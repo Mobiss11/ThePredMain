@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dev Login - ThePred</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0A0E1A 0%, #1A1F35 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gold-gradient {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+        }
+    </style>
+</head>
+<body class="text-white">
+    <div class="glass rounded-2xl p-8 w-full max-w-md">
+        <div class="text-center mb-8">
+            <div class="inline-block gold-gradient rounded-2xl p-4 mb-4">
+                <svg class="w-12 h-12 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold mb-2">Dev Mode</h1>
+            <p class="text-gray-400">Login to test ThePred in browser</p>
+        </div>
+
+        <form method="POST" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium mb-2">User ID</label>
+                <input type="number" name="user_id" value="1" required
+                       class="w-full glass px-4 py-3 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                <p class="text-xs text-gray-500 mt-1">Enter any user ID for testing (default: 1)</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-2">Username</label>
+                <input type="text" name="username" value="DevUser" required
+                       class="w-full glass px-4 py-3 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400">
+            </div>
+
+            <button type="submit"
+                    class="w-full gold-gradient text-black font-bold py-3 rounded-lg hover:opacity-90 transition">
+                Login to Dev Mode
+            </button>
+        </form>
+
+        <div class="mt-6 p-4 glass rounded-lg">
+            <h3 class="font-bold mb-2 text-sm">⚠️ Dev Mode Notes:</h3>
+            <ul class="text-xs text-gray-400 space-y-1">
+                <li>• This mode is for testing only</li>
+                <li>• Disable in production (set DEV_MODE=false)</li>
+                <li>• User ID should exist in database</li>
+                <li>• All features work as in Telegram</li>
+            </ul>
+        </div>
+
+        <div class="mt-4 text-center">
+            <p class="text-xs text-gray-500">
+                To disable dev mode: set <code class="bg-gray-800 px-2 py-1 rounded">DEV_MODE=false</code> in .env
+            </p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - ThePred{% endblock %}
+
+{% block content %}
+<!-- Profile Header -->
+<div class="glass card-shine rounded-2xl p-6 mb-6">
+    <div class="flex items-center space-x-4 mb-6">
+        <div class="w-20 h-20 gold-gradient rounded-2xl flex items-center justify-center text-3xl font-bold pulse-gold">
+            🏆
+        </div>
+        <div class="flex-1">
+            <h1 class="text-2xl font-bold mb-1" id="username">Player #12345</h1>
+            <div class="flex items-center space-x-2">
+                <span class="gold-gradient px-3 py-1 rounded-full text-xs font-bold text-black">
+                    💎 GOLD RANK
+                </span>
+                <span class="text-gray-400 text-sm">#234 Globally</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Balance Cards -->
+    <div class="grid grid-cols-2 gap-4">
+        <div class="glass rounded-xl p-4">
+            <div class="text-gray-400 text-sm mb-1">PRED Balance</div>
+            <div class="text-2xl font-bold text-yellow-400" id="pred-balance-display">1,000</div>
+            <div class="text-green-400 text-xs mt-1">+250 this week</div>
+        </div>
+        <div class="glass rounded-xl p-4">
+            <div class="text-gray-400 text-sm mb-1">TON Balance</div>
+            <div class="text-2xl font-bold text-blue-400" id="ton-balance-display">0.00</div>
+            <button class="gold-gradient px-3 py-1 rounded-lg text-xs font-bold text-black mt-2">
+                + Deposit
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="glass rounded-2xl p-6 mb-6">
+    <h2 class="text-xl font-bold mb-4">📊 Your Stats</h2>
+    <div class="grid grid-cols-2 gap-4">
+        <div class="glass rounded-xl p-4 text-center">
+            <div class="text-3xl font-bold text-white mb-1">156</div>
+            <div class="text-gray-400 text-sm">Total Bets</div>
+        </div>
+        <div class="glass rounded-xl p-4 text-center">
+            <div class="text-3xl font-bold text-green-400 mb-1">89</div>
+            <div class="text-gray-400 text-sm">Wins</div>
+        </div>
+        <div class="glass rounded-xl p-4 text-center">
+            <div class="text-3xl font-bold text-red-400 mb-1">67</div>
+            <div class="text-gray-400 text-sm">Losses</div>
+        </div>
+        <div class="glass rounded-xl p-4 text-center">
+            <div class="text-3xl font-bold text-purple-400 mb-1">57%</div>
+            <div class="text-gray-400 text-sm">Win Rate</div>
+        </div>
+    </div>
+
+    <div class="mt-4 glass rounded-xl p-4">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-gray-400 text-sm">Current Streak</span>
+            <span class="text-2xl font-bold text-yellow-400">🔥 7</span>
+        </div>
+        <div class="flex items-center justify-between">
+            <span class="text-gray-400 text-sm">Best Streak</span>
+            <span class="text-xl font-bold">15</span>
+        </div>
+    </div>
+</div>
+
+<!-- Rank Progress -->
+<div class="glass rounded-2xl p-6 mb-6">
+    <h2 class="text-xl font-bold mb-4">🎖 Rank Progress</h2>
+
+    <div class="space-y-3">
+        <div class="glass rounded-xl p-4 opacity-50">
+            <div class="flex items-center justify-between mb-2">
+                <span class="font-bold">🥉 Bronze</span>
+                <span class="text-sm text-gray-400">0-100 bets</span>
+            </div>
+            <div class="text-xs text-gray-500">Commission: 1% PRED, 5% TON</div>
+        </div>
+
+        <div class="glass rounded-xl p-4 opacity-50">
+            <div class="flex items-center justify-between mb-2">
+                <span class="font-bold">🥈 Silver</span>
+                <span class="text-sm text-gray-400">100-500 bets</span>
+            </div>
+            <div class="text-xs text-gray-500">Commission: 0.8% PRED, 4.5% TON</div>
+        </div>
+
+        <div class="glass rounded-xl p-4 border-2 border-yellow-400">
+            <div class="flex items-center justify-between mb-2">
+                <span class="font-bold text-yellow-400">🥇 Gold</span>
+                <span class="text-sm text-green-400">CURRENT</span>
+            </div>
+            <div class="text-xs text-gray-400 mb-3">Commission: 0.6% PRED, 4% TON</div>
+            <div class="w-full bg-gray-800 rounded-full h-2">
+                <div class="gold-gradient h-2 rounded-full" style="width: 31%"></div>
+            </div>
+            <div class="text-xs text-gray-400 mt-1">156 / 500 bets to Diamond</div>
+        </div>
+
+        <div class="glass rounded-xl p-4">
+            <div class="flex items-center justify-between mb-2">
+                <span class="font-bold">💎 Diamond</span>
+                <span class="text-sm text-gray-400">500-2000 bets</span>
+            </div>
+            <div class="text-xs text-gray-500">Commission: 0.4% PRED, 3% TON</div>
+        </div>
+
+        <div class="glass rounded-xl p-4">
+            <div class="flex items-center justify-between mb-2">
+                <span class="font-bold">🌟 Legend</span>
+                <span class="text-sm text-gray-400">2000+ bets</span>
+            </div>
+            <div class="text-xs text-gray-500">Commission: 0.2% PRED, 2% TON</div>
+        </div>
+    </div>
+</div>
+
+<!-- Referral -->
+<div class="glass rounded-2xl p-6 mb-6">
+    <h2 class="text-xl font-bold mb-4">🎁 Invite Friends</h2>
+    <p class="text-gray-400 text-sm mb-4">Get 1,000 PRED for each friend who joins!</p>
+
+    <div class="glass rounded-xl p-4 mb-4">
+        <div class="text-gray-400 text-xs mb-2">Your Referral Link</div>
+        <div class="flex items-center space-x-2">
+            <input type="text" readonly value="https://t.me/ThePredBot?start=abc123"
+                   class="flex-1 bg-transparent text-sm focus:outline-none">
+            <button onclick="copyReferralLink()" class="gold-gradient px-4 py-2 rounded-lg font-bold text-black text-sm">
+                Copy
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+        <div class="glass rounded-xl p-4 text-center">
+            <div class="text-2xl font-bold mb-1">12</div>
+            <div class="text-gray-400 text-xs">Referrals</div>
+        </div>
+        <div class="glass rounded-xl p-4 text-center">
+            <div class="text-2xl font-bold text-yellow-400 mb-1">12,000</div>
+            <div class="text-gray-400 text-xs">PRED Earned</div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Bets -->
+<div class="glass rounded-2xl p-6 mb-6">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold">📜 Recent Bets</h2>
+        <a href="#" class="text-yellow-400 text-sm">View All</a>
+    </div>
+
+    <div class="space-y-3">
+        <div class="glass rounded-xl p-4">
+            <div class="flex items-start justify-between mb-2">
+                <div class="flex-1">
+                    <div class="font-medium mb-1">Bitcoin > $100k?</div>
+                    <div class="text-xs text-gray-400">Bet YES • 1,000 PRED</div>
+                </div>
+                <span class="green-gradient px-3 py-1 rounded-full text-xs font-bold text-white">
+                    WON
+                </span>
+            </div>
+            <div class="text-xs text-gray-500">+1,850 PRED • 2h ago</div>
+        </div>
+
+        <div class="glass rounded-xl p-4">
+            <div class="flex items-start justify-between mb-2">
+                <div class="flex-1">
+                    <div class="font-medium mb-1">Man City wins PL?</div>
+                    <div class="text-xs text-gray-400">Bet NO • 500 PRED</div>
+                </div>
+                <span class="glass px-3 py-1 rounded-full text-xs font-bold text-yellow-400">
+                    PENDING
+                </span>
+            </div>
+            <div class="text-xs text-gray-500">Potential: +750 PRED • 5h ago</div>
+        </div>
+
+        <div class="glass rounded-xl p-4">
+            <div class="flex items-start justify-between mb-2">
+                <div class="flex-1">
+                    <div class="font-medium mb-1">ETH ETF Approved?</div>
+                    <div class="text-xs text-gray-400">Bet YES • 2,000 PRED</div>
+                </div>
+                <span class="red-gradient px-3 py-1 rounded-full text-xs font-bold text-white">
+                    LOST
+                </span>
+            </div>
+            <div class="text-xs text-gray-500">-2,000 PRED • 1d ago</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Load profile data
+async function loadProfile() {
+    try {
+        const response = await fetch('/api/profile');
+        if (response.ok) {
+            const profile = await response.json();
+
+            // Update username
+            document.getElementById('username').innerText = profile.username || `Player #${profile.telegram_id}`;
+
+            // Update balances
+            document.getElementById('pred-balance-display').innerText = window.formatNumber(profile.pred_balance);
+            document.getElementById('ton-balance-display').innerText = profile.ton_balance;
+
+            // Update stats
+            const statsElements = document.querySelectorAll('.glass.rounded-xl.p-4.text-center');
+            if (statsElements.length >= 4) {
+                statsElements[0].querySelector('.text-3xl').innerText = profile.total_bets;
+                statsElements[1].querySelector('.text-3xl').innerText = profile.total_wins;
+                statsElements[2].querySelector('.text-3xl').innerText = profile.total_losses;
+
+                const winRate = profile.total_bets > 0
+                    ? Math.round((profile.total_wins / profile.total_bets) * 100)
+                    : 0;
+                statsElements[3].querySelector('.text-3xl').innerText = winRate + '%';
+            }
+
+            // Update win streak
+            const streakElements = document.querySelectorAll('.text-2xl.font-bold, .text-xl.font-bold');
+            if (streakElements.length >= 2) {
+                streakElements[0].innerHTML = `🔥 ${profile.win_streak}`;
+            }
+
+            // Update rank
+            const rankBadge = document.querySelector('.gold-gradient.px-3.py-1.rounded-full');
+            const rankIcons = {
+                'Bronze': '🥉',
+                'Silver': '🥈',
+                'Gold': '🥇',
+                'Diamond': '💎',
+                'Legend': '🌟'
+            };
+            if (rankBadge) {
+                rankBadge.innerHTML = `${rankIcons[profile.rank] || '🏆'} ${profile.rank.toUpperCase()} RANK`;
+            }
+
+            // Update referral link
+            const referralInput = document.querySelector('input[readonly]');
+            if (referralInput && profile.referral_code) {
+                referralInput.value = `https://t.me/ThePredBot?start=${profile.referral_code}`;
+            }
+        }
+    } catch (error) {
+        console.error('Failed to load profile:', error);
+    }
+}
+
+// Load bet history
+async function loadBetHistory() {
+    try {
+        const response = await fetch('/api/bets/history');
+        if (response.ok) {
+            const bets = await response.json();
+
+            if (bets.length > 0) {
+                const recentBetsContainer = document.querySelector('.space-y-3');
+
+                const statusColors = {
+                    'WON': 'green-gradient',
+                    'LOST': 'red-gradient',
+                    'PENDING': 'glass'
+                };
+
+                const statusTextColors = {
+                    'WON': 'text-white',
+                    'LOST': 'text-white',
+                    'PENDING': 'text-yellow-400'
+                };
+
+                recentBetsContainer.innerHTML = bets.slice(0, 5).map(bet => {
+                    const statusClass = statusColors[bet.status] || 'glass';
+                    const statusTextClass = statusTextColors[bet.status] || 'text-white';
+
+                    return `
+                        <div class="glass rounded-xl p-4">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="flex-1">
+                                    <div class="font-medium mb-1">${bet.market_title || 'Market #' + bet.market_id}</div>
+                                    <div class="text-xs text-gray-400">Bet ${bet.position} • ${bet.amount} ${bet.currency}</div>
+                                </div>
+                                <span class="${statusClass} px-3 py-1 rounded-full text-xs font-bold ${statusTextClass}">
+                                    ${bet.status}
+                                </span>
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                ${bet.status === 'WON' ? `+${bet.payout} ${bet.currency}` : bet.status === 'LOST' ? `-${bet.amount} ${bet.currency}` : `Potential: +${bet.potential_win} ${bet.currency}`}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+    } catch (error) {
+        console.error('Failed to load bet history:', error);
+    }
+}
+
+function copyReferralLink() {
+    const input = document.querySelector('input[readonly]');
+    window.copyToClipboard(input.value);
+}
+
+// Load data on page load
+document.addEventListener('DOMContentLoaded', () => {
+    loadProfile();
+    loadBetHistory();
+});
+</script>
+{% endblock %}

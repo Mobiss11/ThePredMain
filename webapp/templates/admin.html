@@ -1,0 +1,642 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel - ThePred{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="glass card-shine rounded-2xl p-6 mb-6">
+    <h1 class="text-2xl font-bold mb-4">🔧 Admin Panel</h1>
+    <p class="text-gray-400 text-sm">Platform management and statistics</p>
+</div>
+
+<!-- Tab Navigation -->
+<div class="glass rounded-2xl p-2 mb-6">
+    <div class="grid grid-cols-4 gap-2">
+        <button id="tab-stats" class="tab-button gold-gradient rounded-lg py-3 font-bold text-black text-sm">
+            📊 Stats
+        </button>
+        <button id="tab-markets" class="tab-button glass rounded-lg py-3 font-bold text-sm">
+            📈 Markets
+        </button>
+        <button id="tab-users" class="tab-button glass rounded-lg py-3 font-bold text-sm">
+            👥 Users
+        </button>
+        <button id="tab-create" class="tab-button glass rounded-lg py-3 font-bold text-sm">
+            ✨ Create
+        </button>
+    </div>
+</div>
+
+<!-- Stats Tab -->
+<div id="content-stats" class="tab-content">
+    <div class="glass rounded-2xl p-6 mb-6">
+        <h2 class="text-xl font-bold mb-4">Platform Statistics</h2>
+        <div id="stats-container" class="grid grid-cols-2 gap-4">
+            <!-- Stats will be loaded here -->
+        </div>
+    </div>
+
+    <div class="glass rounded-2xl p-6">
+        <h2 class="text-xl font-bold mb-4">Recent Activity (24h)</h2>
+        <div id="activity-container" class="space-y-3">
+            <!-- Activity will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Markets Tab -->
+<div id="content-markets" class="tab-content hidden">
+    <div class="glass rounded-2xl p-4 mb-4">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold">Market Management</h2>
+            <select id="market-status-filter" class="glass rounded-lg px-3 py-2 text-sm">
+                <option value="">All Markets</option>
+                <option value="open">Open</option>
+                <option value="closed">Closed</option>
+                <option value="resolved">Resolved</option>
+                <option value="cancelled">Cancelled</option>
+            </select>
+        </div>
+        <div id="markets-list" class="space-y-3">
+            <!-- Markets will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Users Tab -->
+<div id="content-users" class="tab-content hidden">
+    <div class="glass rounded-2xl p-4">
+        <h2 class="text-xl font-bold mb-4">User Management</h2>
+        <div id="users-list" class="space-y-3">
+            <!-- Users will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Create Market Tab -->
+<div id="content-create" class="tab-content hidden">
+    <div class="glass rounded-2xl p-6">
+        <h2 class="text-xl font-bold mb-4">Create New Market</h2>
+        <form id="create-market-form" class="space-y-4">
+            <div>
+                <label class="block text-sm font-bold mb-2">Title</label>
+                <input type="text" id="market-title" class="glass rounded-lg px-4 py-3 w-full" placeholder="Will Bitcoin reach $100k by end of 2025?" required>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold mb-2">Description</label>
+                <textarea id="market-description" class="glass rounded-lg px-4 py-3 w-full" rows="3" placeholder="Detailed market description..."></textarea>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold mb-2">Category</label>
+                <select id="market-category" class="glass rounded-lg px-4 py-3 w-full" required>
+                    <option value="crypto">💰 Crypto</option>
+                    <option value="sports">⚽ Sports</option>
+                    <option value="politics">🏛️ Politics</option>
+                    <option value="technology">💻 Technology</option>
+                    <option value="entertainment">🎬 Entertainment</option>
+                    <option value="other">📊 Other</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold mb-2">Resolve Date (optional)</label>
+                <input type="datetime-local" id="market-resolve-date" class="glass rounded-lg px-4 py-3 w-full">
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold mb-2">Promotion Level</label>
+                <select id="market-promotion" class="glass rounded-lg px-4 py-3 w-full">
+                    <option value="none">None</option>
+                    <option value="basic">Basic</option>
+                    <option value="premium">Premium</option>
+                </select>
+            </div>
+
+            <div id="promotion-hours-container" class="hidden">
+                <label class="block text-sm font-bold mb-2">Promotion Duration (hours)</label>
+                <input type="number" id="promotion-hours" class="glass rounded-lg px-4 py-3 w-full" value="24" min="1">
+            </div>
+
+            <button type="submit" class="gold-gradient rounded-lg py-3 w-full font-bold text-black">
+                Create Market
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Market Details Modal (for resolve/delete) -->
+<div id="market-modal" class="fixed inset-0 bg-black bg-opacity-80 hidden flex items-center justify-center z-50">
+    <div class="glass rounded-2xl p-6 max-w-md w-full mx-4">
+        <h3 id="modal-title" class="text-xl font-bold mb-4"></h3>
+        <div id="modal-content" class="mb-4">
+            <!-- Modal content will be inserted here -->
+        </div>
+        <div id="modal-actions" class="flex gap-3">
+            <!-- Modal buttons will be inserted here -->
+        </div>
+    </div>
+</div>
+
+<!-- User Details Modal -->
+<div id="user-modal" class="fixed inset-0 bg-black bg-opacity-80 hidden flex items-center justify-center z-50">
+    <div class="glass rounded-2xl p-6 max-w-md w-full mx-4">
+        <h3 id="user-modal-title" class="text-xl font-bold mb-4"></h3>
+        <div id="user-modal-content" class="mb-4">
+            <!-- User content will be inserted here -->
+        </div>
+        <button onclick="closeUserModal()" class="glass rounded-lg py-2 w-full font-bold">
+            Close
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Tab switching
+    const tabs = ['stats', 'markets', 'users', 'create'];
+    let currentTab = 'stats';
+
+    tabs.forEach(tab => {
+        document.getElementById(`tab-${tab}`).addEventListener('click', () => {
+            // Update tab buttons
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                const content = document.getElementById(`content-${t}`);
+
+                if (t === tab) {
+                    btn.classList.remove('glass');
+                    btn.classList.add('gold-gradient', 'text-black');
+                    content.classList.remove('hidden');
+                    currentTab = tab;
+                } else {
+                    btn.classList.remove('gold-gradient', 'text-black');
+                    btn.classList.add('glass');
+                    content.classList.add('hidden');
+                }
+            });
+
+            // Load data for the tab
+            if (tab === 'stats') loadStats();
+            else if (tab === 'markets') loadMarkets();
+            else if (tab === 'users') loadUsers();
+        });
+    });
+
+    // ============ Stats Tab ============
+
+    async function loadStats() {
+        try {
+            const response = await fetch('/api/admin/stats');
+            const stats = await response.json();
+
+            const statsHTML = `
+                <div class="glass rounded-xl p-4">
+                    <div class="text-gray-400 text-sm mb-1">Total Users</div>
+                    <div class="text-2xl font-bold">${stats.total_users}</div>
+                    <div class="text-green-400 text-xs mt-1">+${stats.users_last_24h} today</div>
+                </div>
+                <div class="glass rounded-xl p-4">
+                    <div class="text-gray-400 text-sm mb-1">Total Markets</div>
+                    <div class="text-2xl font-bold">${stats.total_markets}</div>
+                    <div class="text-blue-400 text-xs mt-1">${stats.active_markets} active</div>
+                </div>
+                <div class="glass rounded-xl p-4">
+                    <div class="text-gray-400 text-sm mb-1">Total Bets</div>
+                    <div class="text-2xl font-bold">${stats.total_bets}</div>
+                    <div class="text-green-400 text-xs mt-1">+${stats.bets_last_24h} today</div>
+                </div>
+                <div class="glass rounded-xl p-4">
+                    <div class="text-gray-400 text-sm mb-1">Total Volume</div>
+                    <div class="text-2xl font-bold text-yellow-400">${window.formatNumber(stats.total_volume_pred)} PRED</div>
+                    <div class="text-green-400 text-xs mt-1">+${window.formatNumber(stats.volume_last_24h)} today</div>
+                </div>
+            `;
+
+            document.getElementById('stats-container').innerHTML = statsHTML;
+
+            const activityHTML = `
+                <div class="glass rounded-xl p-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="font-bold">New Users</div>
+                            <div class="text-gray-400 text-sm">Last 24 hours</div>
+                        </div>
+                        <div class="text-2xl font-bold text-green-400">+${stats.users_last_24h}</div>
+                    </div>
+                </div>
+                <div class="glass rounded-xl p-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="font-bold">New Bets</div>
+                            <div class="text-gray-400 text-sm">Last 24 hours</div>
+                        </div>
+                        <div class="text-2xl font-bold text-blue-400">+${stats.bets_last_24h}</div>
+                    </div>
+                </div>
+                <div class="glass rounded-xl p-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="font-bold">Volume</div>
+                            <div class="text-gray-400 text-sm">Last 24 hours</div>
+                        </div>
+                        <div class="text-2xl font-bold text-yellow-400">${window.formatNumber(stats.volume_last_24h)} PRED</div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('activity-container').innerHTML = activityHTML;
+        } catch (error) {
+            console.error('Error loading stats:', error);
+        }
+    }
+
+    // ============ Markets Tab ============
+
+    async function loadMarkets(status = null) {
+        try {
+            const url = status ? `/api/admin/markets?status=${status}` : '/api/admin/markets';
+            const response = await fetch(url);
+            const markets = await response.json();
+
+            if (markets.length === 0) {
+                document.getElementById('markets-list').innerHTML = '<div class="text-center text-gray-400 py-8">No markets found</div>';
+                return;
+            }
+
+            const marketsHTML = markets.map(market => {
+                const statusColor = {
+                    'open': 'text-green-400',
+                    'closed': 'text-gray-400',
+                    'resolved': 'text-blue-400',
+                    'cancelled': 'text-red-400'
+                }[market.status] || 'text-gray-400';
+
+                return `
+                    <div class="glass rounded-xl p-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex-1">
+                                <div class="font-bold mb-1">${market.title}</div>
+                                <div class="text-xs text-gray-400">ID: ${market.id} | ${market.category}</div>
+                            </div>
+                            <span class="${statusColor} text-sm font-bold">${market.status.toUpperCase()}</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 text-xs mb-3">
+                            <div class="glass rounded p-2">
+                                <div class="text-gray-400">Volume</div>
+                                <div class="font-bold">${window.formatNumber(market.total_volume_pred)} PRED</div>
+                            </div>
+                            <div class="glass rounded p-2">
+                                <div class="text-gray-400">Bets</div>
+                                <div class="font-bold">${market.bets_count}</div>
+                            </div>
+                            <div class="glass rounded p-2">
+                                <div class="text-gray-400">Views</div>
+                                <div class="font-bold">${market.views_count}</div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            ${market.status === 'open' ? `
+                                <button onclick="showResolveModal(${market.id}, '${market.title}')" class="glass rounded-lg px-3 py-2 text-xs font-bold flex-1">
+                                    ✅ Resolve
+                                </button>
+                                <button onclick="promoteMarket(${market.id})" class="glass rounded-lg px-3 py-2 text-xs font-bold">
+                                    ⭐ Promote
+                                </button>
+                            ` : ''}
+                            ${market.bets_count === 0 ? `
+                                <button onclick="deleteMarket(${market.id})" class="glass rounded-lg px-3 py-2 text-xs font-bold text-red-400">
+                                    🗑️ Delete
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('markets-list').innerHTML = marketsHTML;
+        } catch (error) {
+            console.error('Error loading markets:', error);
+        }
+    }
+
+    document.getElementById('market-status-filter').addEventListener('change', (e) => {
+        loadMarkets(e.target.value || null);
+    });
+
+    function showResolveModal(marketId, title) {
+        document.getElementById('modal-title').innerText = `Resolve Market #${marketId}`;
+        document.getElementById('modal-content').innerHTML = `
+            <div class="mb-4">
+                <div class="font-bold mb-2">${title}</div>
+                <p class="text-gray-400 text-sm mb-4">Select the outcome for this market:</p>
+            </div>
+        `;
+        document.getElementById('modal-actions').innerHTML = `
+            <button onclick="resolveMarket(${marketId}, 'YES')" class="gold-gradient rounded-lg py-2 flex-1 font-bold text-black">
+                ✅ YES Wins
+            </button>
+            <button onclick="resolveMarket(${marketId}, 'NO')" class="glass rounded-lg py-2 flex-1 font-bold">
+                ❌ NO Wins
+            </button>
+            <button onclick="resolveMarket(${marketId}, 'CANCELLED')" class="glass rounded-lg py-2 flex-1 font-bold text-red-400">
+                🚫 Cancel
+            </button>
+        `;
+        document.getElementById('market-modal').classList.remove('hidden');
+    }
+
+    async function resolveMarket(marketId, outcome) {
+        try {
+            const response = await fetch(`/api/admin/markets/${marketId}/resolve`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({outcome})
+            });
+
+            if (response.ok) {
+                alert(`Market resolved with outcome: ${outcome}`);
+                document.getElementById('market-modal').classList.add('hidden');
+                loadMarkets();
+            } else {
+                alert('Failed to resolve market');
+            }
+        } catch (error) {
+            console.error('Error resolving market:', error);
+            alert('Error resolving market');
+        }
+    }
+
+    async function promoteMarket(marketId) {
+        const level = prompt('Promotion level (basic/premium):', 'basic');
+        if (!level) return;
+
+        const hours = prompt('Hours:', '24');
+        if (!hours) return;
+
+        try {
+            const response = await fetch(`/api/admin/markets/${marketId}/promote?promotion_level=${level}&hours=${hours}`, {
+                method: 'PUT'
+            });
+
+            if (response.ok) {
+                alert('Market promoted successfully');
+                loadMarkets();
+            } else {
+                alert('Failed to promote market');
+            }
+        } catch (error) {
+            console.error('Error promoting market:', error);
+        }
+    }
+
+    async function deleteMarket(marketId) {
+        if (!confirm('Are you sure you want to delete this market?')) return;
+
+        try {
+            const response = await fetch(`/api/admin/markets/${marketId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                alert('Market deleted successfully');
+                loadMarkets();
+            } else {
+                alert('Failed to delete market');
+            }
+        } catch (error) {
+            console.error('Error deleting market:', error);
+        }
+    }
+
+    // ============ Users Tab ============
+
+    async function loadUsers() {
+        try {
+            const response = await fetch('/api/admin/users?limit=50');
+            const users = await response.json();
+
+            if (users.length === 0) {
+                document.getElementById('users-list').innerHTML = '<div class="text-center text-gray-400 py-8">No users found</div>';
+                return;
+            }
+
+            const usersHTML = users.map(user => {
+                const displayName = user.username || user.first_name || `User #${user.telegram_id}`;
+                const winRate = user.total_bets > 0 ? Math.round((user.total_wins / user.total_bets) * 100) : 0;
+
+                return `
+                    <div class="glass rounded-xl p-4">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <div class="font-bold">${displayName}</div>
+                                <div class="text-xs text-gray-400">ID: ${user.id} | TG: ${user.telegram_id}</div>
+                            </div>
+                            <span class="text-sm">${user.rank}</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 text-xs mb-3">
+                            <div class="glass rounded p-2">
+                                <div class="text-gray-400">PRED</div>
+                                <div class="font-bold text-yellow-400">${window.formatNumber(user.pred_balance)}</div>
+                            </div>
+                            <div class="glass rounded p-2">
+                                <div class="text-gray-400">Bets</div>
+                                <div class="font-bold">${user.total_bets}</div>
+                            </div>
+                            <div class="glass rounded p-2">
+                                <div class="text-gray-400">Win Rate</div>
+                                <div class="font-bold">${winRate}%</div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="showUserDetails(${user.id})" class="glass rounded-lg px-3 py-2 text-xs font-bold flex-1">
+                                👁️ View Details
+                            </button>
+                            <button onclick="editUserBalance(${user.id}, ${user.pred_balance})" class="glass rounded-lg px-3 py-2 text-xs font-bold">
+                                💰 Edit Balance
+                            </button>
+                            <button onclick="editUserRank(${user.id}, '${user.rank}')" class="glass rounded-lg px-3 py-2 text-xs font-bold">
+                                🏆 Edit Rank
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('users-list').innerHTML = usersHTML;
+        } catch (error) {
+            console.error('Error loading users:', error);
+        }
+    }
+
+    async function showUserDetails(userId) {
+        try {
+            const response = await fetch(`/api/admin/users/${userId}/activity`);
+            const data = await response.json();
+
+            document.getElementById('user-modal-title').innerText = `User #${userId} - ${data.username || 'User'}`;
+
+            const recentBetsHTML = data.recent_bets.map(bet => `
+                <div class="glass rounded p-2 text-xs">
+                    <div class="flex justify-between">
+                        <span>Market #${bet.market_id}</span>
+                        <span class="${bet.status === 'WON' ? 'text-green-400' : bet.status === 'LOST' ? 'text-red-400' : 'text-gray-400'}">${bet.status}</span>
+                    </div>
+                    <div class="text-gray-400">${bet.position} | ${bet.amount} PRED</div>
+                </div>
+            `).join('');
+
+            document.getElementById('user-modal-content').innerHTML = `
+                <div class="space-y-3">
+                    <div class="glass rounded-xl p-4">
+                        <div class="text-sm text-gray-400 mb-2">Balances</div>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div>PRED: <span class="font-bold text-yellow-400">${window.formatNumber(data.balances.pred)}</span></div>
+                            <div>TON: <span class="font-bold">${window.formatNumber(data.balances.ton)}</span></div>
+                        </div>
+                    </div>
+                    <div class="glass rounded-xl p-4">
+                        <div class="text-sm text-gray-400 mb-2">Stats</div>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div>Total Bets: <span class="font-bold">${data.stats.total_bets}</span></div>
+                            <div>Wins: <span class="font-bold text-green-400">${data.stats.total_wins}</span></div>
+                            <div>Losses: <span class="font-bold text-red-400">${data.stats.total_losses}</span></div>
+                            <div>Win Rate: <span class="font-bold">${data.stats.win_rate}%</span></div>
+                            <div>Win Streak: <span class="font-bold">${data.stats.win_streak}</span></div>
+                            <div>Profit: <span class="font-bold text-yellow-400">${window.formatNumber(data.stats.total_profit)}</span></div>
+                        </div>
+                    </div>
+                    <div class="glass rounded-xl p-4">
+                        <div class="text-sm text-gray-400 mb-2">Recent Bets</div>
+                        <div class="space-y-2">${recentBetsHTML || '<div class="text-gray-400 text-xs">No recent bets</div>'}</div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('user-modal').classList.remove('hidden');
+        } catch (error) {
+            console.error('Error loading user details:', error);
+        }
+    }
+
+    function closeUserModal() {
+        document.getElementById('user-modal').classList.add('hidden');
+    }
+
+    async function editUserBalance(userId, currentBalance) {
+        const newBalance = prompt(`Enter new PRED balance for user #${userId}:`, currentBalance);
+        if (newBalance === null) return;
+
+        try {
+            const response = await fetch(`/api/admin/users/${userId}/balance`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({pred_balance: parseFloat(newBalance)})
+            });
+
+            if (response.ok) {
+                alert('Balance updated successfully');
+                loadUsers();
+            } else {
+                alert('Failed to update balance');
+            }
+        } catch (error) {
+            console.error('Error updating balance:', error);
+        }
+    }
+
+    async function editUserRank(userId, currentRank) {
+        const ranks = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Master', 'Grandmaster'];
+        const newRank = prompt(`Enter new rank for user #${userId}:\n${ranks.join(', ')}`, currentRank);
+        if (!newRank || !ranks.includes(newRank)) return;
+
+        try {
+            const response = await fetch(`/api/admin/users/${userId}/rank?rank=${newRank}`, {
+                method: 'PUT'
+            });
+
+            if (response.ok) {
+                alert('Rank updated successfully');
+                loadUsers();
+            } else {
+                alert('Failed to update rank');
+            }
+        } catch (error) {
+            console.error('Error updating rank:', error);
+        }
+    }
+
+    // ============ Create Market Tab ============
+
+    document.getElementById('market-promotion').addEventListener('change', (e) => {
+        const container = document.getElementById('promotion-hours-container');
+        if (e.target.value !== 'none') {
+            container.classList.remove('hidden');
+        } else {
+            container.classList.add('hidden');
+        }
+    });
+
+    document.getElementById('create-market-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const title = document.getElementById('market-title').value;
+        const description = document.getElementById('market-description').value;
+        const category = document.getElementById('market-category').value;
+        const resolveDate = document.getElementById('market-resolve-date').value || null;
+        const promotion = document.getElementById('market-promotion').value;
+
+        try {
+            const response = await fetch('/api/admin/markets', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    title,
+                    description,
+                    category,
+                    resolve_date: resolveDate,
+                    is_promoted: promotion,
+                    promoted_until: null
+                })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                alert(`Market created successfully! ID: ${result.id}`);
+
+                // Reset form
+                document.getElementById('create-market-form').reset();
+                document.getElementById('promotion-hours-container').classList.add('hidden');
+
+                // Switch to markets tab
+                document.getElementById('tab-markets').click();
+            } else {
+                alert('Failed to create market');
+            }
+        } catch (error) {
+            console.error('Error creating market:', error);
+            alert('Error creating market');
+        }
+    });
+
+    // Close modals when clicking outside
+    document.getElementById('market-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'market-modal') {
+            e.target.classList.add('hidden');
+        }
+    });
+
+    document.getElementById('user-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'user-modal') {
+            closeUserModal();
+        }
+    });
+
+    // Load initial data
+    document.addEventListener('DOMContentLoaded', () => {
+        loadStats();
+    });
+</script>
+{% endblock %}

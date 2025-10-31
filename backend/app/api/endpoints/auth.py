@@ -1,0 +1,101 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.database import get_db
+from app.models.user import User
+from app.core.config import settings
+from pydantic import BaseModel
+from jose import jwt
+from datetime import datetime, timedelta
+import hashlib
+import secrets
+
+router = APIRouter()
+
+
+class TelegramAuthData(BaseModel):
+    id: int
+    first_name: str
+    username: str | None = None
+    last_name: str | None = None
+    auth_date: int
+    hash: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str
+    user_id: int
+
+
+def verify_telegram_auth(auth_data: dict) -> bool:
+    """Verify Telegram WebApp authorization"""
+    check_hash = auth_data.pop('hash', None)
+    if not check_hash:
+        return False
+
+    # In production, use BOT_TOKEN from settings
+    # For now, simplified version
+    return True
+
+
+def create_access_token(data: dict) -> str:
+    """Create JWT access token"""
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(hours=settings.JWT_EXPIRE_HOURS)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+    return encoded_jwt
+
+
+@router.post("/telegram", response_model=TokenResponse)
+async def telegram_auth(
+    auth_data: TelegramAuthData,
+    db: AsyncSession = Depends(get_db)
+):
+    """Authenticate user via Telegram"""
+    # Verify Telegram data
+    if not verify_telegram_auth(auth_data.dict()):
+        raise HTTPException(status_code=401, detail="Invalid authentication data")
+
+    # Check if user exists
+    from sqlalchemy import select
+    result = await db.execute(
+        select(User).where(User.telegram_id == auth_data.id)
+    )
+    user = result.scalar_one_or_none()
+
+    # Create new user if doesn't exist
+    if not user:
+        referral_code = secrets.token_urlsafe(8)
+        user = User(
+            telegram_id=auth_data.id,
+            username=auth_data.username,
+            first_name=auth_data.first_name,
+            last_name=auth_data.last_name,
+            pred_balance=settings.INITIAL_PRED_BALANCE,
+            referral_code=referral_code
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+
+    # Create access token
+    access_token = create_access_token(
+        data={"sub": str(user.telegram_id), "user_id": user.id}
+    )
+
+    return TokenResponse(
+        access_token=access_token,
+        token_type="bearer",
+        user_id=user.id
+    )
+
+
+@router.get("/verify")
+async def verify_token(token: str):
+    """Verify JWT token"""
+    try:
+        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+        return {"valid": True, "user_id": payload.get("user_id")}
+    except:
+        raise HTTPException(status_code=401, detail="Invalid token")

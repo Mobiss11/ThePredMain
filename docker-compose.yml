@@ -1,0 +1,149 @@
+# Docker Compose for LOCAL DEVELOPMENT
+# Use this for local development without domains
+# Usage: docker-compose up -d
+
+version: '3.8'
+
+services:
+  # ============ Database & Cache ============
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: thepred_postgres_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-thepred}
+      POSTGRES_USER: ${POSTGRES_USER:-thepred}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"  # Exposed for DB clients
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-thepred}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: thepred_redis_dev
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"  # Exposed for redis-cli
+    volumes:
+      - redis_data_dev:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ============ Backend API ============
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: thepred_backend_dev
+    restart: unless-stopped
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-thepred}
+      - POSTGRES_USER=${POSTGRES_USER:-thepred}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET:-your_super_secret_jwt_key}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - JWT_EXPIRE_HOURS=${JWT_EXPIRE_HOURS:-24}
+      - DEBUG=${DEBUG:-true}
+      - INITIAL_PRED_BALANCE=${INITIAL_PRED_BALANCE:-10000}
+      - REFERRAL_BONUS_PRED=${REFERRAL_BONUS_PRED:-1000}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ============ Telegram Bot ============
+
+  bot:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    container_name: thepred_bot_dev
+    restart: unless-stopped
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - WEBAPP_URL=${WEBAPP_URL:-http://localhost:8001}
+      - API_URL=http://backend:8000
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-thepred}
+      - POSTGRES_USER=${POSTGRES_USER:-thepred}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+
+  # ============ WebApp ============
+
+  webapp:
+    build:
+      context: ./webapp
+      dockerfile: Dockerfile
+    container_name: thepred_webapp_dev
+    restart: unless-stopped
+    environment:
+      - API_URL=http://backend:8000
+      - DEV_MODE=${DEV_MODE:-true}
+      - WEBAPP_SECRET_KEY=${WEBAPP_SECRET_KEY:-dev-secret-key}
+      - BOT_TOKEN=${BOT_TOKEN}
+      - BOT_USERNAME=${BOT_USERNAME:-The_Pred_Bot}
+    ports:
+      - "${WEBAPP_PORT:-8001}:8001"
+    depends_on:
+      - backend
+
+  # ============ Admin Panel ============
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: thepred_admin_dev
+    restart: unless-stopped
+    environment:
+      - API_URL=http://backend:8000
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - ADMIN_SECRET_KEY=${ADMIN_SECRET_KEY:-admin-secret-key}
+    ports:
+      - "${ADMIN_PORT:-8002}:8002"
+    depends_on:
+      - backend
+
+  # ============ Landing Page ============
+
+  landing:
+    build:
+      context: ./landing
+      dockerfile: Dockerfile
+    container_name: thepred_landing_dev
+    restart: unless-stopped
+    ports:
+      - "${LANDING_PORT:-8003}:8003"
+
+volumes:
+  postgres_data_dev:
+  redis_data_dev:

@@ -1,0 +1,371 @@
+📋 Техническое задание: ThePred MVP
+🎯 Общее описание проекта
+ThePred - платформа prediction markets в Telegram Mini App с внутренней валютой PRED и интеграцией TON.
+Версия: MVP 1.0
+Срок разработки: 4-6 недель
+Команда: 2 backend, 1 frontend, 1 DevOps
+
+🏗 Архитектура системы
+mermaidgraph TB
+    User[User] --> TG[Telegram]
+    TG --> Bot[Bot Service - aiogram]
+    TG --> MA[Mini App - Quart]
+    Bot --> API[API Gateway - FastAPI]
+    MA --> API
+    API --> Auth[Auth Service]
+    API --> Market[Market Service]
+    API --> Wallet[Wallet Service]
+    API --> Game[Gamification Service]
+    Admin[Admin Panel - Quart] --> API
+    API --> PG[(PostgreSQL)]
+    API --> Redis[(Redis)]
+    API --> TON[TON Blockchain]
+
+📦 Микросервисы MVP
+1. Bot Service (aiogram)
+python# Функционал MVP:
+/start - регистрация + выдача 10,000 PRED
+/balance - баланс PRED и TON
+/markets - топ-5 активных маркетов
+/bet <market_id> <yes/no> <amount> - быстрая ставка
+/referral - реферальная ссылка
+/help - помощь
+
+# Структура:
+bot/
+├── handlers/
+│   ├── start.py      # Onboarding
+│   ├── markets.py    # Просмотр маркетов
+│   ├── betting.py    # Ставки
+│   └── wallet.py     # Баланс
+├── keyboards/
+│   ├── inline.py     # Inline кнопки
+│   └── reply.py      # Reply клавиатуры
+├── middlewares/
+│   └── auth.py       # Проверка регистрации
+└── config.py
+2. Backend API (FastAPI)
+python# Endpoints MVP:
+
+# Auth
+POST /auth/telegram   # Авторизация через Telegram
+GET  /auth/verify     # Проверка токена
+
+# User
+GET  /user/profile    # Профиль пользователя
+GET  /user/balance    # Баланс PRED/TON
+POST /user/referral   # Активация реферала
+
+# Markets
+GET  /markets         # Список маркетов
+GET  /markets/{id}    # Детали маркета
+POST /markets         # Создание маркета (v2)
+
+# Betting
+POST /bet             # Сделать ставку
+GET  /bets/history    # История ставок
+GET  /bets/active     # Активные ставки
+
+# Wallet
+POST /wallet/deposit  # Пополнение TON
+POST /wallet/withdraw # Вывод TON (v2)
+GET  /wallet/transactions # История транзакций
+
+# Gamification
+GET  /missions        # Список заданий
+POST /missions/claim  # Забрать награду
+GET  /leaderboard     # Таблица лидеров
+3. Mini App Frontend (Quart + Jinja2)
+python# Страницы MVP:
+
+# Структура:
+webapp/
+├── templates/
+│   ├── base.html         # Базовый шаблон
+│   ├── index.html        # Главная (список маркетов)
+│   ├── market.html       # Страница маркета
+│   ├── profile.html      # Профиль пользователя
+│   └── leaderboard.html  # Рейтинг
+├── static/
+│   ├── css/
+│   │   └── tailwind.css  # Стили
+│   └── js/
+│       ├── telegram.js   # Telegram Web App SDK
+│       └── betting.js    # Логика ставок
+└── routes/
+    ├── markets.py        # Роуты маркетов
+    ├── betting.py        # Роуты ставок
+    └── profile.py        # Роуты профиля
+4. Admin Panel (Quart + Jinja2)
+python# Функционал MVP:
+
+# Страницы:
+/admin/dashboard      # Общая статистика
+/admin/users          # Управление пользователями
+/admin/markets        # Управление маркетами
+/admin/missions       # Настройка заданий
+/admin/analytics      # Аналитика
+
+# Возможности:
+- Блокировка/разблокировка пользователей
+- Resolve маркетов (определение победителя)
+- Создание/редактирование миссий
+- Просмотр статистики в real-time
+- Экспорт данных в CSV
+
+📊 База данных (PostgreSQL)
+Основные таблицы MVP:
+sql-- Пользователи
+CREATE TABLE users (
+    id BIGSERIAL PRIMARY KEY,
+    telegram_id BIGINT UNIQUE,
+    username VARCHAR(255),
+    pred_balance DECIMAL(20,2) DEFAULT 10000,
+    ton_balance DECIMAL(20,2) DEFAULT 0,
+    rank VARCHAR(50) DEFAULT 'Bronze',
+    referrer_id BIGINT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Маркеты
+CREATE TABLE markets (
+    id BIGSERIAL PRIMARY KEY,
+    title VARCHAR(500),
+    description TEXT,
+    yes_odds DECIMAL(5,2),
+    no_odds DECIMAL(5,2),
+    total_volume DECIMAL(20,2) DEFAULT 0,
+    status VARCHAR(50), -- open/closed/resolved
+    outcome VARCHAR(10), -- yes/no/null
+    resolve_date TIMESTAMP,
+    created_by BIGINT REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Ставки
+CREATE TABLE bets (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT REFERENCES users(id),
+    market_id BIGINT REFERENCES markets(id),
+    position VARCHAR(10), -- yes/no
+    amount DECIMAL(20,2),
+    currency VARCHAR(10), -- PRED/TON
+    odds DECIMAL(5,2),
+    status VARCHAR(50), -- pending/won/lost
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Транзакции
+CREATE TABLE transactions (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT REFERENCES users(id),
+    type VARCHAR(50), -- deposit/withdraw/bet/win
+    currency VARCHAR(10),
+    amount DECIMAL(20,2),
+    tx_hash VARCHAR(255),
+    status VARCHAR(50),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Миссии
+CREATE TABLE missions (
+    id BIGSERIAL PRIMARY KEY,
+    title VARCHAR(255),
+    description TEXT,
+    reward_amount DECIMAL(20,2),
+    reward_currency VARCHAR(10),
+    type VARCHAR(50), -- daily/weekly/special
+    requirements JSONB
+);
+
+-- Прогресс миссий
+CREATE TABLE user_missions (
+    user_id BIGINT REFERENCES users(id),
+    mission_id BIGINT REFERENCES missions(id),
+    progress INTEGER DEFAULT 0,
+    completed BOOLEAN DEFAULT FALSE,
+    claimed BOOLEAN DEFAULT FALSE,
+    PRIMARY KEY (user_id, mission_id)
+);
+
+🎮 Геймификация MVP
+Система рангов:
+pythonRANKS = {
+    "Bronze": {"min_bets": 0, "commission": 0.01},
+    "Silver": {"min_bets": 10, "commission": 0.008},
+    "Gold": {"min_bets": 50, "commission": 0.006},
+}
+Daily Missions:
+pythonDAILY_MISSIONS = [
+    {
+        "id": "daily_bet_3",
+        "title": "Сделай 3 ставки",
+        "reward": 500,
+        "currency": "PRED",
+        "requirement": {"bets_count": 3}
+    },
+    {
+        "id": "daily_win",
+        "title": "Выиграй хотя бы одну ставку",
+        "reward": 1000,
+        "currency": "PRED",
+        "requirement": {"wins_count": 1}
+    }
+]
+```
+
+---
+
+## 🔄 User Flow MVP
+
+### **1. Onboarding:**
+```
+1. User нажимает /start в боте
+2. Автоматическая регистрация
+3. Получает 10,000 PRED
+4. Redirect в Mini App
+5. Показ туториала (skippable)
+```
+
+### **2. Первая ставка:**
+```
+1. Выбор маркета из списка
+2. Выбор позиции (YES/NO)
+3. Ввод суммы в PRED
+4. Подтверждение
+5. Анимация результата
+6. Обновление баланса
+```
+
+### **3. Daily Loop:**
+```
+1. Проверка daily missions
+2. Ставки на интересные маркеты
+3. Проверка позиции в leaderboard
+4. Приглашение друзей для бонусов
+5. Claim rewards
+
+⚙️ Технические требования
+Performance:
+
+Response time < 200ms для API
+Mini App load < 2 секунды
+Поддержка 10,000 concurrent users
+
+Security:
+
+JWT токены для авторизации
+Rate limiting: 100 req/min per user
+SQL injection protection
+XSS protection в Mini App
+
+Monitoring:
+
+Sentry для error tracking
+Prometheus + Grafana для метрик
+Telegram alerts для critical errors
+
+Infrastructure:
+yaml# docker-compose.yml для MVP
+services:
+  postgres:
+    image: postgres:15
+  redis:
+    image: redis:7
+  backend:
+    build: ./backend
+    replicas: 2
+  bot:
+    build: ./bot
+  webapp:
+    build: ./webapp
+  admin:
+    build: ./admin
+  nginx:
+    image: nginx
+    # Load balancing и SSL
+```
+
+---
+
+## 📅 Roadmap MVP
+
+### **Sprint 1 (Week 1-2):**
+- [ ] База данных и модели
+- [ ] Auth через Telegram
+- [ ] Базовые API endpoints
+- [ ] Простой бот с /start и /balance
+
+### **Sprint 2 (Week 3-4):**
+- [ ] Mini App с списком маркетов
+- [ ] Функционал ставок PRED
+- [ ] Система рангов
+- [ ] Daily missions
+
+### **Sprint 3 (Week 5-6):**
+- [ ] Admin panel
+- [ ] Leaderboard
+- [ ] Referral система
+- [ ] Базовая аналитика
+- [ ] Testing & bug fixes
+
+---
+
+## 🚀 Деплой MVP
+
+### **Окружения:**
+```
+Development: localhost
+Staging: staging.thepred.com
+Production: thepred.com
+CI/CD:
+yaml# GitHub Actions
+- Push to main → Deploy to staging
+- Tag release → Deploy to production
+- Automated tests before deploy
+```
+
+---
+
+## 📈 Метрики успеха MVP
+
+### **Week 1 после запуска:**
+- 1,000 регистраций
+- 100 активных daily users
+- 10 ставок на юзера
+- 1 созданный маркет от юзеров
+
+### **Month 1:**
+- 10,000 регистраций
+- 1,000 DAU
+- 50 ставок на юзера
+- Retention D7: 30%
+
+---
+
+## 💰 Бюджет MVP
+```
+Разработка: $5,000
+- Backend: $2,000
+- Frontend: $1,500
+- Bot: $500
+- Admin: $1,000
+
+Инфраструктура (месяц): $200
+- VPS: $100
+- База данных: $50
+- Мониторинг: $50
+
+Маркетинг: $1,000
+- Influencers: $500
+- Ads: $300
+- Community: $200
+
+ИТОГО: $6,200
+
+Это базовое ТЗ для MVP. Хочешь детализировать какую-то конкретную часть? Например, могу расписать:
+
+Детальную логику расчета odds
+Smart contract для TON интеграции
+Алгоритм matching ставок
+API документацию в OpenAPI формате

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ThePred - Вход</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+
+        .auth-container {
+            text-align: center;
+            padding: 40px;
+            max-width: 400px;
+        }
+
+        .logo {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            opacity: 0.8;
+            margin-bottom: 30px;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: rgba(255, 59, 48, 0.2);
+            border: 1px solid rgba(255, 59, 48, 0.5);
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .redirect-btn {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #fff;
+            font-weight: 600;
+            margin-top: 20px;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .redirect-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="logo">ThePred</div>
+        <div class="title">Вход через Telegram</div>
+        <div class="subtitle" id="status-text">Проверяем данные...</div>
+        <div class="loader" id="loader"></div>
+        <div class="error" id="error-message"></div>
+        <a href="https://t.me/{{ bot_username }}" class="redirect-btn" id="redirect-btn" style="display: none;">
+            Открыть в Telegram
+        </a>
+    </div>
+
+    <script>
+        // Check if running in Telegram WebApp
+        if (window.Telegram && window.Telegram.WebApp) {
+            const tg = window.Telegram.WebApp;
+            tg.ready();
+            tg.expand();
+
+            // Get initData from Telegram WebApp
+            const initData = tg.initData;
+
+            if (initData) {
+                // Send auth request to backend
+                document.getElementById('status-text').textContent = 'Авторизация...';
+
+                fetch('/auth/telegram', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ initData: initData })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('status-text').textContent = 'Успешно! Перенаправление...';
+                        setTimeout(() => {
+                            window.location.href = '/markets';
+                        }, 500);
+                    } else {
+                        showError('Ошибка авторизации: ' + (data.error || 'Неизвестная ошибка'));
+                    }
+                })
+                .catch(error => {
+                    showError('Ошибка соединения: ' + error.message);
+                });
+            } else {
+                showError('Telegram данные не найдены. Откройте приложение через бота.');
+            }
+        } else {
+            // Not in Telegram WebApp - show redirect button
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('status-text').textContent = 'Это приложение работает только в Telegram';
+            document.getElementById('redirect-btn').style.display = 'inline-block';
+        }
+
+        function showError(message) {
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('status-text').style.display = 'none';
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('error-message').classList.add('show');
+            document.getElementById('redirect-btn').style.display = 'inline-block';
+        }
+    </script>
+</body>
+</html>

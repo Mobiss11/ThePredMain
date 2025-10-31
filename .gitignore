@@ -1,0 +1,73 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+.env.local
+.env.production
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+*.sqlite3
+*.sql
+backups/
+backup_*.sql
+backup_*.sql.gz
+
+# Logs
+*.log
+logs/
+
+# Docker
+docker-compose.override.yml
+
+# Node (if used for build tools)
+node_modules/
+package-lock.json
+yarn.lock
+
+# SSL & Nginx
+nginx/ssl/*
+!nginx/ssl/.gitkeep
+*.pem
+*.crt
+*.key
+
+# Certbot
+certbot/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*~.conf
+*.conf.temp
