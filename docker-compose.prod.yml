@@ -156,7 +156,7 @@ services:
   # ============ Nginx Reverse Proxy ============
 
   nginx:
-    image: nginx:alpine
+    image: nginx:latest
     container_name: thepred_nginx
     restart: unless-stopped
     ports:
