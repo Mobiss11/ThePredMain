@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs ps clean test dev prod db-migrate db-shell redis-shell backend-shell bot-shell webapp-shell admin-shell landing-shell backup
+.PHONY: help build up down restart logs ps clean test dev prod db-migrate db-shell redis-shell backend-shell bot-shell webapp-shell admin-shell landing-shell backup prod-rebuild-app prod-rebuild-all prod-restart prod-status prod-clean
 
 # Colors for output
 GREEN  := \033[0;32m
@@ -187,16 +187,68 @@ setup: ## Initial setup (create .env, build, start)
 	@echo "$(GREEN)Setup complete!$(NC)"
 
 # Production commands
+PROD_COMPOSE := docker compose -f docker-compose.prod.yml
+APP_SERVICES := backend bot webapp admin landing
+
 prod-build: ## Build for production
 	@echo "$(GREEN)Building for production...$(NC)"
-	docker-compose build --no-cache
+	$(PROD_COMPOSE) build --no-cache
 
 prod-up: ## Start in production mode
 	@echo "$(GREEN)Starting in production mode...$(NC)"
-	DEV_MODE=false docker-compose up -d
+	$(PROD_COMPOSE) up -d
 
 prod-logs: ## Show production logs
-	docker-compose logs -f --tail=100
+	$(PROD_COMPOSE) logs -f --tail=100
+
+prod-rebuild-app: ## Rebuild production app services without cache (backend, bot, webapp, admin, landing)
+	@echo "$(YELLOW)🔄 Stopping app services...$(NC)"
+	$(PROD_COMPOSE) stop $(APP_SERVICES)
+	@echo "$(RED)🗑️  Removing containers...$(NC)"
+	$(PROD_COMPOSE) rm -f $(APP_SERVICES)
+	@echo "$(RED)🗑️  Removing images...$(NC)"
+	@docker images | grep 'thepredmain' | grep -E '(backend|bot|webapp|admin|landing)' | awk '{print $$3}' | xargs -r docker rmi -f 2>/dev/null || true
+	@echo "$(GREEN)🔨 Rebuilding without cache...$(NC)"
+	$(PROD_COMPOSE) build --no-cache $(APP_SERVICES)
+	@echo "$(GREEN)🚀 Starting app services...$(NC)"
+	$(PROD_COMPOSE) up -d $(APP_SERVICES)
+	@echo "$(GREEN)✅ Done! Check logs: make prod-logs$(NC)"
+
+prod-rebuild-all: ## Rebuild ALL production services without cache (including nginx)
+	@echo "$(YELLOW)🔄 Stopping all services...$(NC)"
+	$(PROD_COMPOSE) stop
+	@echo "$(RED)🗑️  Removing containers...$(NC)"
+	$(PROD_COMPOSE) rm -f
+	@echo "$(RED)🗑️  Removing images...$(NC)"
+	@docker images | grep 'thepredmain' | awk '{print $$3}' | xargs -r docker rmi -f 2>/dev/null || true
+	@echo "$(GREEN)🔨 Rebuilding without cache...$(NC)"
+	$(PROD_COMPOSE) build --no-cache
+	@echo "$(GREEN)🚀 Starting all services...$(NC)"
+	$(PROD_COMPOSE) up -d
+	@echo "$(GREEN)✅ Done! Check logs: make prod-logs$(NC)"
+
+prod-restart: ## Restart production app services
+	@echo "$(YELLOW)🔄 Restarting app services...$(NC)"
+	$(PROD_COMPOSE) restart $(APP_SERVICES)
+	@echo "$(GREEN)✅ Done!$(NC)"
+
+prod-status: ## Show production status
+	@echo "$(GREEN)📊 Production Status$(NC)"
+	@echo ""
+	@echo "$(YELLOW)Containers:$(NC)"
+	@docker ps -a --filter "name=thepred_" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+	@echo ""
+	@echo "$(YELLOW)Disk Usage:$(NC)"
+	@docker system df
+	@echo ""
+	@echo "$(YELLOW)HTTPS Check:$(NC)"
+	@curl -s -o /dev/null -w "  thepred.com:  %{http_code}\n" https://thepred.com 2>/dev/null || echo "  thepred.com:  $(RED)FAILED$(NC)"
+	@curl -s -o /dev/null -w "  thepred.tech: %{http_code}\n" https://thepred.tech 2>/dev/null || echo "  thepred.tech: $(RED)FAILED$(NC)"
+
+prod-clean: ## Stop and remove production containers (keeps volumes)
+	@echo "$(RED)⚠️  Stopping and removing all containers...$(NC)"
+	$(PROD_COMPOSE) down
+	@echo "$(GREEN)✅ Done! Volumes preserved.$(NC)"
 
 # Monitoring
 monitor: ## Show real-time logs and stats
