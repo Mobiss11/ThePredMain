@@ -109,7 +109,17 @@ class BackendAPIClient:
             "first_name": first_name,
             "last_name": last_name
         }
-        return await self._post("/auth/telegram", data)
+        # Use simple register endpoint - returns user info
+        result = await self._post("/auth/register", data)
+        # Convert to expected format with 'id' field
+        return {
+            "id": result["user_id"],
+            "telegram_id": result["telegram_id"],
+            "username": result.get("username"),
+            "first_name": result["first_name"],
+            "pred_balance": result["pred_balance"],
+            "referral_code": result["referral_code"]
+        }
 
     # ============ Missions ============
 

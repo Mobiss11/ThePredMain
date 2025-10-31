@@ -37,6 +37,7 @@ class TokenResponse(BaseModel):
 
 class UserInfoResponse(BaseModel):
     user_id: int
+    id: int | None = None  # Alias for user_id (for compatibility)
     telegram_id: int
     username: str | None
     first_name: str
@@ -139,6 +140,7 @@ async def register_user(
 
     return UserInfoResponse(
         user_id=user.id,
+        id=user.id,  # For compatibility with webapp
         telegram_id=user.telegram_id,
         username=user.username,
         first_name=user.first_name,
