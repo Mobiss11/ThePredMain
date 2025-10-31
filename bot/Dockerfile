@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
 RUN pip install --no-cache-dir \
     aiogram==3.22.0 \
     asyncpg==0.30.0 \
+    greenlet==3.1.1 \
     python-dotenv==1.0.0 \
     redis==5.0.1
 

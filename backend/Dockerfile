@@ -19,6 +19,7 @@ RUN pip install --no-cache-dir \
     pydantic==2.11.10 \
     pydantic-settings==2.7.0 \
     sqlalchemy==2.0.36 \
+    greenlet==3.1.1 \
     asyncpg==0.30.0 \
     alembic==1.14.0 \
     redis==5.0.1 \
