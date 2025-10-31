@@ -21,10 +21,27 @@ class TelegramAuthData(BaseModel):
     hash: str
 
 
+class SimpleTelegramAuth(BaseModel):
+    """Simple auth model for bot registration"""
+    telegram_id: int
+    first_name: str
+    username: str | None = None
+    last_name: str | None = None
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str
     user_id: int
+
+
+class UserInfoResponse(BaseModel):
+    user_id: int
+    telegram_id: int
+    username: str | None
+    first_name: str
+    pred_balance: float
+    referral_code: str
 
 
 def verify_telegram_auth(auth_data: dict) -> bool:
@@ -88,6 +105,45 @@ async def telegram_auth(
         access_token=access_token,
         token_type="bearer",
         user_id=user.id
+    )
+
+
+@router.post("/register", response_model=UserInfoResponse)
+async def register_user(
+    auth_data: SimpleTelegramAuth,
+    db: AsyncSession = Depends(get_db)
+):
+    """Simple user registration from bot - no auth required"""
+    from sqlalchemy import select
+
+    # Check if user exists
+    result = await db.execute(
+        select(User).where(User.telegram_id == auth_data.telegram_id)
+    )
+    user = result.scalar_one_or_none()
+
+    # Create new user if doesn't exist
+    if not user:
+        referral_code = secrets.token_urlsafe(8)
+        user = User(
+            telegram_id=auth_data.telegram_id,
+            username=auth_data.username,
+            first_name=auth_data.first_name,
+            last_name=auth_data.last_name,
+            pred_balance=settings.INITIAL_PRED_BALANCE,
+            referral_code=referral_code
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+
+    return UserInfoResponse(
+        user_id=user.id,
+        telegram_id=user.telegram_id,
+        username=user.username,
+        first_name=user.first_name,
+        pred_balance=user.pred_balance,
+        referral_code=user.referral_code
     )
 
 

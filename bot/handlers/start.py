@@ -1,19 +1,20 @@
 from aiogram import Router
 from aiogram.filters import CommandStart
-from aiogram.types import Message, WebAppInfo
+from aiogram.types import Message, WebAppInfo, FSInputFile
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 import aiohttp
 from config import config
+import os
 
 router = Router()
 
 
 @router.message(CommandStart())
 async def cmd_start(message: Message):
-    """Handle /start command - Register user and show webapp button"""
+    """Handle /start command - Show welcome message with photo"""
     user = message.from_user
 
-    # Register/authenticate user via API
+    # Register user via API (silently, no error shown to user)
     async with aiohttp.ClientSession() as session:
         try:
             auth_data = {
@@ -24,50 +25,63 @@ async def cmd_start(message: Message):
             }
 
             async with session.post(
-                f"{config.API_URL}/auth/telegram",
+                f"{config.API_URL}/auth/register",
                 json=auth_data
             ) as resp:
                 if resp.status == 200:
                     data = await resp.json()
-
-                    welcome_text = f"""
-🎉 <b>Welcome to ThePred!</b>
-
-Hi {user.first_name}! 👋
-
-💎 <b>What is ThePred?</b>
-ThePred is a prediction market where you can bet on future events using PRED tokens or TON cryptocurrency.
-
-🎯 <b>How it works:</b>
-1. Browse markets and choose an event
-2. Predict YES or NO
-3. Place your bet
-4. Win if you're right!
-
-🎁 <b>Your starting balance:</b> 1,000 PRED
-
-🚀 <b>Start now:</b>
-• Browse 20+ active markets
-• Complete daily missions
-• Invite friends (1,000 PRED per referral)
-• Climb the leaderboard
-
-Click the button below to open ThePred app! 👇
-"""
-
-                    # Create webapp button
-                    builder = InlineKeyboardBuilder()
-                    builder.button(
-                        text="🚀 Open ThePred",
-                        web_app=WebAppInfo(url=config.WEBAPP_URL)
-                    )
-
-                    await message.answer(
-                        welcome_text,
-                        reply_markup=builder.as_markup()
-                    )
+                    pred_balance = data.get("pred_balance", 10000)
                 else:
-                    await message.answer("⚠️ Registration failed. Please try again with /start")
+                    pred_balance = 10000  # Default value if registration fails
+        except:
+            pred_balance = 10000  # Default value if API unavailable
 
-        except Exception as e:
-            await message.answer("⚠️ Service temporarily unavailable. Please try again later.")
+    # Welcome message
+    welcome_text = f"""<b>🔮 Добро пожаловать в ThePred!</b>
+
+Привет, {user.first_name}!
+
+<b>🎯 Что такое ThePred?</b>
+ThePred — это платформа для предсказания будущего, где ты можешь делать ставки на реальные события и зарабатывать, если окажешься прав.
+
+<b>💡 Как это работает:</b>
+• Выбирай интересующее событие
+• Делай прогноз: ДА или НЕТ
+• Ставь PRED токены или TON
+• Получай прибыль, если угадал!
+
+<b>🎁 Твой стартовый баланс:</b> {pred_balance:,.0f} PRED
+
+<b>🚀 Начни сейчас:</b>
+✓ Исследуй 20+ активных рынков
+✓ Выполняй ежедневные миссии
+✓ Приглашай друзей (+1,000 PRED за друга)
+✓ Поднимайся в таблице лидеров
+
+<i>Предскажи будущее и заработай! 🔥</i>
+
+Нажми кнопку ниже, чтобы открыть приложение 👇"""
+
+    # Create webapp button
+    builder = InlineKeyboardBuilder()
+    builder.button(
+        text="🚀 Открыть ThePred",
+        web_app=WebAppInfo(url=config.WEBAPP_URL)
+    )
+
+    # Send photo with welcome message
+    photo_path = os.path.join(os.path.dirname(__file__), "..", "photo_2025-10-30_11-43-57.jpg")
+
+    if os.path.exists(photo_path):
+        photo = FSInputFile(photo_path)
+        await message.answer_photo(
+            photo=photo,
+            caption=welcome_text,
+            reply_markup=builder.as_markup()
+        )
+    else:
+        # Fallback if photo not found
+        await message.answer(
+            welcome_text,
+            reply_markup=builder.as_markup()
+        )
