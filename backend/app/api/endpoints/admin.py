@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc, case
 from app.core.database import get_db
 from app.models.user import User
-from app.models.market import Market, MarketStatus, MarketOutcome
+from app.models.market import Market, MarketStatus, MarketOutcome, ModerationStatus
 from app.models.bet import Bet, BetStatus
 from app.models.mission import Mission
 from pydantic import BaseModel
@@ -565,3 +565,365 @@ async def get_user_activity(
             for bet in recent_bets
         ]
     }
+
+
+# ============ Market Moderation ============
+
+@router.get("/markets/pending", response_model=List[MarketManagementItem])
+async def get_pending_markets(
+    db: AsyncSession = Depends(get_db)
+):
+    """Get all pending markets for moderation"""
+    query = select(Market).where(
+        Market.moderation_status == ModerationStatus.PENDING
+    ).order_by(desc(Market.created_at))
+
+    result = await db.execute(query)
+    markets = result.scalars().all()
+
+    return [MarketManagementItem.from_orm(market) for market in markets]
+
+
+@router.put("/markets/{market_id}/moderate")
+async def moderate_market(
+    market_id: int,
+    action: str,  # approve or reject
+    db: AsyncSession = Depends(get_db)
+):
+    """Approve or reject a pending market"""
+    if action not in ["approve", "reject"]:
+        raise HTTPException(status_code=400, detail="Action must be 'approve' or 'reject'")
+
+    result = await db.execute(select(Market).where(Market.id == market_id))
+    market = result.scalar_one_or_none()
+
+    if not market:
+        raise HTTPException(status_code=404, detail="Market not found")
+
+    if market.moderation_status != ModerationStatus.PENDING:
+        raise HTTPException(status_code=400, detail="Market is not pending moderation")
+
+    if action == "approve":
+        market.moderation_status = ModerationStatus.APPROVED
+        market.status = MarketStatus.OPEN
+        message = "Market approved and opened"
+    else:
+        market.moderation_status = ModerationStatus.REJECTED
+        market.status = MarketStatus.CANCELLED
+        message = "Market rejected"
+
+    await db.commit()
+
+    return {
+        "market_id": market_id,
+        "moderation_status": market.moderation_status,
+        "status": market.status,
+        "message": message
+    }
+
+
+@router.put("/markets/{market_id}/close")
+async def close_market(
+    market_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """Close a market (no more bets accepted)"""
+    result = await db.execute(select(Market).where(Market.id == market_id))
+    market = result.scalar_one_or_none()
+
+    if not market:
+        raise HTTPException(status_code=404, detail="Market not found")
+
+    if market.status != MarketStatus.OPEN:
+        raise HTTPException(status_code=400, detail="Market is not open")
+
+    market.status = MarketStatus.CLOSED
+
+    await db.commit()
+
+    return {
+        "market_id": market_id,
+        "status": market.status,
+        "message": "Market closed successfully"
+    }
+
+
+@router.put("/markets/{market_id}/cancel")
+async def cancel_market(
+    market_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """Cancel a market and refund all bets"""
+    result = await db.execute(select(Market).where(Market.id == market_id))
+    market = result.scalar_one_or_none()
+
+    if not market:
+        raise HTTPException(status_code=404, detail="Market not found")
+
+    if market.status == MarketStatus.RESOLVED:
+        raise HTTPException(status_code=400, detail="Cannot cancel resolved market")
+
+    # Update market status
+    market.status = MarketStatus.CANCELLED
+    market.outcome = MarketOutcome.CANCELLED
+
+    # Refund all bets
+    bets_result = await db.execute(
+        select(Bet).where(Bet.market_id == market_id, Bet.status == BetStatus.PENDING)
+    )
+    bets = bets_result.scalars().all()
+
+    refunded_count = 0
+    for bet in bets:
+        bet.status = BetStatus.REFUNDED
+        bet.payout = bet.amount
+
+        # Return funds to user
+        user_result = await db.execute(select(User).where(User.id == bet.user_id))
+        user = user_result.scalar_one()
+
+        if bet.currency == "PRED":
+            user.pred_balance += bet.amount
+        else:
+            user.ton_balance += bet.amount
+
+        refunded_count += 1
+
+    await db.commit()
+
+    return {
+        "market_id": market_id,
+        "status": market.status,
+        "bets_refunded": refunded_count,
+        "message": "Market cancelled and all bets refunded"
+    }
+
+
+# ============ Missions Management ============
+
+class MissionResponse(BaseModel):
+    id: int
+    title: str
+    description: str
+    mission_type: str
+    requirement: int
+    reward_pred: int
+    reward_ton: Optional[Decimal]
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class CreateMissionRequest(BaseModel):
+    title: str
+    description: str
+    mission_type: str  # daily_bet, weekly_win, etc
+    requirement: int
+    reward_pred: int
+    reward_ton: Optional[Decimal] = None
+    is_active: bool = True
+
+
+@router.get("/missions", response_model=List[MissionResponse])
+async def get_all_missions(
+    db: AsyncSession = Depends(get_db)
+):
+    """Get all missions"""
+    query = select(Mission).order_by(desc(Mission.created_at))
+    result = await db.execute(query)
+    missions = result.scalars().all()
+
+    return [MissionResponse.from_orm(mission) for mission in missions]
+
+
+@router.post("/missions")
+async def create_mission(
+    mission_data: CreateMissionRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Create a new mission"""
+    new_mission = Mission(
+        title=mission_data.title,
+        description=mission_data.description,
+        mission_type=mission_data.mission_type,
+        requirement=mission_data.requirement,
+        reward_pred=mission_data.reward_pred,
+        reward_ton=mission_data.reward_ton,
+        is_active=mission_data.is_active
+    )
+
+    db.add(new_mission)
+    await db.commit()
+    await db.refresh(new_mission)
+
+    return {
+        "id": new_mission.id,
+        "title": new_mission.title,
+        "message": "Mission created successfully"
+    }
+
+
+@router.put("/missions/{mission_id}")
+async def update_mission(
+    mission_id: int,
+    mission_data: CreateMissionRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Update a mission"""
+    result = await db.execute(select(Mission).where(Mission.id == mission_id))
+    mission = result.scalar_one_or_none()
+
+    if not mission:
+        raise HTTPException(status_code=404, detail="Mission not found")
+
+    mission.title = mission_data.title
+    mission.description = mission_data.description
+    mission.mission_type = mission_data.mission_type
+    mission.requirement = mission_data.requirement
+    mission.reward_pred = mission_data.reward_pred
+    mission.reward_ton = mission_data.reward_ton
+    mission.is_active = mission_data.is_active
+
+    await db.commit()
+
+    return {
+        "id": mission_id,
+        "message": "Mission updated successfully"
+    }
+
+
+@router.delete("/missions/{mission_id}")
+async def delete_mission(
+    mission_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """Delete a mission"""
+    result = await db.execute(select(Mission).where(Mission.id == mission_id))
+    mission = result.scalar_one_or_none()
+
+    if not mission:
+        raise HTTPException(status_code=404, detail="Mission not found")
+
+    await db.delete(mission)
+    await db.commit()
+
+    return {"message": "Mission deleted successfully"}
+
+
+# ============ Broadcast Messages ============
+
+class BroadcastRequest(BaseModel):
+    message: str
+    target: str = "all"  # "all" or specific telegram_id
+    telegram_id: Optional[int] = None
+    parse_mode: str = "HTML"  # HTML or Markdown
+
+
+@router.post("/broadcast")
+async def broadcast_message(
+    broadcast_data: BroadcastRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Broadcast a message to users via Telegram bot
+    This endpoint stores the message and returns user list
+    The actual sending should be done by the bot
+    """
+    from aiohttp import ClientSession
+
+    # Get BOT_TOKEN from environment
+    import os
+    bot_token = os.getenv("BOT_TOKEN")
+
+    if not bot_token:
+        raise HTTPException(status_code=500, detail="BOT_TOKEN not configured")
+
+    if broadcast_data.target == "all":
+        # Get all users
+        query = select(User.telegram_id)
+        result = await db.execute(query)
+        telegram_ids = [row[0] for row in result.all()]
+    else:
+        if not broadcast_data.telegram_id:
+            raise HTTPException(status_code=400, detail="telegram_id required for specific user")
+        telegram_ids = [broadcast_data.telegram_id]
+
+    # Send messages via Telegram API
+    sent_count = 0
+    failed_count = 0
+
+    async with ClientSession() as session:
+        for telegram_id in telegram_ids:
+            try:
+                url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+                payload = {
+                    "chat_id": telegram_id,
+                    "text": broadcast_data.message,
+                    "parse_mode": broadcast_data.parse_mode
+                }
+
+                async with session.post(url, json=payload) as response:
+                    if response.status == 200:
+                        sent_count += 1
+                    else:
+                        failed_count += 1
+            except Exception as e:
+                failed_count += 1
+                print(f"Failed to send to {telegram_id}: {e}")
+
+    return {
+        "total_recipients": len(telegram_ids),
+        "sent": sent_count,
+        "failed": failed_count,
+        "message": f"Broadcast sent to {sent_count} users"
+    }
+
+
+# ============ Leaderboard View ============
+
+class LeaderboardEntry(BaseModel):
+    rank: int
+    user_id: int
+    telegram_id: int
+    username: Optional[str]
+    first_name: Optional[str]
+    pred_balance: Decimal
+    total_bets: int
+    total_wins: int
+    win_rate: float
+    user_rank: str
+
+    class Config:
+        from_attributes = True
+
+
+@router.get("/leaderboard")
+async def get_leaderboard(
+    limit: int = 100,
+    db: AsyncSession = Depends(get_db)
+):
+    """Get leaderboard sorted by PRED balance"""
+    query = select(User).order_by(desc(User.pred_balance)).limit(limit)
+    result = await db.execute(query)
+    users = result.scalars().all()
+
+    leaderboard = []
+    for rank, user in enumerate(users, start=1):
+        win_rate = (user.total_wins / user.total_bets * 100) if user.total_bets > 0 else 0
+
+        leaderboard.append({
+            "rank": rank,
+            "user_id": user.id,
+            "telegram_id": user.telegram_id,
+            "username": user.username,
+            "first_name": user.first_name,
+            "pred_balance": user.pred_balance,
+            "total_bets": user.total_bets,
+            "total_wins": user.total_wins,
+            "win_rate": round(win_rate, 2),
+            "user_rank": user.rank
+        })
+
+    return leaderboard

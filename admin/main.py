@@ -65,5 +65,17 @@ async def missions():
     return await render_template('missions.html')
 
 
+@app.route('/leaderboard')
+@login_required
+async def leaderboard():
+    return await render_template('leaderboard.html')
+
+
+@app.route('/broadcast')
+@login_required
+async def broadcast():
+    return await render_template('broadcast.html')
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8002)
