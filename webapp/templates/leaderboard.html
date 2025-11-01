@@ -1,21 +1,21 @@
 {% extends "base.html" %}
 
-{% block title %}Leaderboard - ThePred{% endblock %}
+{% block title %}Рейтинг - ThePred{% endblock %}
 
 {% block content %}
 <!-- Header -->
 <div class="glass card-shine rounded-2xl p-6 mb-6">
-    <h1 class="text-2xl font-bold mb-4">🏆 Leaderboard</h1>
+    <h1 class="text-2xl font-bold mb-4">🏆 Таблица Лидеров</h1>
 
     <div class="grid grid-cols-3 gap-2">
         <button class="gold-gradient rounded-lg py-2 font-bold text-black text-sm">
-            Weekly
+            Неделя
         </button>
         <button class="glass rounded-lg py-2 font-bold text-sm">
-            Monthly
+            Месяц
         </button>
         <button class="glass rounded-lg py-2 font-bold text-sm">
-            All Time
+            Всё Время
         </button>
     </div>
 </div>
@@ -41,33 +41,33 @@
 
 <!-- Rewards Info -->
 <div class="glass rounded-2xl p-6">
-    <h2 class="text-xl font-bold mb-4">🎁 Weekly Rewards</h2>
+    <h2 class="text-xl font-bold mb-4">🎁 Недельные Награды</h2>
     <div class="space-y-2 text-sm">
         <div class="flex items-center justify-between">
-            <span>🥇 1st Place</span>
+            <span>🥇 1-е Место</span>
             <span class="font-bold text-yellow-400">50,000 PRED</span>
         </div>
         <div class="flex items-center justify-between">
-            <span>🥈 2nd Place</span>
+            <span>🥈 2-е Место</span>
             <span class="font-bold text-yellow-400">30,000 PRED</span>
         </div>
         <div class="flex items-center justify-between">
-            <span>🥉 3rd Place</span>
+            <span>🥉 3-е Место</span>
             <span class="font-bold text-yellow-400">20,000 PRED</span>
         </div>
         <div class="flex items-center justify-between">
-            <span>4th - 10th</span>
+            <span>4-10 Места</span>
             <span class="font-bold text-yellow-400">1,000 PRED</span>
         </div>
         <div class="flex items-center justify-between">
-            <span>11th - 50th</span>
+            <span>11-50 Места</span>
             <span class="font-bold text-yellow-400">5,000 PRED</span>
         </div>
     </div>
 
     <div class="mt-4 pt-4 border-t border-gray-700">
         <div class="text-center text-gray-400 text-sm">
-            Reset in <span class="font-bold text-yellow-400">4d 12h 34m</span>
+            Обновление через <span class="font-bold text-yellow-400">4д 12ч 34м</span>
         </div>
     </div>
 </div>
@@ -77,13 +77,13 @@
 <script>
     // Rank badge icons mapping
     const rankBadges = {
-        'bronze': '🥉 Bronze',
-        'silver': '🥈 Silver',
-        'gold': '🥇 Gold',
-        'platinum': '💠 Platinum',
-        'diamond': '💎 Diamond',
-        'master': '👑 Master',
-        'grandmaster': '🏆 Grandmaster'
+        'bronze': '🥉 Бронза',
+        'silver': '🥈 Серебро',
+        'gold': '🥇 Золото',
+        'platinum': '💠 Платина',
+        'diamond': '💎 Алмаз',
+        'master': '👑 Мастер',
+        'grandmaster': '🏆 Гранд Мастер'
     };
 
     // Medal emojis for top 3
@@ -114,7 +114,7 @@
     // Render leaderboard entries
     function renderLeaderboard(leaderboard) {
         if (!leaderboard || leaderboard.length === 0) {
-            document.getElementById('leaderboard-list').innerHTML = '<div class="text-center text-gray-400 py-8">No leaderboard data available</div>';
+            document.getElementById('leaderboard-list').innerHTML = '<div class="text-center text-gray-400 py-8">Нет данных рейтинга</div>';
             return;
         }
 
@@ -143,7 +143,7 @@
                     <div class="text-right">
                         <div class="font-bold ${profitColor}">${profitPrefix}${window.formatNumber(entry.profit)}</div>
                         <div class="text-xs text-gray-400">PRED</div>
-                        <div class="text-xs text-gray-400">${entry.win_rate}% wins</div>
+                        <div class="text-xs text-gray-400">${entry.win_rate}% побед</div>
                     </div>
                 </div>
             `;
@@ -203,7 +203,7 @@
         if (!rankData.rank) {
             document.getElementById('user-rank-card').innerHTML = `
                 <div class="glass rounded-2xl p-4 text-center">
-                    <div class="text-gray-400">Place bets to appear on the leaderboard!</div>
+                    <div class="text-gray-400">Делайте прогнозы, чтобы попасть в рейтинг!</div>
                 </div>
             `;
             return;
@@ -219,12 +219,12 @@
                         <div class="font-bold text-2xl text-yellow-400">#${rankData.rank}</div>
                         <div class="w-10 h-10 gold-gradient rounded-full"></div>
                         <div>
-                            <div class="font-bold">You</div>
+                            <div class="font-bold">Вы</div>
                             <div class="${profitColor} text-sm">${profitPrefix}${window.formatNumber(rankData.profit)} PRED</div>
                         </div>
                     </div>
                     <div class="text-right">
-                        <div class="text-gray-400 text-xs">of ${rankData.total_players} players</div>
+                        <div class="text-gray-400 text-xs">из ${rankData.total_players} игроков</div>
                     </div>
                 </div>
             </div>

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Profile - ThePred{% endblock %}
+{% block title %}Профиль - ThePred{% endblock %}
 
 {% block content %}
 <!-- Profile Header -->
@@ -10,12 +10,12 @@
             🏆
         </div>
         <div class="flex-1">
-            <h1 class="text-2xl font-bold mb-1" id="username">Player #12345</h1>
+            <h1 class="text-2xl font-bold mb-1" id="username">Игрок #12345</h1>
             <div class="flex items-center space-x-2">
                 <span class="gold-gradient px-3 py-1 rounded-full text-xs font-bold text-black">
-                    💎 GOLD RANK
+                    💎 ЗОЛОТОЙ РАНГ
                 </span>
-                <span class="text-gray-400 text-sm">#234 Globally</span>
+                <span class="text-gray-400 text-sm">#234 в мире</span>
             </div>
         </div>
     </div>
@@ -23,15 +23,15 @@
     <!-- Balance Cards -->
     <div class="grid grid-cols-2 gap-4">
         <div class="glass rounded-xl p-4">
-            <div class="text-gray-400 text-sm mb-1">PRED Balance</div>
+            <div class="text-gray-400 text-sm mb-1">Баланс PRED</div>
             <div class="text-2xl font-bold text-yellow-400" id="pred-balance-display">1,000</div>
-            <div class="text-green-400 text-xs mt-1">+250 this week</div>
+            <div class="text-green-400 text-xs mt-1">+250 за неделю</div>
         </div>
         <div class="glass rounded-xl p-4">
-            <div class="text-gray-400 text-sm mb-1">TON Balance</div>
+            <div class="text-gray-400 text-sm mb-1">Баланс TON</div>
             <div class="text-2xl font-bold text-blue-400" id="ton-balance-display">0.00</div>
             <button class="gold-gradient px-3 py-1 rounded-lg text-xs font-bold text-black mt-2">
-                + Deposit
+                + Пополнить
             </button>
         </div>
     </div>
@@ -39,33 +39,33 @@
 
 <!-- Stats -->
 <div class="glass rounded-2xl p-6 mb-6">
-    <h2 class="text-xl font-bold mb-4">📊 Your Stats</h2>
+    <h2 class="text-xl font-bold mb-4">📊 Ваша Статистика</h2>
     <div class="grid grid-cols-2 gap-4">
         <div class="glass rounded-xl p-4 text-center">
             <div class="text-3xl font-bold text-white mb-1">156</div>
-            <div class="text-gray-400 text-sm">Total Bets</div>
+            <div class="text-gray-400 text-sm">Всего Прогнозов</div>
         </div>
         <div class="glass rounded-xl p-4 text-center">
             <div class="text-3xl font-bold text-green-400 mb-1">89</div>
-            <div class="text-gray-400 text-sm">Wins</div>
+            <div class="text-gray-400 text-sm">Побед</div>
         </div>
         <div class="glass rounded-xl p-4 text-center">
             <div class="text-3xl font-bold text-red-400 mb-1">67</div>
-            <div class="text-gray-400 text-sm">Losses</div>
+            <div class="text-gray-400 text-sm">Проигрышей</div>
         </div>
         <div class="glass rounded-xl p-4 text-center">
             <div class="text-3xl font-bold text-purple-400 mb-1">57%</div>
-            <div class="text-gray-400 text-sm">Win Rate</div>
+            <div class="text-gray-400 text-sm">Винрейт</div>
         </div>
     </div>
 
     <div class="mt-4 glass rounded-xl p-4">
         <div class="flex items-center justify-between mb-2">
-            <span class="text-gray-400 text-sm">Current Streak</span>
+            <span class="text-gray-400 text-sm">Текущая Серия</span>
             <span class="text-2xl font-bold text-yellow-400">🔥 7</span>
         </div>
         <div class="flex items-center justify-between">
-            <span class="text-gray-400 text-sm">Best Streak</span>
+            <span class="text-gray-400 text-sm">Лучшая Серия</span>
             <span class="text-xl font-bold">15</span>
         </div>
     </div>
@@ -73,67 +73,67 @@
 
 <!-- Rank Progress -->
 <div class="glass rounded-2xl p-6 mb-6">
-    <h2 class="text-xl font-bold mb-4">🎖 Rank Progress</h2>
+    <h2 class="text-xl font-bold mb-4">🎖 Прогресс Ранга</h2>
 
     <div class="space-y-3">
         <div class="glass rounded-xl p-4 opacity-50">
             <div class="flex items-center justify-between mb-2">
-                <span class="font-bold">🥉 Bronze</span>
-                <span class="text-sm text-gray-400">0-100 bets</span>
+                <span class="font-bold">🥉 Бронза</span>
+                <span class="text-sm text-gray-400">0-100 прогнозов</span>
             </div>
-            <div class="text-xs text-gray-500">Commission: 1% PRED, 5% TON</div>
+            <div class="text-xs text-gray-500">Комиссия: 1% PRED, 5% TON</div>
         </div>
 
         <div class="glass rounded-xl p-4 opacity-50">
             <div class="flex items-center justify-between mb-2">
-                <span class="font-bold">🥈 Silver</span>
-                <span class="text-sm text-gray-400">100-500 bets</span>
+                <span class="font-bold">🥈 Серебро</span>
+                <span class="text-sm text-gray-400">100-500 прогнозов</span>
             </div>
-            <div class="text-xs text-gray-500">Commission: 0.8% PRED, 4.5% TON</div>
+            <div class="text-xs text-gray-500">Комиссия: 0.8% PRED, 4.5% TON</div>
         </div>
 
         <div class="glass rounded-xl p-4 border-2 border-yellow-400">
             <div class="flex items-center justify-between mb-2">
-                <span class="font-bold text-yellow-400">🥇 Gold</span>
-                <span class="text-sm text-green-400">CURRENT</span>
+                <span class="font-bold text-yellow-400">🥇 Золото</span>
+                <span class="text-sm text-green-400">ТЕКУЩИЙ</span>
             </div>
-            <div class="text-xs text-gray-400 mb-3">Commission: 0.6% PRED, 4% TON</div>
+            <div class="text-xs text-gray-400 mb-3">Комиссия: 0.6% PRED, 4% TON</div>
             <div class="w-full bg-gray-800 rounded-full h-2">
                 <div class="gold-gradient h-2 rounded-full" style="width: 31%"></div>
             </div>
-            <div class="text-xs text-gray-400 mt-1">156 / 500 bets to Diamond</div>
+            <div class="text-xs text-gray-400 mt-1">156 / 500 прогнозов до Алмаза</div>
         </div>
 
         <div class="glass rounded-xl p-4">
             <div class="flex items-center justify-between mb-2">
-                <span class="font-bold">💎 Diamond</span>
-                <span class="text-sm text-gray-400">500-2000 bets</span>
+                <span class="font-bold">💎 Алмаз</span>
+                <span class="text-sm text-gray-400">500-2000 прогнозов</span>
             </div>
-            <div class="text-xs text-gray-500">Commission: 0.4% PRED, 3% TON</div>
+            <div class="text-xs text-gray-500">Комиссия: 0.4% PRED, 3% TON</div>
         </div>
 
         <div class="glass rounded-xl p-4">
             <div class="flex items-center justify-between mb-2">
-                <span class="font-bold">🌟 Legend</span>
-                <span class="text-sm text-gray-400">2000+ bets</span>
+                <span class="font-bold">🌟 Легенда</span>
+                <span class="text-sm text-gray-400">2000+ прогнозов</span>
             </div>
-            <div class="text-xs text-gray-500">Commission: 0.2% PRED, 2% TON</div>
+            <div class="text-xs text-gray-500">Комиссия: 0.2% PRED, 2% TON</div>
         </div>
     </div>
 </div>
 
 <!-- Referral -->
 <div class="glass rounded-2xl p-6 mb-6">
-    <h2 class="text-xl font-bold mb-4">🎁 Invite Friends</h2>
-    <p class="text-gray-400 text-sm mb-4">Get 1,000 PRED for each friend who joins!</p>
+    <h2 class="text-xl font-bold mb-4">🎁 Пригласить Друзей</h2>
+    <p class="text-gray-400 text-sm mb-4">Получайте 100 PRED за каждого приглашённого друга!</p>
 
     <div class="glass rounded-xl p-4 mb-4">
-        <div class="text-gray-400 text-xs mb-2">Your Referral Link</div>
+        <div class="text-gray-400 text-xs mb-2">Ваша Реферальная Ссылка</div>
         <div class="flex items-center space-x-2">
             <input type="text" readonly value="https://t.me/ThePredBot?start=abc123"
                    class="flex-1 bg-transparent text-sm focus:outline-none">
             <button onclick="copyReferralLink()" class="gold-gradient px-4 py-2 rounded-lg font-bold text-black text-sm">
-                Copy
+                Копировать
             </button>
         </div>
     </div>
@@ -141,11 +141,11 @@
     <div class="grid grid-cols-2 gap-4">
         <div class="glass rounded-xl p-4 text-center">
             <div class="text-2xl font-bold mb-1">12</div>
-            <div class="text-gray-400 text-xs">Referrals</div>
+            <div class="text-gray-400 text-xs">Рефералов</div>
         </div>
         <div class="glass rounded-xl p-4 text-center">
-            <div class="text-2xl font-bold text-yellow-400 mb-1">12,000</div>
-            <div class="text-gray-400 text-xs">PRED Earned</div>
+            <div class="text-2xl font-bold text-yellow-400 mb-1">1,200</div>
+            <div class="text-gray-400 text-xs">PRED Заработано</div>
         </div>
     </div>
 </div>
@@ -153,8 +153,8 @@
 <!-- Recent Bets -->
 <div class="glass rounded-2xl p-6 mb-6">
     <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-bold">📜 Recent Bets</h2>
-        <a href="#" class="text-yellow-400 text-sm">View All</a>
+        <h2 class="text-xl font-bold">📜 Последние Прогнозы</h2>
+        <a href="#" class="text-yellow-400 text-sm">Все</a>
     </div>
 
     <div class="space-y-3">
@@ -162,39 +162,39 @@
             <div class="flex items-start justify-between mb-2">
                 <div class="flex-1">
                     <div class="font-medium mb-1">Bitcoin > $100k?</div>
-                    <div class="text-xs text-gray-400">Bet YES • 1,000 PRED</div>
+                    <div class="text-xs text-gray-400">Прогноз ДА • 1,000 PRED</div>
                 </div>
                 <span class="green-gradient px-3 py-1 rounded-full text-xs font-bold text-white">
-                    WON
+                    ВЫИГРЫШ
                 </span>
             </div>
-            <div class="text-xs text-gray-500">+1,850 PRED • 2h ago</div>
+            <div class="text-xs text-gray-500">+1,850 PRED • 2ч назад</div>
         </div>
 
         <div class="glass rounded-xl p-4">
             <div class="flex items-start justify-between mb-2">
                 <div class="flex-1">
                     <div class="font-medium mb-1">Man City wins PL?</div>
-                    <div class="text-xs text-gray-400">Bet NO • 500 PRED</div>
+                    <div class="text-xs text-gray-400">Прогноз НЕТ • 500 PRED</div>
                 </div>
                 <span class="glass px-3 py-1 rounded-full text-xs font-bold text-yellow-400">
-                    PENDING
+                    ОЖИДАНИЕ
                 </span>
             </div>
-            <div class="text-xs text-gray-500">Potential: +750 PRED • 5h ago</div>
+            <div class="text-xs text-gray-500">Потенциал: +750 PRED • 5ч назад</div>
         </div>
 
         <div class="glass rounded-xl p-4">
             <div class="flex items-start justify-between mb-2">
                 <div class="flex-1">
                     <div class="font-medium mb-1">ETH ETF Approved?</div>
-                    <div class="text-xs text-gray-400">Bet YES • 2,000 PRED</div>
+                    <div class="text-xs text-gray-400">Прогноз ДА • 2,000 PRED</div>
                 </div>
                 <span class="red-gradient px-3 py-1 rounded-full text-xs font-bold text-white">
-                    LOST
+                    ПРОИГРЫШ
                 </span>
             </div>
-            <div class="text-xs text-gray-500">-2,000 PRED • 1d ago</div>
+            <div class="text-xs text-gray-500">-2,000 PRED • 1д назад</div>
         </div>
     </div>
 </div>
@@ -244,8 +244,15 @@ async function loadProfile() {
                 'Diamond': '💎',
                 'Legend': '🌟'
             };
+            const rankNames = {
+                'Bronze': 'БРОНЗОВЫЙ',
+                'Silver': 'СЕРЕБРЯНЫЙ',
+                'Gold': 'ЗОЛОТОЙ',
+                'Diamond': 'АЛМАЗНЫЙ',
+                'Legend': 'ЛЕГЕНДАРНЫЙ'
+            };
             if (rankBadge) {
-                rankBadge.innerHTML = `${rankIcons[profile.rank] || '🏆'} ${profile.rank.toUpperCase()} RANK`;
+                rankBadge.innerHTML = `${rankIcons[profile.rank] || '🏆'} ${rankNames[profile.rank] || profile.rank.toUpperCase()} РАНГ`;
             }
 
             // Update referral link
@@ -281,23 +288,30 @@ async function loadBetHistory() {
                     'PENDING': 'text-yellow-400'
                 };
 
+                const statusTranslations = {
+                    'WON': 'ВЫИГРЫШ',
+                    'LOST': 'ПРОИГРЫШ',
+                    'PENDING': 'ОЖИДАНИЕ'
+                };
+
                 recentBetsContainer.innerHTML = bets.slice(0, 5).map(bet => {
                     const statusClass = statusColors[bet.status] || 'glass';
                     const statusTextClass = statusTextColors[bet.status] || 'text-white';
+                    const positionText = bet.position === 'YES' ? 'ДА' : 'НЕТ';
 
                     return `
                         <div class="glass rounded-xl p-4">
                             <div class="flex items-start justify-between mb-2">
                                 <div class="flex-1">
-                                    <div class="font-medium mb-1">${bet.market_title || 'Market #' + bet.market_id}</div>
-                                    <div class="text-xs text-gray-400">Bet ${bet.position} • ${bet.amount} ${bet.currency}</div>
+                                    <div class="font-medium mb-1">${bet.market_title || 'Рынок #' + bet.market_id}</div>
+                                    <div class="text-xs text-gray-400">Прогноз ${positionText} • ${bet.amount} ${bet.currency}</div>
                                 </div>
                                 <span class="${statusClass} px-3 py-1 rounded-full text-xs font-bold ${statusTextClass}">
-                                    ${bet.status}
+                                    ${statusTranslations[bet.status] || bet.status}
                                 </span>
                             </div>
                             <div class="text-xs text-gray-500">
-                                ${bet.status === 'WON' ? `+${bet.payout} ${bet.currency}` : bet.status === 'LOST' ? `-${bet.amount} ${bet.currency}` : `Potential: +${bet.potential_win} ${bet.currency}`}
+                                ${bet.status === 'WON' ? `+${bet.payout} ${bet.currency}` : bet.status === 'LOST' ? `-${bet.amount} ${bet.currency}` : `Потенциал: +${bet.potential_win} ${bet.currency}`}
                             </div>
                         </div>
                     `;
