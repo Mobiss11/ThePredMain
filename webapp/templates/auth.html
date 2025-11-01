@@ -133,10 +133,8 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        document.getElementById('status-text').textContent = 'Успешно! Перенаправление...';
-                        setTimeout(() => {
-                            window.location.href = '/markets';
-                        }, 500);
+                        // Instant redirect without showing success message
+                        window.location.href = '/markets';
                     } else {
                         showError('Ошибка авторизации: ' + (data.error || 'Неизвестная ошибка'));
                     }
