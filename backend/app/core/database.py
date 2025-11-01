@@ -1,10 +1,6 @@
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker, AsyncAttrs
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
 from app.core.config import settings
-
-# Create base class for models
-class Base(AsyncAttrs, DeclarativeBase):
-    pass
 
 # Create async engine
 engine = create_async_engine(
@@ -17,22 +13,27 @@ engine = create_async_engine(
 
 # Create async session maker
 AsyncSessionLocal = async_sessionmaker(
-    engine,
+    bind=engine,
     class_=AsyncSession,
     expire_on_commit=False,
     autocommit=False,
     autoflush=False,
 )
 
+# Create base class for models
+Base = declarative_base()
+
 
 async def get_db():
     """Dependency for getting database session"""
-    async with AsyncSessionLocal() as session:
-        try:
-            yield session
-            await session.commit()
-        except Exception:
+    session = None
+    try:
+        session = AsyncSessionLocal()
+        yield session
+    except Exception:
+        if session:
             await session.rollback()
-            raise
-        finally:
+        raise
+    finally:
+        if session:
             await session.close()
