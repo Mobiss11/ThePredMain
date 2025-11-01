@@ -32,7 +32,7 @@ class Settings(BaseSettings):
 
     # Gamification
     INITIAL_PRED_BALANCE: int = 1000
-    REFERRAL_BONUS_PRED: int = 1000
+    REFERRAL_BONUS_PRED: int = 100
 
     # Commission rates
     COMMISSION_PRED: float = 0.01  # 1%
