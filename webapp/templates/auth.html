@@ -20,57 +20,194 @@
             align-items: center;
             justify-content: center;
             color: #fff;
+            overflow: hidden;
+        }
+
+        /* Animated background particles */
+        .bg-particles {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 20s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) translateX(100px);
+                opacity: 0;
+            }
         }
 
         .auth-container {
             text-align: center;
             padding: 40px;
-            max-width: 400px;
+            max-width: 450px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-container {
+            margin-bottom: 30px;
+            animation: fadeInDown 0.8s ease-out;
         }
 
         .logo {
-            font-size: 48px;
-            font-weight: 800;
-            margin-bottom: 20px;
+            font-size: 56px;
+            font-weight: 900;
+            margin-bottom: 10px;
             background: linear-gradient(135deg, #FFD700, #FFA500);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            text-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
+            animation: pulse 2s ease-in-out infinite;
         }
 
-        .title {
-            font-size: 24px;
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .quote {
+            font-size: 18px;
             font-weight: 600;
-            margin-bottom: 10px;
+            margin-bottom: 40px;
+            opacity: 0.95;
+            line-height: 1.6;
+            font-style: italic;
+            animation: fadeIn 1s ease-out 0.3s both;
         }
 
-        .subtitle {
-            font-size: 16px;
-            opacity: 0.8;
-            margin-bottom: 30px;
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 0.95;
+            }
         }
 
-        .loader {
-            display: inline-block;
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255, 255, 255, 0.3);
-            border-top-color: #fff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        .progress-container {
+            width: 100%;
             margin-bottom: 20px;
+            animation: fadeIn 1s ease-out 0.5s both;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .progress-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #FFD700, #FFA500, #FFD700);
+            background-size: 200% 100%;
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.3s ease;
+            animation: shimmer 2s linear infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        .status-text {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-top: 15px;
+            animation: fadeIn 1s ease-out 0.7s both;
+        }
+
+        .crystal-ball {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 30px;
+            position: relative;
+            animation: fadeIn 1s ease-out 0.4s both;
+        }
+
+        .crystal-ball-inner {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4), transparent);
+            border-radius: 50%;
+            border: 3px solid rgba(255, 215, 0, 0.3);
+            box-shadow:
+                0 0 20px rgba(255, 215, 0, 0.4),
+                inset 0 0 20px rgba(255, 255, 255, 0.2);
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% {
+                box-shadow:
+                    0 0 20px rgba(255, 215, 0, 0.4),
+                    inset 0 0 20px rgba(255, 255, 255, 0.2);
+            }
+            50% {
+                box-shadow:
+                    0 0 40px rgba(255, 215, 0, 0.6),
+                    inset 0 0 30px rgba(255, 255, 255, 0.3);
+            }
         }
 
         .error {
             background: rgba(255, 59, 48, 0.2);
             border: 1px solid rgba(255, 59, 48, 0.5);
-            padding: 15px;
-            border-radius: 12px;
+            padding: 20px;
+            border-radius: 16px;
             margin-top: 20px;
             display: none;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
         }
 
         .error.show {
@@ -81,82 +218,155 @@
             display: inline-block;
             background: rgba(255, 255, 255, 0.2);
             backdrop-filter: blur(10px);
-            padding: 15px 30px;
-            border-radius: 12px;
+            padding: 16px 32px;
+            border-radius: 16px;
             text-decoration: none;
             color: #fff;
             font-weight: 600;
             margin-top: 20px;
             transition: all 0.3s;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.3);
         }
 
         .redirect-btn:hover {
             background: rgba(255, 255, 255, 0.3);
             transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
         }
     </style>
 </head>
 <body>
+    <!-- Animated particles background -->
+    <div class="bg-particles" id="particles"></div>
+
     <div class="auth-container">
-        <div class="logo">ThePred</div>
-        <div class="title">Вход через Telegram</div>
-        <div class="subtitle" id="status-text">Проверяем данные...</div>
-        <div class="loader" id="loader"></div>
+        <div class="logo-container">
+            <div class="logo">ThePred</div>
+        </div>
+
+        <!-- Crystal ball icon -->
+        <div class="crystal-ball" id="crystal-ball">
+            <div class="crystal-ball-inner"></div>
+        </div>
+
+        <!-- Quote -->
+        <div class="quote">
+            Будущее принадлежит тем,<br>кто его предсказывает
+        </div>
+
+        <!-- Progress bar -->
+        <div class="progress-container" id="progress-container">
+            <div class="progress-bar-bg">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+        </div>
+
+        <!-- Status text -->
+        <div class="status-text" id="status-text">Загрузка...</div>
+
+        <!-- Error message -->
         <div class="error" id="error-message"></div>
+
+        <!-- Redirect button (for non-Telegram browsers) -->
         <a href="https://t.me/{{ bot_username }}" class="redirect-btn" id="redirect-btn" style="display: none;">
             Открыть в Telegram
         </a>
     </div>
 
     <script>
+        // Create animated particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 15; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                const size = Math.random() * 60 + 20;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.bottom = '-' + size + 'px';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 15) + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        // Animate progress bar
+        function setProgress(percent) {
+            document.getElementById('progress-bar').style.width = percent + '%';
+        }
+
+        // Update status text
+        function updateStatus(text) {
+            document.getElementById('status-text').textContent = text;
+        }
+
+        // Show error
+        function showError(message) {
+            document.getElementById('crystal-ball').style.display = 'none';
+            document.getElementById('progress-container').style.display = 'none';
+            document.getElementById('status-text').style.display = 'none';
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('error-message').classList.add('show');
+            document.getElementById('redirect-btn').style.display = 'inline-block';
+        }
+
+        // Initialize
+        createParticles();
+        setProgress(20);
+
         // Check if running in Telegram WebApp
         if (window.Telegram && window.Telegram.WebApp) {
             const tg = window.Telegram.WebApp;
             tg.ready();
             tg.expand();
 
+            // Progress animation
+            setProgress(40);
+            updateStatus('Проверка данных Telegram...');
+
             // Get initData from Telegram WebApp
             const initData = tg.initData;
 
             if (initData) {
-                // Send auth request to backend
-                document.getElementById('status-text').textContent = 'Авторизация...';
+                setTimeout(() => {
+                    setProgress(60);
+                    updateStatus('Авторизация...');
 
-                fetch('/auth/telegram', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ initData: initData })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Instant redirect without showing success message
-                        window.location.href = '/markets';
-                    } else {
-                        showError('Ошибка авторизации: ' + (data.error || 'Неизвестная ошибка'));
-                    }
-                })
-                .catch(error => {
-                    showError('Ошибка соединения: ' + error.message);
-                });
+                    fetch('/auth/telegram', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ initData: initData })
+                    })
+                    .then(response => {
+                        setProgress(80);
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            setProgress(100);
+                            updateStatus('Успешно! Загрузка...');
+                            setTimeout(() => {
+                                window.location.href = '/markets';
+                            }, 300);
+                        } else {
+                            showError('Ошибка авторизации: ' + (data.error || 'Неизвестная ошибка'));
+                        }
+                    })
+                    .catch(error => {
+                        showError('Ошибка соединения: ' + error.message);
+                    });
+                }, 200);
             } else {
                 showError('Telegram данные не найдены. Откройте приложение через бота.');
             }
         } else {
             // Not in Telegram WebApp - show redirect button
-            document.getElementById('loader').style.display = 'none';
+            document.getElementById('crystal-ball').style.display = 'none';
+            document.getElementById('progress-container').style.display = 'none';
             document.getElementById('status-text').textContent = 'Это приложение работает только в Telegram';
-            document.getElementById('redirect-btn').style.display = 'inline-block';
-        }
-
-        function showError(message) {
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('status-text').style.display = 'none';
-            document.getElementById('error-message').textContent = message;
-            document.getElementById('error-message').classList.add('show');
             document.getElementById('redirect-btn').style.display = 'inline-block';
         }
     </script>
