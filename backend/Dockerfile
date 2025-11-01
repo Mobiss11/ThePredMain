@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     libpq-dev \
     postgresql-client \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies
@@ -33,4 +34,8 @@ RUN pip install --no-cache-dir \
 
 COPY . .
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Copy and make entrypoint executable
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
