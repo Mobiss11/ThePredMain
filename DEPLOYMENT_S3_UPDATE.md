@@ -281,6 +281,175 @@ docker-compose -f docker-compose.prod.yml exec backend bash
 
 ---
 
+## Дополнительные проверки
+
+### Проверка Админ-панели
+
+Админ-панель доступна на порту `8002`:
+
+```bash
+# На сервере проверь что контейнер админки запущен
+docker-compose -f docker-compose.prod.yml ps admin
+```
+
+Админка доступна по адресу: `http://IP_СЕРВЕРА:8002`
+
+**Первый вход:**
+- URL: `http://IP_СЕРВЕРА:8002/login`
+- Пароль: значение из `ADMIN_PASSWORD` в `.env`
+
+**Функционал админки:**
+- **Dashboard** - статистика платформы в реальном времени
+- **Users** - управление пользователями (просмотр, изменение баланса/ранга)
+- **Markets** - модерация событий (Approve/Reject), управление статусами, resolve
+- **Missions** - создание/редактирование/удаление миссий
+- **Leaderboard** - топ-100 пользователей
+- **Broadcast** - рассылка сообщений всем пользователям или конкретному
+
+**Важно:** Админка НЕ защищена SSL, только по HTTP. Используй VPN или SSH tunnel для доступа.
+
+### Создание SSH туннеля для админки (опционально)
+
+Для безопасного доступа к админке с локального компьютера:
+
+```bash
+ssh -L 8002:localhost:8002 root@твой_сервер_ip
+```
+
+Теперь админка доступна локально: `http://localhost:8002`
+
+### Проверка BOT_TOKEN для рассылки
+
+Broadcast функция использует `BOT_TOKEN` из `.env`. Проверь что он установлен:
+
+```bash
+# На сервере
+cat .env | grep BOT_TOKEN
+```
+
+Если не установлен - добавь в `.env`:
+```env
+BOT_TOKEN=твой_токен_бота
+```
+
+И перезапусти backend:
+```bash
+docker-compose -f docker-compose.prod.yml restart backend
+```
+
+### Тест рассылки
+
+1. Зайди в админку: `Broadcast`
+2. Выбери "Specific User"
+3. Введи свой Telegram ID
+4. Напиши тестовое сообщение
+5. Отправь
+
+Должно прийти сообщение в Telegram.
+
+---
+
+## Что ещё нужно для полного развёртывания
+
+### 1. Настройка домена thepred.store
+
+Если у тебя уже есть домен `thepred.store`, настрой его в DNS панели как описано в Шаге 1.
+
+Если домена ещё нет - зарегистрируй его или используй другой свободный домен для S3.
+
+### 2. Пароли в .env
+
+Убедись что все пароли установлены в `.env`:
+
+```env
+# Обязательные
+POSTGRES_PASSWORD=твой_сложный_пароль_postgres
+JWT_SECRET=твой_секретный_jwt_ключ
+ADMIN_PASSWORD=твой_пароль_админки
+ADMIN_SECRET_KEY=твой_секретный_ключ_админки
+WEBAPP_SECRET_KEY=твой_секретный_ключ_вебапп
+MINIO_ROOT_PASSWORD=твой_пароль_minio
+BOT_TOKEN=твой_токен_бота
+```
+
+### 3. Переменные для бота
+
+Проверь что все переменные установлены в `.env`:
+
+```env
+BOT_USERNAME=твой_юзернейм_бота_без_@
+```
+
+### 4. Первый запуск - порядок действий
+
+**Правильная последовательность:**
+
+1. Настроить DNS (thepred.store → IP сервера)
+2. Обновить `.env` со всеми паролями
+3. Выполнить `git pull` на сервере
+4. Остановить контейнеры: `docker-compose -f docker-compose.prod.yml down`
+5. Пересобрать: `docker-compose -f docker-compose.prod.yml build`
+6. Запустить: `docker-compose -f docker-compose.prod.yml up -d`
+7. Дождаться запуска всех сервисов (2-3 минуты)
+8. Выполнить миграции: `docker-compose -f docker-compose.prod.yml exec backend alembic upgrade head`
+9. Получить SSL для thepred.store
+10. Перезапустить nginx
+11. Проверить все сервисы
+
+### 5. Проверка портов
+
+Убедись что открыты порты на сервере:
+
+```bash
+# Firewall должен разрешать:
+# 80 (HTTP)
+# 443 (HTTPS)
+# 8002 (Admin Panel) - только если нужен внешний доступ
+```
+
+Если используешь `ufw`:
+```bash
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw allow 8002/tcp  # Опционально для админки
+```
+
+### 6. Логирование
+
+Для отладки смотри логи сервисов:
+
+```bash
+# Все логи
+docker-compose -f docker-compose.prod.yml logs --tail=100 -f
+
+# Конкретный сервис
+docker-compose -f docker-compose.prod.yml logs backend --tail=100 -f
+docker-compose -f docker-compose.prod.yml logs minio --tail=50 -f
+docker-compose -f docker-compose.prod.yml logs admin --tail=50 -f
+```
+
+### 7. Бэкапы
+
+**Важно!** Настрой автоматические бэкапы:
+
+```bash
+# Бэкап базы данных
+docker-compose -f docker-compose.prod.yml exec postgres pg_dump -U thepred thepred > backup_$(date +%Y%m%d).sql
+
+# Бэкап MinIO данных
+docker run --rm -v thepred_minio_data:/data -v $(pwd):/backup alpine tar czf /backup/minio_backup_$(date +%Y%m%d).tar.gz /data
+```
+
+Настрой cron для автоматических бэкапов:
+```bash
+crontab -e
+
+# Добавь строку (бэкап каждую ночь в 3:00):
+0 3 * * * cd /root/ThePred && docker-compose -f docker-compose.prod.yml exec -T postgres pg_dump -U thepred thepred > /root/backups/db_$(date +\%Y\%m\%d).sql
+```
+
+---
+
 ## Коммит изменений в .env
 
 **НЕ ЗАБУДЬ** добавить `.env` в `.gitignore`, если его там нет:
