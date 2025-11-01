@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.core.database import get_db
 from app.models.user import User
 from app.core.config import settings
@@ -76,7 +77,6 @@ async def telegram_auth(
         raise HTTPException(status_code=401, detail="Invalid authentication data")
 
     # Check if user exists
-    from sqlalchemy import select
     result = await db.execute(
         select(User).where(User.telegram_id == auth_data.id)
     )
@@ -115,8 +115,6 @@ async def register_user(
     db: AsyncSession = Depends(get_db)
 ):
     """Simple user registration from bot - no auth required"""
-    from sqlalchemy import select
-
     # Check if user exists
     result = await db.execute(
         select(User).where(User.telegram_id == auth_data.telegram_id)
