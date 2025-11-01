@@ -2,11 +2,11 @@
 
 ## Шаг 1: Настройка DNS (в панели управления доменом)
 
-Зайди в панель управления доменом `thepred.tech` и добавь новую **A-запись**:
+Зайди в панель управления доменом `thepred.store` и настрой **A-запись**:
 
 ```
 Тип: A
-Имя: s3
+Имя: @ (или оставь пустым для корневого домена)
 Значение: IP твоего сервера (тот же IP что у thepred.tech)
 TTL: Auto или 3600
 ```
@@ -15,7 +15,7 @@ TTL: Auto или 3600
 
 Проверить можно командой:
 ```bash
-ping s3.thepred.tech
+ping thepred.store
 ```
 
 Должен отвечать IP твоего сервера.
@@ -102,13 +102,13 @@ INFO  [alembic.runtime.migration] Running upgrade faa5267d165a -> 79fa342a014c, 
 
 ---
 
-## Шаг 9: Получи SSL сертификат для s3.thepred.tech
+## Шаг 9: Получи SSL сертификат для thepred.store
 
 ```bash
 docker-compose -f docker-compose.prod.yml run --rm certbot certonly \
   --webroot \
   --webroot-path=/var/www/certbot \
-  -d s3.thepred.tech \
+  -d thepred.store \
   --email твой@email.com \
   --agree-tos \
   --no-eff-email
@@ -135,9 +135,9 @@ curl -I https://thepred.tech
 
 Должен вернуть `HTTP/2 200`
 
-### Проверка S3 поддомена:
+### Проверка S3 домена:
 ```bash
-curl -I https://s3.thepred.tech
+curl -I https://thepred.store
 ```
 
 Должен вернуть либо `HTTP/2 200`, либо `HTTP/2 403` (это нормально для MinIO)
@@ -195,7 +195,7 @@ docker-compose -f docker-compose.prod.yml logs nginx | tail -20
 docker-compose -f docker-compose.prod.yml logs backend | grep "Uploaded file to"
 ```
 
-URL будет вида: `https://s3.thepred.tech/thepred-events/[uuid].jpg`
+URL будет вида: `https://thepred.store/thepred-events/[uuid].jpg`
 
 Попробуй открыть этот URL в браузере - должна открыться картинка.
 
@@ -203,7 +203,7 @@ URL будет вида: `https://s3.thepred.tech/thepred-events/[uuid].jpg`
 
 ## Что делать если что-то не работает
 
-### DNS не резолвится (s3.thepred.tech не пингуется)
+### DNS не резолвится (thepred.store не пингуется)
 - Подожди ещё 10-15 минут
 - Проверь правильность A-записи в DNS панели
 - Убедись что указал правильный IP сервера
@@ -211,7 +211,7 @@ URL будет вида: `https://s3.thepred.tech/thepred-events/[uuid].jpg`
 ### Ошибка при получении SSL сертификата
 ```bash
 # Проверь что nginx слушает 80 порт и отдаёт challenge
-curl http://s3.thepred.tech/.well-known/acme-challenge/test
+curl http://thepred.store/.well-known/acme-challenge/test
 ```
 
 Если 404 - это нормально. Если connection refused - проблема с nginx.
@@ -274,7 +274,7 @@ docker-compose -f docker-compose.prod.yml exec backend bash
 
 ✅ `https://thepred.tech` - основной сайт
 ✅ `https://api.thepred.tech` - API
-✅ `https://s3.thepred.tech` - MinIO S3 хранилище
+✅ `https://thepred.store` - MinIO S3 хранилище
 ✅ Создание событий с загрузкой фото
 ✅ Отображение фото в карточках событий
 ✅ Модерация событий (статус PENDING для новых)
