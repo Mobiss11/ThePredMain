@@ -18,6 +18,7 @@ class TelegramAuthData(BaseModel):
     first_name: str
     username: str | None = None
     last_name: str | None = None
+    photo_url: str | None = None
     auth_date: int
     hash: str
 
@@ -28,6 +29,7 @@ class SimpleTelegramAuth(BaseModel):
     first_name: str
     username: str | None = None
     last_name: str | None = None
+    photo_url: str | None = None
 
 
 class TokenResponse(BaseModel):
@@ -42,6 +44,7 @@ class UserInfoResponse(BaseModel):
     telegram_id: int
     username: str | None
     first_name: str
+    photo_url: str | None
     pred_balance: float
     referral_code: str
 
@@ -90,10 +93,16 @@ async def telegram_auth(
             username=auth_data.username,
             first_name=auth_data.first_name,
             last_name=auth_data.last_name,
+            photo_url=auth_data.photo_url,
             pred_balance=settings.INITIAL_PRED_BALANCE,
             referral_code=referral_code
         )
         db.add(user)
+        await db.commit()
+        await db.refresh(user)
+    elif auth_data.photo_url and user.photo_url != auth_data.photo_url:
+        # Update photo if changed
+        user.photo_url = auth_data.photo_url
         await db.commit()
         await db.refresh(user)
 
@@ -129,10 +138,16 @@ async def register_user(
             username=auth_data.username,
             first_name=auth_data.first_name,
             last_name=auth_data.last_name,
+            photo_url=auth_data.photo_url,
             pred_balance=settings.INITIAL_PRED_BALANCE,
             referral_code=referral_code
         )
         db.add(user)
+        await db.commit()
+        await db.refresh(user)
+    elif auth_data.photo_url and user.photo_url != auth_data.photo_url:
+        # Update photo if changed
+        user.photo_url = auth_data.photo_url
         await db.commit()
         await db.refresh(user)
 
@@ -142,6 +157,7 @@ async def register_user(
         telegram_id=user.telegram_id,
         username=user.username,
         first_name=user.first_name,
+        photo_url=user.photo_url,
         pred_balance=user.pred_balance,
         referral_code=user.referral_code
     )

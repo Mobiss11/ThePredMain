@@ -8,34 +8,58 @@ let userBalance = {
     ton: 0
 };
 
-// Load user balance
-async function loadUserBalance() {
+let userProfile = null;
+
+// Load user profile
+async function loadUserProfile() {
     try {
-        const response = await fetch(`${API_URL}/balance`);
+        const response = await fetch(`${API_URL}/profile`);
 
         if (response.ok) {
-            const data = await response.json();
-            userBalance = data;
+            userProfile = await response.json();
 
-            // Update UI
+            // Update balance
+            userBalance.pred = userProfile.pred_balance;
+            userBalance.ton = userProfile.ton_balance;
+
+            // Update balance displays
             const predBalance = document.getElementById('pred-balance');
             if (predBalance) {
-                predBalance.innerText = formatNumber(data.pred_balance);
+                predBalance.innerText = formatNumber(userProfile.pred_balance);
             }
 
             const predBalanceDisplay = document.getElementById('pred-balance-display');
             if (predBalanceDisplay) {
-                predBalanceDisplay.innerText = formatNumber(data.pred_balance);
+                predBalanceDisplay.innerText = formatNumber(userProfile.pred_balance);
             }
 
             const tonBalanceDisplay = document.getElementById('ton-balance-display');
             if (tonBalanceDisplay) {
-                tonBalanceDisplay.innerText = formatNumber(data.ton_balance);
+                tonBalanceDisplay.innerText = formatNumber(userProfile.ton_balance);
             }
+
+            // Update avatar
+            const avatar = document.getElementById('user-avatar');
+            const avatarPlaceholder = document.getElementById('user-avatar-placeholder');
+            if (avatar && userProfile.photo_url) {
+                avatar.src = userProfile.photo_url;
+                avatar.style.display = 'block';
+                if (avatarPlaceholder) {
+                    avatarPlaceholder.style.display = 'none';
+                }
+            }
+
+            return userProfile;
         }
     } catch (error) {
-        console.error('Failed to load balance:', error);
+        console.error('Failed to load profile:', error);
     }
+    return null;
+}
+
+// Load user balance (backward compatibility)
+async function loadUserBalance() {
+    return await loadUserProfile();
 }
 
 // Format numbers

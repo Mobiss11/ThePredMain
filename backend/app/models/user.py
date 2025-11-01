@@ -11,6 +11,7 @@ class User(Base):
     username = Column(String(255), nullable=True)
     first_name = Column(String(255), nullable=True)
     last_name = Column(String(255), nullable=True)
+    photo_url = Column(String(500), nullable=True)
 
     # Balances
     pred_balance = Column(DECIMAL(20, 2), default=1000.00, nullable=False)

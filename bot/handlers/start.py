@@ -14,6 +14,17 @@ async def cmd_start(message: Message):
     """Handle /start command - Show welcome message with photo"""
     user = message.from_user
 
+    # Get user profile photos
+    photo_url = None
+    try:
+        photos = await message.bot.get_user_profile_photos(user.id, limit=1)
+        if photos.total_count > 0:
+            photo = photos.photos[0][-1]  # Get largest photo
+            file = await message.bot.get_file(photo.file_id)
+            photo_url = f"https://api.telegram.org/file/bot{message.bot.token}/{file.file_path}"
+    except:
+        pass  # If can't get photo, continue without it
+
     # Register user via API (silently, no error shown to user)
     async with aiohttp.ClientSession() as session:
         try:
@@ -21,7 +32,8 @@ async def cmd_start(message: Message):
                 "telegram_id": user.id,
                 "first_name": user.first_name,
                 "username": user.username,
-                "last_name": user.last_name
+                "last_name": user.last_name,
+                "photo_url": photo_url
             }
 
             async with session.post(
