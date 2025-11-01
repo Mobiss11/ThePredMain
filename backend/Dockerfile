@@ -28,6 +28,7 @@ RUN pip install --no-cache-dir \
     passlib[bcrypt]==1.7.4 \
     python-multipart==0.0.6 \
     aiohttp==3.13.2 \
+    aioboto3==13.2.0 \
     sentry-sdk==1.39.2 \
     prometheus-client==0.19.0 \
     python-dotenv==1.0.0

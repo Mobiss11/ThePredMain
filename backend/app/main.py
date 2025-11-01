@@ -2,7 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.endpoints import auth, users, markets, bets, wallet, missions, leaderboard, admin
+from app.core.s3 import s3_client
 import sentry_sdk
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Initialize Sentry if DSN provided
 if settings.SENTRY_DSN:
@@ -33,6 +37,14 @@ app.include_router(wallet.router, prefix="/wallet", tags=["wallet"])
 app.include_router(missions.router, prefix="/missions", tags=["missions"])
 app.include_router(leaderboard.router, prefix="/leaderboard", tags=["leaderboard"])
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize services on startup"""
+    logger.info("Initializing S3 bucket...")
+    await s3_client.init_bucket()
+    logger.info("S3 bucket initialized")
 
 
 @app.get("/")

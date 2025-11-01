@@ -17,6 +17,12 @@ class MarketOutcome(str, enum.Enum):
     CANCELLED = "cancelled"
 
 
+class ModerationStatus(str, enum.Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+
 class Market(Base):
     __tablename__ = "markets"
 
@@ -24,6 +30,8 @@ class Market(Base):
     title = Column(String(500), nullable=False)
     description = Column(Text, nullable=True)
     category = Column(String(100), nullable=True)
+    photo_url = Column(String(500), nullable=True)
+    moderation_status = Column(Enum(ModerationStatus), default=ModerationStatus.APPROVED, nullable=False)
 
     # Odds & Volume
     yes_odds = Column(DECIMAL(5, 2), default=50.00, nullable=False)

@@ -9,6 +9,7 @@ let userBalance = {
 };
 
 let userProfile = null;
+window.userProfile = null;
 
 // Load user profile
 async function loadUserProfile() {
@@ -17,6 +18,7 @@ async function loadUserProfile() {
 
         if (response.ok) {
             userProfile = await response.json();
+            window.userProfile = userProfile;
 
             // Update balance
             userBalance.pred = userProfile.pred_balance;
