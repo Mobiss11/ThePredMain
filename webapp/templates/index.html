@@ -5,10 +5,13 @@
 {% block content %}
 <!-- Hero Section -->
 <div class="glass card-shine rounded-2xl p-6 mb-6">
-    <div class="flex items-center justify-between mb-4">
-        <h1 class="text-2xl font-bold">🔥 Горячие Рынки</h1>
-        <select class="glass px-4 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400">
-            <option>Все Категории</option>
+    <div class="flex items-center justify-between gap-3">
+        <button onclick="showCreateEventModal()" class="gold-gradient rounded-xl px-6 py-3 font-bold text-black hover:opacity-90 transition flex items-center space-x-2">
+            <span>+</span>
+            <span>Создать Событие</span>
+        </button>
+        <select class="glass px-6 py-3 rounded-xl text-base font-medium focus:outline-none focus:ring-2 focus:ring-yellow-400 flex-1">
+            <option>Категории</option>
             <option>Крипто</option>
             <option>Спорт</option>
             <option>Политика</option>
@@ -182,6 +185,81 @@
 <button class="w-full glass rounded-xl py-4 font-bold mt-6 hover:bg-opacity-20 transition">
     Загрузить Ещё
 </button>
+
+<!-- Create Event Modal -->
+<div id="create-event-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50" style="display: none;">
+    <div class="glass rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold">Создать Событие</h2>
+            <button onclick="hideCreateEventModal()" class="text-gray-400 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <form id="create-event-form" class="space-y-4">
+            <!-- Event Photo -->
+            <div>
+                <label class="block text-sm font-medium mb-2">Фото События</label>
+                <div class="glass rounded-xl p-4 border-2 border-dashed border-gray-600 text-center cursor-pointer hover:border-yellow-400 transition" onclick="document.getElementById('event-photo').click()">
+                    <input type="file" id="event-photo" class="hidden" accept="image/*" onchange="previewEventPhoto(event)">
+                    <div id="photo-preview" class="hidden mb-2">
+                        <img id="photo-preview-img" class="w-full h-48 object-cover rounded-lg">
+                    </div>
+                    <div id="photo-placeholder">
+                        <svg class="w-12 h-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <p class="text-gray-400 text-sm">Нажмите чтобы выбрать фото</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Question -->
+            <div>
+                <label class="block text-sm font-medium mb-2">Вопрос События</label>
+                <input type="text" id="event-question" required placeholder="Например: Достигнет ли Bitcoin $100,000 к концу 2025?" class="w-full glass rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+            </div>
+
+            <!-- Event Description -->
+            <div>
+                <label class="block text-sm font-medium mb-2">Описание</label>
+                <textarea id="event-description" required rows="3" placeholder="Краткое описание события..." class="w-full glass rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 resize-none"></textarea>
+            </div>
+
+            <!-- Category -->
+            <div>
+                <label class="block text-sm font-medium mb-2">Категория</label>
+                <select id="event-category" required class="w-full glass rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                    <option value="">Выберите категорию</option>
+                    <option value="Crypto">Крипто</option>
+                    <option value="Sports">Спорт</option>
+                    <option value="Politics">Политика</option>
+                    <option value="Entertainment">Развлечения</option>
+                    <option value="Technology">Технологии</option>
+                    <option value="Finance">Финансы</option>
+                </select>
+            </div>
+
+            <!-- End Date -->
+            <div>
+                <label class="block text-sm font-medium mb-2">Дата Окончания</label>
+                <input type="datetime-local" id="event-end-date" required class="w-full glass rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex gap-3 pt-4">
+                <button type="button" onclick="hideCreateEventModal()" class="flex-1 glass rounded-xl py-3 font-bold hover:bg-opacity-20 transition">
+                    Отмена
+                </button>
+                <button type="submit" class="flex-1 gold-gradient rounded-xl py-3 font-bold text-black hover:opacity-90 transition">
+                    Отправить на Модерацию
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -286,6 +364,35 @@ async function loadAndRenderMarkets() {
     }
 }
 
+// Show create event modal
+function showCreateEventModal() {
+    document.getElementById('create-event-modal').style.display = 'flex';
+    window.tgHaptic?.light();
+}
+
+// Hide create event modal
+function hideCreateEventModal() {
+    document.getElementById('create-event-modal').style.display = 'none';
+    document.getElementById('create-event-form').reset();
+    document.getElementById('photo-preview').classList.add('hidden');
+    document.getElementById('photo-placeholder').style.display = 'block';
+}
+
+// Preview event photo
+function previewEventPhoto(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('photo-preview-img').src = e.target.result;
+            document.getElementById('photo-preview').classList.remove('hidden');
+            document.getElementById('photo-placeholder').style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// Submit create event form
 document.addEventListener('DOMContentLoaded', () => {
     loadAndRenderMarkets();
 
@@ -294,7 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (categorySelect) {
         categorySelect.addEventListener('change', async (e) => {
             const categoryMap = {
-                'Все Категории': null,
+                'Категории': null,
                 'Крипто': 'Crypto',
                 'Спорт': 'Sports',
                 'Политика': 'Politics',
@@ -306,6 +413,47 @@ document.addEventListener('DOMContentLoaded', () => {
             const regularMarkets = markets.filter(m => m.is_promoted !== 'premium');
             const marketsList = document.getElementById('markets-list');
             marketsList.innerHTML = regularMarkets.map(m => renderMarketCard(m)).join('');
+        });
+    }
+
+    // Create event form submission
+    const createEventForm = document.getElementById('create-event-form');
+    if (createEventForm) {
+        createEventForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            window.tgHaptic?.light();
+
+            const formData = new FormData();
+            const photoFile = document.getElementById('event-photo').files[0];
+            if (photoFile) {
+                formData.append('photo', photoFile);
+            }
+            formData.append('title', document.getElementById('event-question').value);
+            formData.append('description', document.getElementById('event-description').value);
+            formData.append('category', document.getElementById('event-category').value);
+            formData.append('end_date', document.getElementById('event-end-date').value);
+
+            try {
+                const response = await fetch('/api/markets/create', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    window.tgHaptic?.success();
+                    window.showTgAlert('Событие отправлено на модерацию!');
+                    hideCreateEventModal();
+                    await loadAndRenderMarkets();
+                } else {
+                    const error = await response.json();
+                    window.tgHaptic?.error();
+                    window.showTgAlert(error.error || error.detail || 'Ошибка создания события');
+                }
+            } catch (error) {
+                console.error('Create event error:', error);
+                window.tgHaptic?.error();
+                window.showTgAlert('Ошибка сети. Попробуйте снова.');
+            }
         });
     }
 });
