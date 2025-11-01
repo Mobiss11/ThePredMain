@@ -6,6 +6,20 @@
     <title>ThePred - Вход</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        :root {
+            --gold: #FFD700;
+            --gold-dark: #FF8C00;
+            --bg-dark: #0B0E13;
+            --purple-dark: #4C1D95;
+            --purple: #7C3AED;
+            --cyan-dark: #0891B2;
+            --cyan: #06B6D4;
+            --gradient-mesh: radial-gradient(at 0% 0%, rgba(124, 58, 237, 0.3) 0px, transparent 50%),
+                            radial-gradient(at 100% 0%, rgba(6, 182, 212, 0.3) 0px, transparent 50%),
+                            radial-gradient(at 100% 100%, rgba(255, 215, 0, 0.3) 0px, transparent 50%),
+                            radial-gradient(at 0% 100%, rgba(236, 72, 153, 0.3) 0px, transparent 50%);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -14,46 +28,109 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--bg-dark);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #fff;
+            color: #E8E9ED;
             overflow: hidden;
+            position: relative;
         }
 
-        /* Animated background particles */
-        .bg-particles {
+        /* Background layers - like landing page */
+        .bg-layer {
             position: fixed;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
+            inset: 0;
             z-index: 0;
         }
 
-        .particle {
+        .bg-mesh {
+            background: var(--gradient-mesh);
+            opacity: 0.7;
+            animation: meshMove 30s ease-in-out infinite;
+        }
+
+        @keyframes meshMove {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.95); }
+        }
+
+        .bg-grain {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+            pointer-events: none;
+        }
+
+        .bg-grid {
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 80px 80px;
+            mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
+        }
+
+        .bg-orbs {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .orb {
             position: absolute;
-            background: rgba(255, 255, 255, 0.1);
             border-radius: 50%;
-            animation: float 20s infinite;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: float 25s infinite ease-in-out;
+        }
+
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.6), transparent);
+            top: -200px;
+            left: -200px;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.5), transparent);
+            top: -250px;
+            right: -250px;
+            animation-delay: 7s;
+        }
+
+        .orb-3 {
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.4), transparent);
+            bottom: -200px;
+            right: -200px;
+            animation-delay: 14s;
+        }
+
+        .orb-4 {
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.5), transparent);
+            bottom: -150px;
+            left: -150px;
+            animation-delay: 21s;
         }
 
         @keyframes float {
             0%, 100% {
-                transform: translateY(0) translateX(0);
-                opacity: 0;
+                transform: translate(0, 0) scale(1);
             }
-            10% {
-                opacity: 1;
+            33% {
+                transform: translate(50px, -80px) scale(1.1);
             }
-            90% {
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-100vh) translateX(100px);
-                opacity: 0;
+            66% {
+                transform: translate(-30px, 60px) scale(0.9);
             }
         }
 
@@ -236,8 +313,16 @@
     </style>
 </head>
 <body>
-    <!-- Animated particles background -->
-    <div class="bg-particles" id="particles"></div>
+    <!-- Futuristic layered background -->
+    <div class="bg-layer bg-mesh"></div>
+    <div class="bg-layer bg-grain"></div>
+    <div class="bg-layer bg-grid"></div>
+    <div class="bg-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <div class="orb orb-4"></div>
+    </div>
 
     <div class="auth-container">
         <div class="logo-container">
@@ -274,24 +359,7 @@
     </div>
 
     <script>
-        // Create animated particles
-        function createParticles() {
-            const container = document.getElementById('particles');
-            for (let i = 0; i < 15; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                const size = Math.random() * 60 + 20;
-                particle.style.width = size + 'px';
-                particle.style.height = size + 'px';
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.bottom = '-' + size + 'px';
-                particle.style.animationDelay = Math.random() * 20 + 's';
-                particle.style.animationDuration = (Math.random() * 10 + 15) + 's';
-                container.appendChild(particle);
-            }
-        }
-
-        // Animate progress bar
+        // Animate progress bar smoothly
         function setProgress(percent) {
             document.getElementById('progress-bar').style.width = percent + '%';
         }
@@ -311,9 +379,9 @@
             document.getElementById('redirect-btn').style.display = 'inline-block';
         }
 
-        // Initialize
-        createParticles();
-        setProgress(20);
+        // Initialize - start at 0%
+        setProgress(0);
+        updateStatus('Инициализация...');
 
         // Check if running in Telegram WebApp
         if (window.Telegram && window.Telegram.WebApp) {
@@ -321,17 +389,26 @@
             tg.ready();
             tg.expand();
 
-            // Progress animation
-            setProgress(40);
-            updateStatus('Проверка данных Telegram...');
-
             // Get initData from Telegram WebApp
             const initData = tg.initData;
 
             if (initData) {
+                // Stage 1: Initial loading (0-20%) - 500ms
+                setTimeout(() => {
+                    setProgress(20);
+                    updateStatus('Подключение к платформе...');
+                }, 500);
+
+                // Stage 2: Data verification (20-40%) - 1000ms
+                setTimeout(() => {
+                    setProgress(40);
+                    updateStatus('Проверка данных Telegram...');
+                }, 1000);
+
+                // Stage 3: Authentication (40-60%) - 1500ms
                 setTimeout(() => {
                     setProgress(60);
-                    updateStatus('Авторизация...');
+                    updateStatus('Авторизация пользователя...');
 
                     fetch('/auth/telegram', {
                         method: 'POST',
@@ -341,16 +418,28 @@
                         body: JSON.stringify({ initData: initData })
                     })
                     .then(response => {
-                        setProgress(80);
+                        setProgress(75);
+                        updateStatus('Загрузка профиля...');
                         return response.json();
                     })
                     .then(data => {
                         if (data.success) {
-                            setProgress(100);
-                            updateStatus('Успешно! Загрузка...');
+                            // Stage 4: Profile loading (75-90%) - 2200ms
+                            setTimeout(() => {
+                                setProgress(90);
+                                updateStatus('Подготовка интерфейса...');
+                            }, 2200);
+
+                            // Stage 5: Final preparation (90-100%) - 2700ms
+                            setTimeout(() => {
+                                setProgress(100);
+                                updateStatus('Готово! Запуск...');
+                            }, 2700);
+
+                            // Redirect after 3 seconds total
                             setTimeout(() => {
                                 window.location.href = '/markets';
-                            }, 300);
+                            }, 3000);
                         } else {
                             showError('Ошибка авторизации: ' + (data.error || 'Неизвестная ошибка'));
                         }
@@ -358,7 +447,7 @@
                     .catch(error => {
                         showError('Ошибка соединения: ' + error.message);
                     });
-                }, 200);
+                }, 1500);
             } else {
                 showError('Telegram данные не найдены. Откройте приложение через бота.');
             }
