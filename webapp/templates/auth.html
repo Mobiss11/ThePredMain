@@ -179,13 +179,70 @@
         }
 
         .quote {
-            font-size: 18px;
+            position: relative;
+            font-size: 20px;
             font-weight: 600;
-            margin-bottom: 40px;
-            opacity: 0.95;
-            line-height: 1.6;
-            font-style: italic;
-            animation: fadeIn 1s ease-out 0.3s both;
+            margin-bottom: 50px;
+            line-height: 1.8;
+            padding: 30px 40px;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(30px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                0 0 60px rgba(255, 215, 0, 0.15);
+            animation: fadeIn 1s ease-out 0.3s both, glowPulse 3s ease-in-out infinite;
+        }
+
+        .quote::before,
+        .quote::after {
+            content: '"';
+            position: absolute;
+            font-size: 80px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            opacity: 0.3;
+            font-family: Georgia, serif;
+        }
+
+        .quote::before {
+            top: -10px;
+            left: 10px;
+        }
+
+        .quote::after {
+            bottom: -40px;
+            right: 10px;
+            transform: rotate(180deg);
+        }
+
+        .quote-text {
+            position: relative;
+            z-index: 1;
+            background: linear-gradient(135deg, #FFFFFF 0%, var(--gold) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% {
+                box-shadow:
+                    0 8px 32px rgba(0, 0, 0, 0.3),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                    0 0 60px rgba(255, 215, 0, 0.15);
+            }
+            50% {
+                box-shadow:
+                    0 8px 32px rgba(0, 0, 0, 0.3),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                    0 0 80px rgba(255, 215, 0, 0.25);
+            }
         }
 
         @keyframes fadeIn {
@@ -238,38 +295,6 @@
             animation: fadeIn 1s ease-out 0.7s both;
         }
 
-        .crystal-ball {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 30px;
-            position: relative;
-            animation: fadeIn 1s ease-out 0.4s both;
-        }
-
-        .crystal-ball-inner {
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4), transparent);
-            border-radius: 50%;
-            border: 3px solid rgba(255, 215, 0, 0.3);
-            box-shadow:
-                0 0 20px rgba(255, 215, 0, 0.4),
-                inset 0 0 20px rgba(255, 255, 255, 0.2);
-            animation: glow 2s ease-in-out infinite;
-        }
-
-        @keyframes glow {
-            0%, 100% {
-                box-shadow:
-                    0 0 20px rgba(255, 215, 0, 0.4),
-                    inset 0 0 20px rgba(255, 255, 255, 0.2);
-            }
-            50% {
-                box-shadow:
-                    0 0 40px rgba(255, 215, 0, 0.6),
-                    inset 0 0 30px rgba(255, 255, 255, 0.3);
-            }
-        }
 
         .error {
             background: rgba(255, 59, 48, 0.2);
@@ -329,14 +354,11 @@
             <div class="logo">ThePred</div>
         </div>
 
-        <!-- Crystal ball icon -->
-        <div class="crystal-ball" id="crystal-ball">
-            <div class="crystal-ball-inner"></div>
-        </div>
-
         <!-- Quote -->
         <div class="quote">
-            Будущее принадлежит тем,<br>кто его предсказывает
+            <div class="quote-text">
+                Будущее принадлежит тем,<br>кто его предсказывает
+            </div>
         </div>
 
         <!-- Progress bar -->
@@ -371,7 +393,6 @@
 
         // Show error
         function showError(message) {
-            document.getElementById('crystal-ball').style.display = 'none';
             document.getElementById('progress-container').style.display = 'none';
             document.getElementById('status-text').style.display = 'none';
             document.getElementById('error-message').textContent = message;
@@ -381,7 +402,7 @@
 
         // Initialize - start at 0%
         setProgress(0);
-        updateStatus('Инициализация...');
+        updateStatus('Загрузка...');
 
         // Check if running in Telegram WebApp
         if (window.Telegram && window.Telegram.WebApp) {
@@ -393,22 +414,14 @@
             const initData = tg.initData;
 
             if (initData) {
-                // Stage 1: Initial loading (0-20%) - 500ms
+                // Fast loading - total ~800ms
                 setTimeout(() => {
-                    setProgress(20);
-                    updateStatus('Подключение к платформе...');
-                }, 500);
+                    setProgress(30);
+                }, 100);
 
-                // Stage 2: Data verification (20-40%) - 1000ms
-                setTimeout(() => {
-                    setProgress(40);
-                    updateStatus('Проверка данных Telegram...');
-                }, 1000);
-
-                // Stage 3: Authentication (40-60%) - 1500ms
                 setTimeout(() => {
                     setProgress(60);
-                    updateStatus('Авторизация пользователя...');
+                    updateStatus('Авторизация...');
 
                     fetch('/auth/telegram', {
                         method: 'POST',
@@ -418,28 +431,18 @@
                         body: JSON.stringify({ initData: initData })
                     })
                     .then(response => {
-                        setProgress(75);
-                        updateStatus('Загрузка профиля...');
+                        setProgress(85);
                         return response.json();
                     })
                     .then(data => {
                         if (data.success) {
-                            // Stage 4: Profile loading (75-90%) - 2200ms
-                            setTimeout(() => {
-                                setProgress(90);
-                                updateStatus('Подготовка интерфейса...');
-                            }, 2200);
+                            setProgress(100);
+                            updateStatus('Запуск...');
 
-                            // Stage 5: Final preparation (90-100%) - 2700ms
-                            setTimeout(() => {
-                                setProgress(100);
-                                updateStatus('Готово! Запуск...');
-                            }, 2700);
-
-                            // Redirect after 3 seconds total
+                            // Quick redirect after 800ms total
                             setTimeout(() => {
                                 window.location.href = '/markets';
-                            }, 3000);
+                            }, 800);
                         } else {
                             showError('Ошибка авторизации: ' + (data.error || 'Неизвестная ошибка'));
                         }
@@ -447,13 +450,12 @@
                     .catch(error => {
                         showError('Ошибка соединения: ' + error.message);
                     });
-                }, 1500);
+                }, 300);
             } else {
                 showError('Telegram данные не найдены. Откройте приложение через бота.');
             }
         } else {
             // Not in Telegram WebApp - show redirect button
-            document.getElementById('crystal-ball').style.display = 'none';
             document.getElementById('progress-container').style.display = 'none';
             document.getElementById('status-text').textContent = 'Это приложение работает только в Telegram';
             document.getElementById('redirect-btn').style.display = 'inline-block';
