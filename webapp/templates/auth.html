@@ -180,10 +180,10 @@
 
         .quote {
             position: relative;
-            font-size: 20px;
+            font-size: 16px;
             font-weight: 600;
             margin-bottom: 50px;
-            line-height: 1.8;
+            line-height: 1.7;
             padding: 30px 40px;
             background: rgba(255, 255, 255, 0.04);
             backdrop-filter: blur(30px);
@@ -200,7 +200,7 @@
         .quote::after {
             content: '"';
             position: absolute;
-            font-size: 80px;
+            font-size: 60px;
             font-weight: 900;
             background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
             -webkit-background-clip: text;
@@ -402,7 +402,7 @@
 
         // Initialize - start at 0%
         setProgress(0);
-        updateStatus('Загрузка...');
+        updateStatus('Инициализация...');
 
         // Check if running in Telegram WebApp
         if (window.Telegram && window.Telegram.WebApp) {
@@ -414,11 +414,20 @@
             const initData = tg.initData;
 
             if (initData) {
-                // Fast loading - total ~800ms
+                // 3-second loading with smooth stages
+                // Stage 1: 0-20% (500ms)
                 setTimeout(() => {
-                    setProgress(30);
-                }, 100);
+                    setProgress(20);
+                    updateStatus('Подключение к платформе...');
+                }, 500);
 
+                // Stage 2: 20-40% (1000ms)
+                setTimeout(() => {
+                    setProgress(40);
+                    updateStatus('Проверка данных...');
+                }, 1000);
+
+                // Stage 3: 40-60% (1500ms) - Auth request
                 setTimeout(() => {
                     setProgress(60);
                     updateStatus('Авторизация...');
@@ -431,18 +440,28 @@
                         body: JSON.stringify({ initData: initData })
                     })
                     .then(response => {
-                        setProgress(85);
+                        setProgress(75);
+                        updateStatus('Загрузка профиля...');
                         return response.json();
                     })
                     .then(data => {
                         if (data.success) {
-                            setProgress(100);
-                            updateStatus('Запуск...');
+                            // Stage 4: 75-90% (2200ms)
+                            setTimeout(() => {
+                                setProgress(90);
+                                updateStatus('Подготовка интерфейса...');
+                            }, 2200);
 
-                            // Quick redirect after 800ms total
+                            // Stage 5: 90-100% (2700ms)
+                            setTimeout(() => {
+                                setProgress(100);
+                                updateStatus('Готово! Запуск...');
+                            }, 2700);
+
+                            // Final redirect at 3000ms
                             setTimeout(() => {
                                 window.location.href = '/markets';
-                            }, 800);
+                            }, 3000);
                         } else {
                             showError('Ошибка авторизации: ' + (data.error || 'Неизвестная ошибка'));
                         }
@@ -450,7 +469,7 @@
                     .catch(error => {
                         showError('Ошибка соединения: ' + error.message);
                     });
-                }, 300);
+                }, 1500);
             } else {
                 showError('Telegram данные не найдены. Откройте приложение через бота.');
             }
