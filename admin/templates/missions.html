@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Missions - ThePred Admin{% endblock %}
+{% block content %}
+<div class="max-w-6xl">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold">Missions Management</h1>
+        <button onclick="createMission()" class="gradient-gold text-black font-bold px-6 py-2 rounded-lg">+ Create Mission</button>
+    </div>
+    <div class="bg-dark-800 rounded-lg overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-dark-700">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Title</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Type</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Requirement</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Reward</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="missions-tbody"></tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function loadMissions() {
+    const tbody = document.getElementById('missions-tbody');
+    const response = await fetch(`${API_URL}/admin/missions`);
+    const missions = await response.json();
+    tbody.innerHTML = missions.map(m => `
+        <tr class="border-t border-gray-800">
+            <td class="px-6 py-4">${m.title}</td>
+            <td class="px-6 py-4 text-sm">${m.mission_type}</td>
+            <td class="px-6 py-4">${m.requirement}</td>
+            <td class="px-6 py-4">${m.reward_pred} PRED</td>
+            <td class="px-6 py-4"><span class="px-2 py-1 rounded text-xs ${m.is_active ? 'bg-green-600' : 'bg-red-600'}">${m.is_active ? 'Active' : 'Inactive'}</span></td>
+            <td class="px-6 py-4">
+                <button onclick="deleteMission(${m.id})" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-xs">Delete</button>
+            </td>
+        </tr>
+    `).join('');
+}
+function createMission() {
+    const title = prompt('Mission Title:');
+    const description = prompt('Description:');
+    const type = prompt('Type (daily_bet, weekly_win, etc):');
+    const requirement = parseInt(prompt('Requirement:'));
+    const reward = parseInt(prompt('Reward PRED:'));
+    if (!title || !type || !requirement || !reward) return;
+    fetch(`${API_URL}/admin/missions`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({title, description, mission_type: type, requirement, reward_pred: reward, is_active: true})
+    }).then(() => {showToast('Mission created'); loadMissions();});
+}
+async function deleteMission(id) {
+    if (!confirm('Delete mission?')) return;
+    await fetch(`${API_URL}/admin/missions/${id}`, {method: 'DELETE'});
+    showToast('Mission deleted');
+    loadMissions();
+}
+loadMissions();
+</script>
+{% endblock %}

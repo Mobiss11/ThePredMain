@@ -1,155 +1,93 @@
-<!DOCTYPE html>
-<html lang="en" class="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - ThePred Admin</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-900 text-white">
-    <div class="flex">
-        <!-- Sidebar -->
-        <div class="w-64 bg-gray-800 min-h-screen p-6 border-r border-gray-700">
-            <div class="mb-8">
-                <h1 class="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-                    ThePred Admin
-                </h1>
+{% extends "base.html" %}
+{% block title %}Dashboard - ThePred Admin{% endblock %}
+{% block content %}
+<div class="max-w-7xl">
+    <h1 class="text-3xl font-bold mb-8">Dashboard Overview</h1>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-dark-800 rounded-xl p-6 border border-gray-700">
+            <div class="flex items-center justify-between mb-4">
+                <div class="text-gray-400">Total Users</div>
+                <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
             </div>
-
-            <nav class="space-y-2">
-                <a href="/" class="flex items-center space-x-3 px-4 py-3 bg-gray-700 rounded-lg text-yellow-400">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                    </svg>
-                    <span>Dashboard</span>
-                </a>
-
-                <a href="/users" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-700 rounded-lg text-gray-300 hover:text-white">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                    </svg>
-                    <span>Users</span>
-                </a>
-
-                <a href="/markets" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-700 rounded-lg text-gray-300 hover:text-white">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                    </svg>
-                    <span>Markets</span>
-                </a>
-
-                <a href="/missions" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-700 rounded-lg text-gray-300 hover:text-white">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
-                    </svg>
-                    <span>Missions</span>
-                </a>
-
-                <a href="/logout" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-700 rounded-lg text-gray-300 hover:text-white mt-8">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                    </svg>
-                    <span>Logout</span>
-                </a>
-            </nav>
+            <div class="text-3xl font-bold" id="total-users">-</div>
+            <div class="text-green-400 text-sm mt-2"><span id="users-24h">-</span> in last 24h</div>
         </div>
 
-        <!-- Main Content -->
-        <div class="flex-1 p-8">
-            <h2 class="text-3xl font-bold mb-8">Dashboard Overview</h2>
-
-            <!-- Stats Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="text-gray-400">Total Users</div>
-                        <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                        </svg>
-                    </div>
-                    <div class="text-3xl font-bold">12,456</div>
-                    <div class="text-green-400 text-sm mt-2">+23% this week</div>
-                </div>
-
-                <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="text-gray-400">Active Markets</div>
-                        <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                        </svg>
-                    </div>
-                    <div class="text-3xl font-bold">847</div>
-                    <div class="text-green-400 text-sm mt-2">+12 new today</div>
-                </div>
-
-                <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="text-gray-400">Total Volume</div>
-                        <svg class="w-8 h-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <div class="text-3xl font-bold">12.4M</div>
-                    <div class="text-gray-400 text-sm mt-2">PRED + TON</div>
-                </div>
-
-                <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="text-gray-400">Total Bets</div>
-                        <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                        </svg>
-                    </div>
-                    <div class="text-3xl font-bold">89,234</div>
-                    <div class="text-green-400 text-sm mt-2">+1,234 today</div>
-                </div>
+        <div class="bg-dark-800 rounded-xl p-6 border border-gray-700">
+            <div class="flex items-center justify-between mb-4">
+                <div class="text-gray-400">Active Markets</div>
+                <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
             </div>
+            <div class="text-3xl font-bold" id="active-markets">-</div>
+            <div class="text-gray-400 text-sm mt-2"><span id="total-markets">-</span> total</div>
+        </div>
 
-            <!-- Recent Activity -->
-            <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
-                <h3 class="text-xl font-bold mb-4">Recent Activity</h3>
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between py-3 border-b border-gray-700">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
-                                ✓
-                            </div>
-                            <div>
-                                <div class="font-medium">New user registered</div>
-                                <div class="text-sm text-gray-400">@username123</div>
-                            </div>
-                        </div>
-                        <div class="text-sm text-gray-400">2 min ago</div>
-                    </div>
-
-                    <div class="flex items-center justify-between py-3 border-b border-gray-700">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                                📊
-                            </div>
-                            <div>
-                                <div class="font-medium">New market created</div>
-                                <div class="text-sm text-gray-400">Bitcoin > $100k?</div>
-                            </div>
-                        </div>
-                        <div class="text-sm text-gray-400">15 min ago</div>
-                    </div>
-
-                    <div class="flex items-center justify-between py-3">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-yellow-600 rounded-full flex items-center justify-center">
-                                💰
-                            </div>
-                            <div>
-                                <div class="font-medium">Large bet placed</div>
-                                <div class="text-sm text-gray-400">10,000 TON on market #123</div>
-                            </div>
-                        </div>
-                        <div class="text-sm text-gray-400">1 hour ago</div>
-                    </div>
-                </div>
+        <div class="bg-dark-800 rounded-xl p-6 border border-gray-700">
+            <div class="flex items-center justify-between mb-4">
+                <div class="text-gray-400">Total Volume</div>
+                <svg class="w-8 h-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
             </div>
+            <div class="text-3xl font-bold" id="total-volume">-</div>
+            <div class="text-gray-400 text-sm mt-2">PRED + TON</div>
+        </div>
+
+        <div class="bg-dark-800 rounded-xl p-6 border border-gray-700">
+            <div class="flex items-center justify-between mb-4">
+                <div class="text-gray-400">Total Bets</div>
+                <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                </svg>
+            </div>
+            <div class="text-3xl font-bold" id="total-bets">-</div>
+            <div class="text-green-400 text-sm mt-2"><span id="bets-24h">-</span> in last 24h</div>
         </div>
     </div>
-</body>
-</html>
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <a href="/markets" class="bg-dark-800 rounded-xl p-6 border border-gray-700 hover:border-yellow-500 transition block">
+            <h3 class="text-xl font-bold mb-2">Pending Markets</h3>
+            <p class="text-gray-400 mb-4">Review and moderate user-submitted events</p>
+            <span class="gradient-gold text-black px-4 py-2 rounded-lg inline-block font-bold">View Pending →</span>
+        </a>
+
+        <a href="/broadcast" class="bg-dark-800 rounded-xl p-6 border border-gray-700 hover:border-yellow-500 transition block">
+            <h3 class="text-xl font-bold mb-2">Send Broadcast</h3>
+            <p class="text-gray-400 mb-4">Send message to all users or specific user</p>
+            <span class="gradient-gold text-black px-4 py-2 rounded-lg inline-block font-bold">Send Message →</span>
+        </a>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function loadStats() {
+    try {
+        const response = await fetch(`${API_URL}/admin/stats`);
+        const stats = await response.json();
+
+        document.getElementById('total-users').textContent = formatNumber(stats.total_users);
+        document.getElementById('users-24h').textContent = stats.users_last_24h;
+        document.getElementById('active-markets').textContent = stats.active_markets;
+        document.getElementById('total-markets').textContent = stats.total_markets;
+        document.getElementById('total-volume').textContent = formatNumber(parseFloat(stats.total_volume_pred) + parseFloat(stats.total_volume_ton));
+        document.getElementById('total-bets').textContent = formatNumber(stats.total_bets);
+        document.getElementById('bets-24h').textContent = stats.bets_last_24h;
+    } catch (error) {
+        console.error('Failed to load stats:', error);
+    }
+}
+
+loadStats();
+// Refresh stats every 30 seconds
+setInterval(loadStats, 30000);
+</script>
+{% endblock %}

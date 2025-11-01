@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Markets - ThePred Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl">
+    <h1 class="text-3xl font-bold mb-8">Market Management</h1>
+
+    <!-- Tabs -->
+    <div class="flex space-x-4 mb-6 border-b border-gray-800">
+        <button onclick="switchTab('all')" id="tab-all" class="px-4 py-2 font-medium border-b-2 border-yellow-500 text-yellow-500">
+            All Markets
+        </button>
+        <button onclick="switchTab('pending')" id="tab-pending" class="px-4 py-2 font-medium border-b-2 border-transparent text-gray-400 hover:text-white">
+            Pending Moderation <span id="pending-count" class="ml-2 bg-red-600 text-white px-2 py-1 rounded-full text-xs">0</span>
+        </button>
+    </div>
+
+    <!-- Markets Table -->
+    <div class="bg-dark-800 rounded-lg overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-dark-700">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">ID</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Title</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Category</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Moderation</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="markets-tbody" class="divide-y divide-gray-800">
+                <tr>
+                    <td colspan="6" class="px-6 py-8 text-center text-gray-400">Loading...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentTab = 'all';
+
+async function loadMarkets(tab = 'all') {
+    const tbody = document.getElementById('markets-tbody');
+    tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">Loading...</td></tr>';
+
+    try {
+        const url = tab === 'pending' ? `${API_URL}/admin/markets/pending` : `${API_URL}/admin/markets?limit=100`;
+        const response = await fetch(url);
+        const markets = await response.json();
+
+        if (tab === 'pending') {
+            document.getElementById('pending-count').textContent = markets.length;
+        }
+
+        if (markets.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">No markets found</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = markets.map(market => `
+            <tr class="hover:bg-dark-700">
+                <td class="px-6 py-4 text-sm">#${market.id}</td>
+                <td class="px-6 py-4">
+                    <div class="text-sm font-medium">${market.title}</div>
+                    ${market.photo_url ? `<img src="${market.photo_url}" class="mt-2 w-16 h-16 object-cover rounded">` : ''}
+                </td>
+                <td class="px-6 py-4 text-sm">${market.category}</td>
+                <td class="px-6 py-4">
+                    <span class="px-2 py-1 text-xs rounded ${getStatusColor(market.status)}">${market.status}</span>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="px-2 py-1 text-xs rounded ${getModerationColor(market.moderation_status)}">${market.moderation_status}</span>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="flex space-x-2">
+                        ${market.moderation_status === 'PENDING' ? `
+                            <button onclick="moderateMarket(${market.id}, 'approve')" class="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-xs">Approve</button>
+                            <button onclick="moderateMarket(${market.id}, 'reject')" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-xs">Reject</button>
+                        ` : ''}
+                        ${market.status === 'OPEN' ? `
+                            <button onclick="closeMarket(${market.id})" class="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-xs">Close</button>
+                            <button onclick="showResolveModal(${market.id})" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs">Resolve</button>
+                        ` : ''}
+                        <button onclick="cancelMarket(${market.id})" class="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-xs">Cancel</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error('Failed to load markets:', error);
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-red-400">Failed to load markets</td></tr>';
+    }
+}
+
+function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('tab-all').className = tab === 'all'
+        ? 'px-4 py-2 font-medium border-b-2 border-yellow-500 text-yellow-500'
+        : 'px-4 py-2 font-medium border-b-2 border-transparent text-gray-400 hover:text-white';
+    document.getElementById('tab-pending').className = tab === 'pending'
+        ? 'px-4 py-2 font-medium border-b-2 border-yellow-500 text-yellow-500'
+        : 'px-4 py-2 font-medium border-b-2 border-transparent text-gray-400 hover:text-white';
+    loadMarkets(tab);
+}
+
+async function moderateMarket(id, action) {
+    if (!confirm(`Are you sure you want to ${action} this market?`)) return;
+
+    try {
+        const response = await fetch(`${API_URL}/admin/markets/${id}/moderate?action=${action}`, { method: 'PUT' });
+        const result = await response.json();
+        showToast(result.message);
+        loadMarkets(currentTab);
+    } catch (error) {
+        showToast('Failed to moderate market', 'error');
+    }
+}
+
+async function closeMarket(id) {
+    if (!confirm('Close this market?')) return;
+
+    try {
+        const response = await fetch(`${API_URL}/admin/markets/${id}/close`, { method: 'PUT' });
+        const result = await response.json();
+        showToast(result.message);
+        loadMarkets(currentTab);
+    } catch (error) {
+        showToast('Failed to close market', 'error');
+    }
+}
+
+async function cancelMarket(id) {
+    if (!confirm('Cancel this market and refund all bets?')) return;
+
+    try {
+        const response = await fetch(`${API_URL}/admin/markets/${id}/cancel`, { method: 'PUT' });
+        const result = await response.json();
+        showToast(result.message);
+        loadMarkets(currentTab);
+    } catch (error) {
+        showToast('Failed to cancel market', 'error');
+    }
+}
+
+function showResolveModal(id) {
+    const outcome = prompt('Enter outcome (YES, NO, or CANCELLED):');
+    if (!outcome) return;
+    resolveMarket(id, outcome);
+}
+
+async function resolveMarket(id, outcome) {
+    try {
+        const response = await fetch(`${API_URL}/admin/markets/${id}/resolve`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ outcome })
+        });
+        const result = await response.json();
+        showToast(result.message);
+        loadMarkets(currentTab);
+    } catch (error) {
+        showToast('Failed to resolve market', 'error');
+    }
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'OPEN': 'bg-green-600',
+        'CLOSED': 'bg-yellow-600',
+        'RESOLVED': 'bg-blue-600',
+        'CANCELLED': 'bg-red-600'
+    };
+    return colors[status] || 'bg-gray-600';
+}
+
+function getModerationColor(status) {
+    const colors = {
+        'PENDING': 'bg-orange-600',
+        'APPROVED': 'bg-green-600',
+        'REJECTED': 'bg-red-600'
+    };
+    return colors[status] || 'bg-gray-600';
+}
+
+// Load markets on page load
+loadMarkets('all');
+
+// Refresh pending count every 30 seconds
+setInterval(() => {
+    if (currentTab !== 'pending') {
+        fetch(`${API_URL}/admin/markets/pending`)
+            .then(r => r.json())
+            .then(markets => {
+                document.getElementById('pending-count').textContent = markets.length;
+            });
+    }
+}, 30000);
+</script>
+{% endblock %}
