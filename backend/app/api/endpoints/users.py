@@ -14,6 +14,7 @@ class UserProfile(BaseModel):
     telegram_id: int
     username: str | None
     first_name: str | None
+    photo_url: str | None
     pred_balance: Decimal
     ton_balance: Decimal
     rank: str
@@ -22,6 +23,8 @@ class UserProfile(BaseModel):
     total_losses: int
     win_streak: int
     referral_code: str | None
+    best_streak: int = 0
+    global_rank: int | None = None
 
     class Config:
         from_attributes = True

@@ -109,7 +109,7 @@ docker-compose -f docker-compose.prod.yml run --rm certbot certonly \
   --webroot \
   --webroot-path=/var/www/certbot \
   -d thepred.store \
-  --email твой@email.com \
+  --email mobiss11@yandex.ru \
   --agree-tos \
   --no-eff-email
 ```

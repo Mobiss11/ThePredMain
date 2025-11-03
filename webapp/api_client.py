@@ -100,14 +100,16 @@ class BackendAPIClient:
         telegram_id: int,
         username: Optional[str] = None,
         first_name: Optional[str] = None,
-        last_name: Optional[str] = None
+        last_name: Optional[str] = None,
+        photo_url: Optional[str] = None
     ) -> Dict:
         """Authenticate user via Telegram"""
         data = {
             "telegram_id": telegram_id,
             "username": username,
             "first_name": first_name,
-            "last_name": last_name
+            "last_name": last_name,
+            "photo_url": photo_url
         }
         # Use simple register endpoint - returns user info
         result = await self._post("/auth/register", data)
@@ -117,6 +119,7 @@ class BackendAPIClient:
             "telegram_id": result["telegram_id"],
             "username": result.get("username"),
             "first_name": result["first_name"],
+            "photo_url": result.get("photo_url"),
             "pred_balance": result["pred_balance"],
             "referral_code": result["referral_code"]
         }

@@ -120,6 +120,7 @@ async def auth_telegram():
         username = user_data.get('username', '')
         first_name = user_data.get('first_name', '')
         last_name = user_data.get('last_name', '')
+        photo_url = user_data.get('photo_url', None)
 
         # Call backend to register or get user
         try:
@@ -127,7 +128,8 @@ async def auth_telegram():
                 telegram_id=telegram_id,
                 username=username,
                 first_name=first_name,
-                last_name=last_name
+                last_name=last_name,
+                photo_url=photo_url
             )
 
             # Store user in session
@@ -205,6 +207,14 @@ async def missions():
     """Missions page"""
     user_id = session.get('user_id')
     return await render_template('missions.html', user_id=user_id)
+
+
+@app.route('/create-event')
+@auth_required
+async def create_event():
+    """Create event page"""
+    user_id = session.get('user_id')
+    return await render_template('create_event.html', user_id=user_id)
 
 
 # ============ API Routes ============

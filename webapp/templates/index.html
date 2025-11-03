@@ -3,21 +3,23 @@
 {% block title %}Рынки - ThePred{% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
-<div class="glass card-shine rounded-2xl p-6 mb-6">
-    <div class="flex items-center justify-between gap-3">
-        <button onclick="showCreateEventModal()" class="gold-gradient rounded-xl px-6 py-3 font-bold text-black hover:opacity-90 transition flex items-center space-x-2">
+<!-- Filter Section -->
+<div class="mb-6 space-y-3">
+    <a href="/create-event" class="block">
+        <button class="w-full gold-gradient rounded-xl px-6 py-3.5 font-bold text-base text-black hover:opacity-90 transition flex items-center justify-center space-x-2">
             <span>+</span>
             <span>Создать Событие</span>
         </button>
-        <select class="glass px-6 py-3 rounded-xl text-base font-medium focus:outline-none focus:ring-2 focus:ring-yellow-400 flex-1">
-            <option>Категории</option>
-            <option>Крипто</option>
-            <option>Спорт</option>
-            <option>Политика</option>
-            <option>Развлечения</option>
-        </select>
-    </div>
+    </a>
+    <select id="category-filter" class="w-full glass px-6 py-3.5 rounded-xl text-base font-medium focus:outline-none focus:ring-2 focus:ring-yellow-400">
+        <option value="">Категории</option>
+        <option value="Crypto">💰 Крипто</option>
+        <option value="Sports">⚽ Спорт</option>
+        <option value="Politics">🏛️ Политика</option>
+        <option value="Entertainment">🎬 Развлечения</option>
+        <option value="Technology">💻 Технологии</option>
+        <option value="Finance">📈 Финансы</option>
+    </select>
 </div>
 
 <!-- Promoted Market -->
@@ -185,81 +187,6 @@
 <button class="w-full glass rounded-xl py-4 font-bold mt-6 hover:bg-opacity-20 transition">
     Загрузить Ещё
 </button>
-
-<!-- Create Event Modal -->
-<div id="create-event-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50" style="display: none;">
-    <div class="glass rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-2xl font-bold">Создать Событие</h2>
-            <button onclick="hideCreateEventModal()" class="text-gray-400 hover:text-white">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
-        </div>
-
-        <form id="create-event-form" class="space-y-4">
-            <!-- Event Photo -->
-            <div>
-                <label class="block text-sm font-medium mb-2">Фото События</label>
-                <div class="glass rounded-xl p-4 border-2 border-dashed border-gray-600 text-center cursor-pointer hover:border-yellow-400 transition" onclick="document.getElementById('event-photo').click()">
-                    <input type="file" id="event-photo" class="hidden" accept="image/*" onchange="previewEventPhoto(event)">
-                    <div id="photo-preview" class="hidden mb-2">
-                        <img id="photo-preview-img" class="w-full h-48 object-cover rounded-lg">
-                    </div>
-                    <div id="photo-placeholder">
-                        <svg class="w-12 h-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                        <p class="text-gray-400 text-sm">Нажмите чтобы выбрать фото</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Event Question -->
-            <div>
-                <label class="block text-sm font-medium mb-2">Вопрос События</label>
-                <input type="text" id="event-question" required placeholder="Например: Достигнет ли Bitcoin $100,000 к концу 2025?" class="w-full glass rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400">
-            </div>
-
-            <!-- Event Description -->
-            <div>
-                <label class="block text-sm font-medium mb-2">Описание</label>
-                <textarea id="event-description" required rows="3" placeholder="Краткое описание события..." class="w-full glass rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 resize-none"></textarea>
-            </div>
-
-            <!-- Category -->
-            <div>
-                <label class="block text-sm font-medium mb-2">Категория</label>
-                <select id="event-category" required class="w-full glass rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400">
-                    <option value="">Выберите категорию</option>
-                    <option value="Crypto">Крипто</option>
-                    <option value="Sports">Спорт</option>
-                    <option value="Politics">Политика</option>
-                    <option value="Entertainment">Развлечения</option>
-                    <option value="Technology">Технологии</option>
-                    <option value="Finance">Финансы</option>
-                </select>
-            </div>
-
-            <!-- End Date -->
-            <div>
-                <label class="block text-sm font-medium mb-2">Дата Окончания</label>
-                <input type="datetime-local" id="event-end-date" required class="w-full glass rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400">
-            </div>
-
-            <!-- Buttons -->
-            <div class="flex gap-3 pt-4">
-                <button type="button" onclick="hideCreateEventModal()" class="flex-1 glass rounded-xl py-3 font-bold hover:bg-opacity-20 transition">
-                    Отмена
-                </button>
-                <button type="submit" class="flex-1 gold-gradient rounded-xl py-3 font-bold text-black hover:opacity-90 transition">
-                    Отправить на Модерацию
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -287,10 +214,10 @@ function renderMarketCard(market, isPromoted = false) {
         ? '<span class="glass px-3 py-1 rounded-full text-xs font-bold">⭐ ИЗБРАННЫЙ</span>'
         : '';
 
-    const cardClass = isPromoted ? 'glass card-shine rounded-2xl p-6 mb-6 border-2 border-yellow-400 market-card' : 'glass rounded-2xl p-5 market-card';
+    const cardClass = isPromoted ? 'glass card-shine rounded-2xl p-5 mb-6 border-2 border-yellow-400 market-card' : 'glass rounded-2xl p-4 market-card';
 
     // Format end date
-    let endDateHtml = '';
+    let endDateText = '';
     if (market.resolve_date) {
         const endDate = new Date(market.resolve_date);
         const now = new Date();
@@ -298,60 +225,63 @@ function renderMarketCard(market, isPromoted = false) {
         const daysLeft = Math.floor(diff / (1000 * 60 * 60 * 24));
         const hoursLeft = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
 
-        let timeLeftText = '';
         if (daysLeft > 0) {
-            timeLeftText = `${daysLeft}д ${hoursLeft}ч`;
+            endDateText = `${daysLeft}д ${hoursLeft}ч`;
         } else if (hoursLeft > 0) {
-            timeLeftText = `${hoursLeft}ч`;
+            endDateText = `${hoursLeft}ч`;
         } else {
-            timeLeftText = 'Скоро завершится';
+            endDateText = 'Скоро';
         }
-
-        endDateHtml = `<span>⏰ ${timeLeftText}</span>`;
     }
+
+    // Event avatar (photo or category icon)
+    const avatarHtml = market.photo_url
+        ? `<img src="${market.photo_url}" alt="${market.title}" class="w-12 h-12 rounded-xl object-cover">`
+        : `<div class="w-12 h-12 rounded-xl glass flex items-center justify-center text-2xl">${categoryIcon}</div>`;
 
     return `
         <div class="${cardClass}">
-            ${market.photo_url ? `
-                <div class="mb-4 -mx-${isPromoted ? '6' : '5'} -mt-${isPromoted ? '6' : '5'}">
-                    <img src="${market.photo_url}" alt="${market.title}" class="w-full h-48 object-cover rounded-t-2xl">
-                </div>
-            ` : ''}
-            <div class="flex items-start justify-between mb-${isPromoted ? '4' : '3'}">
-                <div class="flex-1">
-                    <div class="flex items-center space-x-2 mb-2">
+            <!-- Header: Tag, Avatar, Title, Description -->
+            <div class="flex items-start space-x-3 mb-3">
+                ${avatarHtml}
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center space-x-2 mb-1">
                         ${promotedBadge}
-                        <span class="glass px-3 py-1 rounded-full text-xs font-medium">${categoryIcon} ${market.category}</span>
+                        <span class="glass px-2 py-0.5 rounded-full text-xs font-medium">${categoryIcon} ${market.category}</span>
                     </div>
-                    <h${isPromoted ? '2' : '3'} class="text-${isPromoted ? 'xl' : 'lg'} font-bold mb-${isPromoted ? '2' : '1'}">${market.title}</h${isPromoted ? '2' : '3'}>
-                    ${market.description ? `<p class="text-gray-400 text-sm">${market.description}</p>` : ''}
+                    <h3 class="text-base font-bold mb-1 line-clamp-2">${market.title}</h3>
+                    ${market.description ? `<p class="text-gray-400 text-xs line-clamp-1">${market.description}</p>` : ''}
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-${isPromoted ? '4' : '3'} mb-${isPromoted ? '4' : '3'}">
-                <div class="glass rounded-${isPromoted ? 'xl' : 'lg'} p-${isPromoted ? '4' : '3'}">
-                    <div class="text-gray-400 text-${isPromoted ? 'sm' : 'xs'} mb-1">ДА</div>
-                    <div class="text-${isPromoted ? '3xl' : '2xl'} font-bold text-green-400">${Math.round(market.yes_odds)}%</div>
-                </div>
-                <div class="glass rounded-${isPromoted ? 'xl' : 'lg'} p-${isPromoted ? '4' : '3'}">
-                    <div class="text-gray-400 text-${isPromoted ? 'sm' : 'xs'} mb-1">НЕТ</div>
-                    <div class="text-${isPromoted ? '3xl' : '2xl'} font-bold text-red-400">${Math.round(market.no_odds)}%</div>
+            <!-- Date and Stats -->
+            <div class="flex items-center justify-between text-xs text-gray-400 mb-3">
+                ${endDateText ? `<span>⏰ ${endDateText}</span>` : '<span></span>'}
+                <div class="flex items-center space-x-3">
+                    <span>💰 ${window.formatNumber(market.total_volume_pred)}</span>
+                    <span>👥 ${market.bets_count}</span>
                 </div>
             </div>
 
-            <div class="flex items-center ${isPromoted ? 'justify-between' : 'flex-wrap gap-2'} text-sm text-gray-400 mb-${isPromoted ? '4' : '3'}">
-                <span>💰 ${window.formatNumber(market.total_volume_pred)} PRED</span>
-                <span>👥 ${market.bets_count} прогнозов</span>
-                ${endDateHtml}
-                ${isPromoted ? `<span>👁 ${window.formatNumber(market.views_count)} просмотров</span>` : ''}
+            <!-- Odds -->
+            <div class="grid grid-cols-2 gap-2 mb-3">
+                <div class="glass rounded-lg p-2">
+                    <div class="text-gray-400 text-xs mb-0.5">ДА</div>
+                    <div class="text-xl font-bold text-green-400">${Math.round(market.yes_odds)}%</div>
+                </div>
+                <div class="glass rounded-lg p-2">
+                    <div class="text-gray-400 text-xs mb-0.5">НЕТ</div>
+                    <div class="text-xl font-bold text-red-400">${Math.round(market.no_odds)}%</div>
+                </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-${isPromoted ? '3' : '2'}">
-                <button onclick="showBetModal(${market.id}, 'YES')" class="green-gradient rounded-${isPromoted ? 'xl' : 'lg'} py-${isPromoted ? '3' : '2'} text-sm font-bold text-white hover:opacity-90 transition">
-                    ✅ ${isPromoted ? 'Прогноз ' : ''}ДА
+            <!-- Bet Buttons -->
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="showBetModal(${market.id}, 'YES')" class="green-gradient rounded-lg py-2 text-xs font-bold text-white hover:opacity-90 transition">
+                    ✅ ДА
                 </button>
-                <button onclick="showBetModal(${market.id}, 'NO')" class="red-gradient rounded-${isPromoted ? 'xl' : 'lg'} py-${isPromoted ? '3' : '2'} text-sm font-bold text-white hover:opacity-90 transition">
-                    ❌ ${isPromoted ? 'Прогноз ' : ''}НЕТ
+                <button onclick="showBetModal(${market.id}, 'NO')" class="red-gradient rounded-lg py-2 text-xs font-bold text-white hover:opacity-90 transition">
+                    ❌ НЕТ
                 </button>
             </div>
         </div>
@@ -391,106 +321,28 @@ async function loadAndRenderMarkets() {
     }
 }
 
-// Show create event modal
-function showCreateEventModal() {
-    document.getElementById('create-event-modal').style.display = 'flex';
-    window.tgHaptic?.light();
-}
-
-// Hide create event modal
-function hideCreateEventModal() {
-    document.getElementById('create-event-modal').style.display = 'none';
-    document.getElementById('create-event-form').reset();
-    document.getElementById('photo-preview').classList.add('hidden');
-    document.getElementById('photo-placeholder').style.display = 'block';
-}
-
-// Preview event photo
-function previewEventPhoto(event) {
-    const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            document.getElementById('photo-preview-img').src = e.target.result;
-            document.getElementById('photo-preview').classList.remove('hidden');
-            document.getElementById('photo-placeholder').style.display = 'none';
-        };
-        reader.readAsDataURL(file);
-    }
-}
-
-// Submit create event form
+// Initialize page
 document.addEventListener('DOMContentLoaded', () => {
     loadAndRenderMarkets();
 
     // Category filter
-    const categorySelect = document.querySelector('select');
-    if (categorySelect) {
-        categorySelect.addEventListener('change', async (e) => {
-            const categoryMap = {
-                'Категории': null,
-                'Крипто': 'Crypto',
-                'Спорт': 'Sports',
-                'Политика': 'Politics',
-                'Развлечения': 'Entertainment'
-            };
-            const category = categoryMap[e.target.value] || null;
+    const categoryFilter = document.getElementById('category-filter');
+    if (categoryFilter) {
+        categoryFilter.addEventListener('change', async (e) => {
+            const category = e.target.value || null;
             const markets = await window.loadMarkets(category);
 
+            const promotedMarket = markets.find(m => m.is_promoted === 'premium');
             const regularMarkets = markets.filter(m => m.is_promoted !== 'premium');
+
+            // Update promoted market
+            if (promotedMarket) {
+                document.getElementById('promoted-market').outerHTML = renderMarketCard(promotedMarket, true);
+            }
+
+            // Update regular markets
             const marketsList = document.getElementById('markets-list');
             marketsList.innerHTML = regularMarkets.map(m => renderMarketCard(m)).join('');
-        });
-    }
-
-    // Create event form submission
-    const createEventForm = document.getElementById('create-event-form');
-    if (createEventForm) {
-        createEventForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            window.tgHaptic?.light();
-
-            // Check if user is loaded
-            if (!window.userProfile || !window.userProfile.id) {
-                window.tgHaptic?.error();
-                window.showTgAlert('Ошибка: пользователь не найден');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('user_id', window.userProfile.id);
-
-            const photoFile = document.getElementById('event-photo').files[0];
-            if (photoFile) {
-                formData.append('photo', photoFile);
-            }
-
-            formData.append('title', document.getElementById('event-question').value);
-            formData.append('description', document.getElementById('event-description').value);
-            formData.append('category', document.getElementById('event-category').value);
-            formData.append('resolve_date', document.getElementById('event-end-date').value);
-
-            try {
-                const response = await fetch(`${API_URL}/markets/create-event`, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (response.ok) {
-                    window.tgHaptic?.success();
-                    window.showTgAlert('Событие отправлено на модерацию!');
-                    hideCreateEventModal();
-                    await loadAndRenderMarkets();
-                } else {
-                    const error = await response.json();
-                    window.tgHaptic?.error();
-                    window.showTgAlert(error.error || error.detail || 'Ошибка создания события');
-                }
-            } catch (error) {
-                console.error('Create event error:', error);
-                window.tgHaptic?.error();
-                window.showTgAlert('Ошибка сети. Попробуйте снова.');
-            }
         });
     }
 });

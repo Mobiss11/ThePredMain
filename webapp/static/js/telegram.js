@@ -25,6 +25,11 @@ if (tg) {
     // Get user data
     window.tgUser = tg.initDataUnsafe?.user;
     window.tgInitData = tg.initData;
+
+    // Get user photo URL from Telegram
+    if (window.tgUser?.photo_url) {
+        window.tgUserPhotoUrl = window.tgUser.photo_url;
+    }
 }
 
 // Helper functions
