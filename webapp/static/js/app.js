@@ -1,6 +1,4 @@
-// API Configuration
-// Use webapp's own API routes which proxy to backend
-const API_URL = '/api';
+// API_URL is defined in base.html
 
 // Global state
 let userBalance = {

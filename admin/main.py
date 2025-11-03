@@ -1,5 +1,6 @@
 from quart import Quart, render_template, request, jsonify, redirect, url_for, session
 import os
+import aiohttp
 from dotenv import load_dotenv
 from functools import wraps
 
@@ -7,7 +8,7 @@ load_dotenv()
 
 app = Quart(__name__)
 app.secret_key = os.getenv('ADMIN_SECRET_KEY', 'change-me-in-production')
-app.config['API_URL'] = os.getenv('API_URL', 'http://localhost:8000')
+app.config['API_URL'] = os.getenv('API_URL', 'http://backend:8000')
 app.config['ADMIN_PASSWORD'] = os.getenv('ADMIN_PASSWORD', 'admin')
 
 
@@ -75,6 +76,88 @@ async def leaderboard():
 @login_required
 async def broadcast():
     return await render_template('broadcast.html')
+
+
+# ============ API Proxy Routes ============
+
+@app.route('/admin/users', methods=['GET'])
+@login_required
+async def api_admin_users():
+    """Proxy admin users request to backend"""
+    try:
+        limit = request.args.get('limit', 100)
+        offset = request.args.get('offset', 0)
+
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.get(
+                f"{app.config['API_URL']}/admin/users?limit={limit}&offset={offset}"
+            ) as response:
+                data = await response.json()
+                return jsonify(data)
+    except Exception as e:
+        print(f"Error fetching users: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/admin/stats', methods=['GET'])
+@login_required
+async def api_admin_stats():
+    """Proxy admin stats request to backend"""
+    try:
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.get(
+                f"{app.config['API_URL']}/admin/stats"
+            ) as response:
+                data = await response.json()
+                return jsonify(data)
+    except Exception as e:
+        print(f"Error fetching stats: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/admin/markets', methods=['GET', 'POST'])
+@login_required
+async def api_admin_markets():
+    """Proxy admin markets request to backend"""
+    try:
+        async with aiohttp.ClientSession() as session_http:
+            if request.method == 'POST':
+                data = await request.get_json()
+                async with session_http.post(
+                    f"{app.config['API_URL']}/admin/markets",
+                    json=data
+                ) as response:
+                    result = await response.json()
+                    return jsonify(result)
+            else:
+                status = request.args.get('status', 'all')
+                limit = request.args.get('limit', 50)
+                async with session_http.get(
+                    f"{app.config['API_URL']}/admin/markets?status={status}&limit={limit}"
+                ) as response:
+                    data = await response.json()
+                    return jsonify(data)
+    except Exception as e:
+        print(f"Error with markets: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/admin/markets/<int:market_id>/resolve', methods=['POST'])
+@login_required
+async def api_admin_resolve_market(market_id):
+    """Proxy market resolve request to backend"""
+    try:
+        data = await request.get_json()
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.post(
+                f"{app.config['API_URL']}/admin/markets/{market_id}/resolve",
+                json=data
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error resolving market: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':

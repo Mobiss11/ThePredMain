@@ -468,5 +468,49 @@ async def api_admin_user_activity(user_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/markets/create-event', methods=['POST'])
+async def api_create_event():
+    """Create user event - proxy to backend"""
+    try:
+        # Get form data
+        form = await request.form
+        files = await request.files
+
+        user_id = session.get('user_id', 1)
+
+        # Prepare data for backend
+        import aiohttp
+        data = aiohttp.FormData()
+        data.add_field('user_id', str(user_id))
+        data.add_field('title', form.get('title'))
+        data.add_field('description', form.get('description'))
+        data.add_field('category', form.get('category'))
+        data.add_field('resolve_date', form.get('resolve_date'))
+
+        # Add photo if exists
+        if 'photo' in files:
+            photo = files['photo']
+            data.add_field('photo', await photo.read(),
+                          filename=photo.filename,
+                          content_type=photo.content_type)
+
+        # Send to backend
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.post(
+                f"{app.config['API_URL']}/markets/create-event",
+                data=data
+            ) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    return jsonify(result)
+                else:
+                    error_text = await response.text()
+                    return jsonify({"error": error_text}), response.status
+
+    except Exception as e:
+        print(f"Error creating event: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8001, debug=app.config['DEV_MODE'])
