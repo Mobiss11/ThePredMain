@@ -56,7 +56,7 @@
         <!-- Category -->
         <div>
             <label class="block text-sm font-medium mb-2">Категория *</label>
-            <select id="event-category" required class="w-full glass rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+            <select id="event-category" required class="w-full glass rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 appearance-none cursor-pointer text-base">
                 <option value="">Выберите категорию</option>
                 <option value="Crypto">💰 Крипто</option>
                 <option value="Sports">⚽ Спорт</option>
@@ -99,7 +99,7 @@
                 </button>
             </a>
             <button type="submit" class="flex-1 gold-gradient rounded-xl py-3 font-bold text-black hover:opacity-90 transition">
-                Отправить на Модерацию
+                Отправить
             </button>
         </div>
     </form>
@@ -123,17 +123,27 @@ function previewEventPhoto(event) {
 }
 
 // Submit create event form
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Ensure user profile is loaded
+    if (!window.userProfile) {
+        await window.loadUserProfile();
+    }
+
     const createEventForm = document.getElementById('create-event-form');
     if (createEventForm) {
         createEventForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             window.tgHaptic?.light();
 
+            // Load user profile if not loaded
+            if (!window.userProfile) {
+                await window.loadUserProfile();
+            }
+
             // Check if user is loaded
             if (!window.userProfile || !window.userProfile.id) {
                 window.tgHaptic?.error();
-                window.showTgAlert('Ошибка: пользователь не найден');
+                window.showTgAlert('Ошибка: пользователь не найден. Попробуйте обновить страницу.');
                 return;
             }
 

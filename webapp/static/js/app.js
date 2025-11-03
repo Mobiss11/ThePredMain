@@ -40,14 +40,29 @@ async function loadUserProfile() {
                 tonBalanceDisplay.innerText = formatNumber(userProfile.ton_balance);
             }
 
-            // Update avatar
+            // Update avatar in header
             const avatar = document.getElementById('user-avatar');
             const avatarPlaceholder = document.getElementById('user-avatar-placeholder');
-            if (avatar && userProfile.photo_url) {
-                avatar.src = userProfile.photo_url;
-                avatar.style.display = 'block';
+            if (userProfile.photo_url) {
+                if (avatar) {
+                    avatar.src = userProfile.photo_url;
+                    avatar.style.display = 'block';
+                }
                 if (avatarPlaceholder) {
                     avatarPlaceholder.style.display = 'none';
+                }
+            }
+
+            // Also update profile page avatar if exists
+            const profileAvatar = document.getElementById('profile-avatar');
+            const profileAvatarPlaceholder = document.getElementById('profile-avatar-placeholder');
+            if (userProfile.photo_url) {
+                if (profileAvatar) {
+                    profileAvatar.src = userProfile.photo_url;
+                    profileAvatar.style.display = 'block';
+                }
+                if (profileAvatarPlaceholder) {
+                    profileAvatarPlaceholder.style.display = 'none';
                 }
             }
 

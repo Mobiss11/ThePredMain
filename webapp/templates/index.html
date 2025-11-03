@@ -11,7 +11,7 @@
             <span>Создать Событие</span>
         </button>
     </a>
-    <select id="category-filter" class="w-full glass px-6 py-3.5 rounded-xl text-base font-medium focus:outline-none focus:ring-2 focus:ring-yellow-400">
+    <select id="category-filter" class="w-full glass px-6 py-3.5 rounded-xl text-base font-medium focus:outline-none focus:ring-2 focus:ring-yellow-400 appearance-none cursor-pointer">
         <option value="">Категории</option>
         <option value="Crypto">💰 Крипто</option>
         <option value="Sports">⚽ Спорт</option>
@@ -23,164 +23,14 @@
 </div>
 
 <!-- Promoted Market -->
-<div id="promoted-market" class="glass card-shine rounded-2xl p-6 mb-6 border-2 border-yellow-400 market-card">
-    <div class="flex items-start justify-between mb-4">
-        <div class="flex-1">
-            <div class="flex items-center space-x-2 mb-2">
-                <span class="gold-gradient px-3 py-1 rounded-full text-xs font-bold text-black">
-                    🔥 ПРОДВИГАЕМЫЙ
-                </span>
-                <span class="glass px-3 py-1 rounded-full text-xs font-medium">Крипто</span>
-            </div>
-            <h2 class="text-xl font-bold mb-2">Достигнет ли Bitcoin $100,000 к концу 2025?</h2>
-            <p class="text-gray-400 text-sm">Главный крипто прогноз - достигнет ли BTC шестизначной цифры?</p>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-4 mb-4">
-        <div class="glass rounded-xl p-4">
-            <div class="text-gray-400 text-sm mb-1">ДА</div>
-            <div class="text-3xl font-bold text-green-400">72%</div>
-            <div class="text-gray-500 text-xs mt-1">+5% сегодня</div>
-        </div>
-        <div class="glass rounded-xl p-4">
-            <div class="text-gray-400 text-sm mb-1">НЕТ</div>
-            <div class="text-3xl font-bold text-red-400">28%</div>
-            <div class="text-gray-500 text-xs mt-1">-5% сегодня</div>
-        </div>
-    </div>
-
-    <div class="flex items-center justify-between mb-4">
-        <div class="flex items-center space-x-4 text-sm text-gray-400">
-            <span>💰 2.5M PRED</span>
-            <span>👥 1,234 прогнозов</span>
-            <span>👁 12.5K просмотров</span>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-3">
-        <button class="green-gradient rounded-xl py-3 font-bold text-white hover:opacity-90 transition">
-            ✅ Прогноз ДА
-        </button>
-        <button class="red-gradient rounded-xl py-3 font-bold text-white hover:opacity-90 transition">
-            ❌ Прогноз НЕТ
-        </button>
-    </div>
+<div id="promoted-market" class="mb-6">
+    <!-- Will be loaded dynamically -->
 </div>
 
 <!-- Markets List -->
 <div id="markets-list" class="space-y-4">
-    <!-- Market Card Template -->
-    <div class="glass rounded-2xl p-5 market-card">
-        <div class="flex items-start justify-between mb-3">
-            <div class="flex-1">
-                <div class="flex items-center space-x-2 mb-2">
-                    <span class="glass px-3 py-1 rounded-full text-xs font-medium">Спорт</span>
-                </div>
-                <h3 class="text-lg font-bold mb-1">Выиграет ли Манчестер Сити Премьер Лигу?</h3>
-                <p class="text-gray-400 text-sm">Прогноз чемпиона сезона 2024/25</p>
-            </div>
-        </div>
+    <!-- Market cards will be loaded dynamically -->
 
-        <div class="grid grid-cols-2 gap-3 mb-3">
-            <div class="glass rounded-lg p-3">
-                <div class="text-gray-400 text-xs mb-1">ДА</div>
-                <div class="text-2xl font-bold text-green-400">65%</div>
-            </div>
-            <div class="glass rounded-lg p-3">
-                <div class="text-gray-400 text-xs mb-1">НЕТ</div>
-                <div class="text-2xl font-bold text-red-400">35%</div>
-            </div>
-        </div>
-
-        <div class="flex items-center justify-between text-sm text-gray-400 mb-3">
-            <span>💰 850K PRED</span>
-            <span>👥 456 прогнозов</span>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-            <button class="green-gradient rounded-lg py-2 text-sm font-bold text-white hover:opacity-90">
-                ✅ ДА
-            </button>
-            <button class="red-gradient rounded-lg py-2 text-sm font-bold text-white hover:opacity-90">
-                ❌ НЕТ
-            </button>
-        </div>
-    </div>
-
-    <div class="glass rounded-2xl p-5 market-card">
-        <div class="flex items-start justify-between mb-3">
-            <div class="flex-1">
-                <div class="flex items-center space-x-2 mb-2">
-                    <span class="glass px-3 py-1 rounded-full text-xs font-medium">Крипто</span>
-                </div>
-                <h3 class="text-lg font-bold mb-1">Будет ли одобрен Ethereum ETF в 2025?</h3>
-                <p class="text-gray-400 text-sm">Одобрение SEC для Ethereum spot ETF</p>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3 mb-3">
-            <div class="glass rounded-lg p-3">
-                <div class="text-gray-400 text-xs mb-1">ДА</div>
-                <div class="text-2xl font-bold text-green-400">58%</div>
-            </div>
-            <div class="glass rounded-lg p-3">
-                <div class="text-gray-400 text-xs mb-1">НЕТ</div>
-                <div class="text-2xl font-bold text-red-400">42%</div>
-            </div>
-        </div>
-
-        <div class="flex items-center justify-between text-sm text-gray-400 mb-3">
-            <span>💰 1.2M PRED</span>
-            <span>👥 789 прогнозов</span>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-            <button class="green-gradient rounded-lg py-2 text-sm font-bold text-white hover:opacity-90">
-                ✅ ДА
-            </button>
-            <button class="red-gradient rounded-lg py-2 text-sm font-bold text-white hover:opacity-90">
-                ❌ НЕТ
-            </button>
-        </div>
-    </div>
-
-    <div class="glass rounded-2xl p-5 market-card">
-        <div class="flex items-start justify-between mb-3">
-            <div class="flex-1">
-                <div class="flex items-center space-x-2 mb-2">
-                    <span class="glass px-3 py-1 rounded-full text-xs font-medium">Политика</span>
-                </div>
-                <h3 class="text-lg font-bold mb-1">Выиграет ли Трамп выборы 2024 в США?</h3>
-                <p class="text-gray-400 text-sm">Прогноз президентских выборов</p>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3 mb-3">
-            <div class="glass rounded-lg p-3">
-                <div class="text-gray-400 text-xs mb-1">ДА</div>
-                <div class="text-2xl font-bold text-green-400">52%</div>
-            </div>
-            <div class="glass rounded-lg p-3">
-                <div class="text-gray-400 text-xs mb-1">НЕТ</div>
-                <div class="text-2xl font-bold text-red-400">48%</div>
-            </div>
-        </div>
-
-        <div class="flex items-center justify-between text-sm text-gray-400 mb-3">
-            <span>💰 3.1M PRED</span>
-            <span>👥 2,145 прогнозов</span>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-            <button class="green-gradient rounded-lg py-2 text-sm font-bold text-white hover:opacity-90">
-                ✅ ДА
-            </button>
-            <button class="red-gradient rounded-lg py-2 text-sm font-bold text-white hover:opacity-90">
-                ❌ НЕТ
-            </button>
-        </div>
-    </div>
 </div>
 
 <!-- Load More -->
@@ -277,11 +127,11 @@ function renderMarketCard(market, isPromoted = false) {
 
             <!-- Bet Buttons -->
             <div class="grid grid-cols-2 gap-2">
-                <button onclick="showBetModal(${market.id}, 'YES')" class="green-gradient rounded-lg py-2 text-xs font-bold text-white hover:opacity-90 transition">
-                    ✅ ДА
+                <button onclick="showBetModal(${market.id}, 'YES')" class="bg-green-600 hover:bg-green-700 rounded-lg py-2.5 text-sm font-bold text-white transition">
+                    ДА
                 </button>
-                <button onclick="showBetModal(${market.id}, 'NO')" class="red-gradient rounded-lg py-2 text-xs font-bold text-white hover:opacity-90 transition">
-                    ❌ НЕТ
+                <button onclick="showBetModal(${market.id}, 'NO')" class="bg-red-600 hover:bg-red-700 rounded-lg py-2.5 text-sm font-bold text-white transition">
+                    НЕТ
                 </button>
             </div>
         </div>
