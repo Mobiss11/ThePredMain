@@ -603,14 +603,37 @@ async def moderate_market(
     if market.moderation_status != ModerationStatus.PENDING:
         raise HTTPException(status_code=400, detail="Market is not pending moderation")
 
+    # Get market creator
+    creator_result = await db.execute(select(User).where(User.id == market.created_by))
+    creator = creator_result.scalar_one_or_none()
+
     if action == "approve":
         market.moderation_status = ModerationStatus.APPROVED
         market.status = MarketStatus.OPEN
         message = "Market approved and opened"
+
+        # Send Telegram notification to creator
+        if creator and creator.telegram_id:
+            await send_telegram_notification(
+                telegram_id=creator.telegram_id,
+                message=f"✅ <b>Ваше событие одобрено!</b>\n\n"
+                        f"<b>{market.title}</b>\n\n"
+                        f"Событие опубликовано и доступно для ставок.\n"
+                        f"Смотреть событие: /market_{market_id}"
+            )
     else:
         market.moderation_status = ModerationStatus.REJECTED
         market.status = MarketStatus.CANCELLED
         message = "Market rejected"
+
+        # Send rejection notification
+        if creator and creator.telegram_id:
+            await send_telegram_notification(
+                telegram_id=creator.telegram_id,
+                message=f"❌ <b>Ваше событие отклонено</b>\n\n"
+                        f"<b>{market.title}</b>\n\n"
+                        f"Событие не прошло модерацию. Пожалуйста, проверьте правила создания событий."
+            )
 
     await db.commit()
 
@@ -620,6 +643,33 @@ async def moderate_market(
         "status": market.status,
         "message": message
     }
+
+
+async def send_telegram_notification(telegram_id: int, message: str):
+    """Send notification to user via Telegram Bot API"""
+    import os
+    from aiohttp import ClientSession
+
+    bot_token = os.getenv("BOT_TOKEN")
+    if not bot_token:
+        print("BOT_TOKEN not configured, skipping notification")
+        return
+
+    try:
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        payload = {
+            "chat_id": telegram_id,
+            "text": message,
+            "parse_mode": "HTML"
+        }
+
+        async with ClientSession() as session:
+            async with session.post(url, json=payload) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    print(f"Failed to send Telegram notification: {error_text}")
+    except Exception as e:
+        print(f"Error sending Telegram notification: {e}")
 
 
 @router.put("/markets/{market_id}/close")

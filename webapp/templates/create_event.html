@@ -104,6 +104,38 @@
         </div>
     </form>
 </div>
+
+<!-- Success Modal -->
+<div id="success-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50" style="display: none;">
+    <div class="glass rounded-2xl p-6 max-w-md w-full text-center">
+        <div class="w-16 h-16 gold-gradient rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+            </svg>
+        </div>
+        <h2 class="text-2xl font-bold mb-2">Отправлено на модерацию!</h2>
+        <p class="text-gray-400 mb-6">Ваше событие будет рассмотрено модераторами в течение 24 часов</p>
+        <button onclick="window.location.href='/'" class="w-full gold-gradient rounded-xl py-3 font-bold text-black hover:opacity-90 transition">
+            Перейти к событиям
+        </button>
+    </div>
+</div>
+
+<!-- Error Modal -->
+<div id="error-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50" style="display: none;">
+    <div class="glass rounded-2xl p-6 max-w-md w-full text-center">
+        <div class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </div>
+        <h2 class="text-2xl font-bold mb-2">Ошибка</h2>
+        <p class="text-gray-400 mb-6" id="error-message">Произошла ошибка при создании события</p>
+        <button onclick="hideErrorModal()" class="w-full glass rounded-xl py-3 font-bold hover:bg-opacity-20 transition">
+            Закрыть
+        </button>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -168,21 +200,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (response.ok) {
                     window.tgHaptic?.success();
-                    window.showTgAlert('Событие отправлено на модерацию!');
-                    // Redirect to markets page
-                    window.location.href = '/';
+                    // Show success modal
+                    document.getElementById('success-modal').style.display = 'flex';
                 } else {
                     const error = await response.json();
                     window.tgHaptic?.error();
-                    window.showTgAlert(error.error || error.detail || 'Ошибка создания события');
+                    // Show error modal
+                    document.getElementById('error-message').innerText = error.error || error.detail || 'Ошибка создания события';
+                    document.getElementById('error-modal').style.display = 'flex';
                 }
             } catch (error) {
                 console.error('Create event error:', error);
                 window.tgHaptic?.error();
-                window.showTgAlert('Ошибка сети. Попробуйте снова.');
+                // Show error modal
+                document.getElementById('error-message').innerText = 'Ошибка сети. Попробуйте снова.';
+                document.getElementById('error-modal').style.display = 'flex';
             }
         });
     }
 });
+
+function hideErrorModal() {
+    document.getElementById('error-modal').style.display = 'none';
+}
 </script>
 {% endblock %}

@@ -160,5 +160,121 @@ async def api_admin_resolve_market(market_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/admin/users/<int:user_id>/balance', methods=['PUT'])
+@login_required
+async def api_admin_update_balance(user_id):
+    """Proxy user balance update request to backend"""
+    try:
+        data = await request.get_json()
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.put(
+                f"{app.config['API_URL']}/admin/users/{user_id}/balance",
+                json=data
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error updating user balance: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/admin/users/<int:user_id>/rank', methods=['PUT'])
+@login_required
+async def api_admin_update_rank(user_id):
+    """Proxy user rank update request to backend"""
+    try:
+        rank = request.args.get('rank')
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.put(
+                f"{app.config['API_URL']}/admin/users/{user_id}/rank?rank={rank}"
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error updating user rank: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/admin/users/<int:user_id>/activity', methods=['GET'])
+@login_required
+async def api_admin_user_activity(user_id):
+    """Proxy user activity request to backend"""
+    try:
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.get(
+                f"{app.config['API_URL']}/admin/users/{user_id}/activity"
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching user activity: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/admin/markets/pending', methods=['GET'])
+@login_required
+async def api_admin_pending_markets():
+    """Proxy pending markets request to backend"""
+    try:
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.get(
+                f"{app.config['API_URL']}/admin/markets/pending"
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching pending markets: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/admin/markets/<int:market_id>/moderate', methods=['PUT'])
+@login_required
+async def api_admin_moderate_market(market_id):
+    """Proxy market moderation request to backend"""
+    try:
+        action = request.args.get('action')
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.put(
+                f"{app.config['API_URL']}/admin/markets/{market_id}/moderate?action={action}"
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error moderating market: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/admin/markets/<int:market_id>/close', methods=['PUT'])
+@login_required
+async def api_admin_close_market(market_id):
+    """Proxy market close request to backend"""
+    try:
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.put(
+                f"{app.config['API_URL']}/admin/markets/{market_id}/close"
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error closing market: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/admin/markets/<int:market_id>/cancel', methods=['PUT'])
+@login_required
+async def api_admin_cancel_market(market_id):
+    """Proxy market cancel request to backend"""
+    try:
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.put(
+                f"{app.config['API_URL']}/admin/markets/{market_id}/cancel"
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error cancelling market: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8002)

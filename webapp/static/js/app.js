@@ -12,11 +12,14 @@ window.userProfile = null;
 // Load user profile
 async function loadUserProfile() {
     try {
+        console.log('Loading user profile...');
         const response = await fetch(`${API_URL}/profile`);
+        console.log('Profile response:', response.status);
 
         if (response.ok) {
             userProfile = await response.json();
             window.userProfile = userProfile;
+            console.log('User profile loaded:', userProfile);
 
             // Update balance
             userBalance.pred = userProfile.pred_balance;
@@ -65,9 +68,12 @@ async function loadUserProfile() {
             }
 
             return userProfile;
+        } else {
+            const errorData = await response.text();
+            console.error('Failed to load profile:', response.status, errorData);
         }
     } catch (error) {
-        console.error('Failed to load profile:', error);
+        console.error('Failed to load profile (exception):', error);
     }
     return null;
 }
