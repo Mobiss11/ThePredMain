@@ -75,7 +75,13 @@ async function loadUserProfile() {
             const errorData = await response.text();
             console.error('Failed to load profile - Status:', response.status);
             console.error('Failed to load profile - Response:', errorData);
-            alert('Ошибка загрузки профиля: ' + errorData);
+
+            if (response.status === 401) {
+                console.error('Not authenticated! User needs to login through Telegram or dev_login');
+                // Don't show alert in production - let user see empty state
+            } else {
+                alert('Ошибка загрузки профиля: ' + errorData);
+            }
         }
     } catch (error) {
         console.error('Failed to load profile (exception):', error);

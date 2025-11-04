@@ -50,8 +50,10 @@ async function loadMarkets(tab = 'all') {
 
     try {
         const url = tab === 'pending' ? `${API_URL}/admin/markets/pending` : `${API_URL}/admin/markets?limit=100`;
+        console.log('Loading markets from:', url);
         const response = await fetch(url);
         const markets = await response.json();
+        console.log('Markets loaded:', markets);
 
         if (tab === 'pending') {
             document.getElementById('pending-count').textContent = markets.length;
@@ -62,7 +64,14 @@ async function loadMarkets(tab = 'all') {
             return;
         }
 
-        tbody.innerHTML = markets.map(market => `
+        tbody.innerHTML = markets.map(market => {
+            // Fix undefined moderation_status
+            const modStatus = market.moderation_status || 'PENDING';
+            const status = market.status || 'OPEN';
+
+            console.log(`Market ${market.id}: status=${status}, moderation_status=${modStatus}`);
+
+            return `
             <tr class="hover:bg-dark-700">
                 <td class="px-6 py-4 text-sm">#${market.id}</td>
                 <td class="px-6 py-4">
@@ -71,18 +80,18 @@ async function loadMarkets(tab = 'all') {
                 </td>
                 <td class="px-6 py-4 text-sm">${market.category}</td>
                 <td class="px-6 py-4">
-                    <span class="px-2 py-1 text-xs rounded ${getStatusColor(market.status)}">${market.status}</span>
+                    <span class="px-2 py-1 text-xs rounded ${getStatusColor(status)}">${status}</span>
                 </td>
                 <td class="px-6 py-4">
-                    <span class="px-2 py-1 text-xs rounded ${getModerationColor(market.moderation_status)}">${market.moderation_status}</span>
+                    <span class="px-2 py-1 text-xs rounded ${getModerationColor(modStatus)}">${modStatus}</span>
                 </td>
                 <td class="px-6 py-4">
                     <div class="flex space-x-2">
-                        ${market.moderation_status === 'PENDING' ? `
+                        ${modStatus === 'PENDING' || !market.moderation_status ? `
                             <button onclick="moderateMarket(${market.id}, 'approve')" class="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-xs">Approve</button>
                             <button onclick="moderateMarket(${market.id}, 'reject')" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-xs">Reject</button>
                         ` : ''}
-                        ${market.status === 'OPEN' ? `
+                        ${status === 'OPEN' || status === 'open' ? `
                             <button onclick="closeMarket(${market.id})" class="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-xs">Close</button>
                             <button onclick="showResolveModal(${market.id})" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs">Resolve</button>
                         ` : ''}
@@ -90,7 +99,8 @@ async function loadMarkets(tab = 'all') {
                     </div>
                 </td>
             </tr>
-        `).join('');
+            `;
+        }).join('');
     } catch (error) {
         console.error('Failed to load markets:', error);
         tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-red-400">Failed to load markets</td></tr>';

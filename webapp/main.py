@@ -296,10 +296,19 @@ async def api_bet_history():
 async def api_profile():
     """Get user profile from backend API"""
     try:
-        user_id = session.get('user_id', 1)
+        user_id = session.get('user_id')
+        print(f"[/api/profile] Session user_id: {user_id}, All session: {dict(session)}")
+
+        if not user_id:
+            print("[/api/profile] No user_id in session!")
+            return jsonify({"error": "Not authenticated"}), 401
+
+        print(f"[/api/profile] Fetching profile for user_id: {user_id}")
         profile = await api_client.get_user_profile(int(user_id))
+        print(f"[/api/profile] Profile loaded: {profile.get('id') if profile else None}")
         return jsonify(profile)
     except Exception as e:
+        print(f"[/api/profile] Error: {e}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -512,7 +521,8 @@ async def api_create_event():
         # Add photo if exists
         if 'photo' in files:
             photo = files['photo']
-            data.add_field('photo', await photo.read(),
+            photo_bytes = photo.read()  # NOT async in Quart
+            data.add_field('photo', photo_bytes,
                           filename=photo.filename,
                           content_type=photo.content_type)
 
