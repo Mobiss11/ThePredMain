@@ -201,7 +201,8 @@ async def get_all_markets(
 
     query = select(Market).order_by(desc(Market.created_at))
 
-    if status:
+    # Only filter by status if it's not "all"
+    if status and status != "all":
         query = query.where(Market.status == status)
 
     query = query.limit(limit)

@@ -106,7 +106,19 @@ async def index():
         print("[/] User authenticated, redirecting to markets")
         return redirect(url_for('markets'))
 
-    # Dev mode - redirect to dev login
+    # Check if request is from Telegram WebApp (even in DEV_MODE)
+    # Telegram WebApp passes tgWebAppData or tgWebAppStartParam in URL
+    is_from_telegram = (
+        request.args.get('tgWebAppStartParam') or
+        request.args.get('tgWebAppData') or
+        request.headers.get('Referer', '').find('telegram') != -1
+    )
+
+    if is_from_telegram:
+        print("[/] Request from Telegram WebApp, showing auth.html")
+        return await render_template('auth.html', bot_username=app.config['BOT_USERNAME'])
+
+    # Dev mode - redirect to dev login (only for browser access)
     if app.config['DEV_MODE']:
         print("[/] DEV_MODE is ON, redirecting to dev_login")
         return redirect(url_for('dev_login'))
@@ -119,18 +131,33 @@ async def index():
 @app.route('/auth/telegram', methods=['POST'])
 async def auth_telegram():
     """Authenticate user from Telegram WebApp"""
+    print("[/auth/telegram] ===== TELEGRAM AUTH REQUEST =====")
     try:
         data = await request.get_json()
         init_data = data.get('initData')
+        print(f"[/auth/telegram] initData received: {bool(init_data)}, length: {len(init_data) if init_data else 0}")
 
         if not init_data:
+            print("[/auth/telegram] ERROR: No initData provided")
             return jsonify({"error": "No initData provided"}), 400
 
+        # Check BOT_TOKEN
+        bot_token = app.config.get('BOT_TOKEN')
+        print(f"[/auth/telegram] BOT_TOKEN configured: {bool(bot_token)}, length: {len(bot_token) if bot_token else 0}")
+
+        if not bot_token:
+            print("[/auth/telegram] ERROR: BOT_TOKEN not configured!")
+            return jsonify({"error": "Server configuration error: BOT_TOKEN not set"}), 500
+
         # Validate Telegram data
-        user_data = validate_telegram_data(init_data, app.config['BOT_TOKEN'])
+        print("[/auth/telegram] Validating Telegram initData...")
+        user_data = validate_telegram_data(init_data, bot_token)
 
         if not user_data:
+            print("[/auth/telegram] ERROR: Invalid Telegram data (validation failed)")
             return jsonify({"error": "Invalid Telegram data"}), 401
+
+        print(f"[/auth/telegram] Telegram data validated! User ID: {user_data.get('id')}, Username: {user_data.get('username')}")
 
         # Register/login user via backend
         telegram_id = user_data.get('id')
@@ -138,6 +165,8 @@ async def auth_telegram():
         first_name = user_data.get('first_name', '')
         last_name = user_data.get('last_name', '')
         photo_url = user_data.get('photo_url', None)
+
+        print(f"[/auth/telegram] Calling backend to register/login user: telegram_id={telegram_id}, username={username}")
 
         # Call backend to register or get user
         try:
@@ -149,16 +178,25 @@ async def auth_telegram():
                 photo_url=photo_url
             )
 
+            print(f"[/auth/telegram] Backend returned user: id={user.get('id')}, username={user.get('username')}")
+
             # Store user in session
             session['user_id'] = user['id']
             session['telegram_id'] = telegram_id
             session['username'] = username
 
+            print(f"[/auth/telegram] Session created: user_id={user['id']}, telegram_id={telegram_id}")
+            print("[/auth/telegram] ===== AUTH SUCCESS =====")
+
             return jsonify({"success": True, "user": user})
         except Exception as e:
+            print(f"[/auth/telegram] ERROR: Backend error: {e}")
             return jsonify({"error": f"Backend error: {str(e)}"}), 500
 
     except Exception as e:
+        print(f"[/auth/telegram] ERROR: Exception: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 
