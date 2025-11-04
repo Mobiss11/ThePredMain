@@ -143,7 +143,7 @@ services:
     restart: unless-stopped
     environment:
       - API_URL=http://backend:8000
-      - DEV_MODE=false
+      - DEV_MODE=${DEV_MODE:-true}
       - WEBAPP_SECRET_KEY=${WEBAPP_SECRET_KEY}
       - BOT_TOKEN=${BOT_TOKEN}
       - BOT_USERNAME=${BOT_USERNAME:-The_Pred_Bot}
