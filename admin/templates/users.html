@@ -256,40 +256,63 @@ function closeViewModal() {
 }
 
 // Handle edit form submission
-document.getElementById('edit-user-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
+document.addEventListener('DOMContentLoaded', () => {
+    const editForm = document.getElementById('edit-user-form');
+    if (editForm) {
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            console.log('Edit form submitted');
 
-    const userId = document.getElementById('edit-user-id').value;
-    const predBalance = parseFloat(document.getElementById('edit-pred-balance').value);
-    const tonBalance = parseFloat(document.getElementById('edit-ton-balance').value);
-    const rank = document.getElementById('edit-rank').value;
+            const userId = document.getElementById('edit-user-id').value;
+            const predBalance = parseFloat(document.getElementById('edit-pred-balance').value);
+            const tonBalance = parseFloat(document.getElementById('edit-ton-balance').value);
+            const rank = document.getElementById('edit-rank').value;
 
-    try {
-        // Update balance
-        const balanceResponse = await fetch(`${API_URL}/admin/users/${userId}/balance`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                pred_balance: predBalance,
-                ton_balance: tonBalance
-            })
+            console.log('Updating user:', { userId, predBalance, tonBalance, rank });
+
+            try {
+                // Update balance
+                console.log('Sending balance update to:', `${API_URL}/admin/users/${userId}/balance`);
+                const balanceResponse = await fetch(`${API_URL}/admin/users/${userId}/balance`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pred_balance: predBalance,
+                        ton_balance: tonBalance
+                    })
+                });
+
+                console.log('Balance response status:', balanceResponse.status);
+
+                if (!balanceResponse.ok) {
+                    const errorText = await balanceResponse.text();
+                    console.error('Balance update error:', errorText);
+                    throw new Error('Failed to update balance: ' + errorText);
+                }
+
+                // Update rank
+                console.log('Sending rank update to:', `${API_URL}/admin/users/${userId}/rank?rank=${rank}`);
+                const rankResponse = await fetch(`${API_URL}/admin/users/${userId}/rank?rank=${rank}`, {
+                    method: 'PUT'
+                });
+
+                console.log('Rank response status:', rankResponse.status);
+
+                if (!rankResponse.ok) {
+                    const errorText = await rankResponse.text();
+                    console.error('Rank update error:', errorText);
+                    throw new Error('Failed to update rank: ' + errorText);
+                }
+
+                console.log('User updated successfully');
+                showToast('User updated successfully', 'success');
+                closeEditModal();
+                loadUsers();
+            } catch (error) {
+                console.error('Error updating user:', error);
+                showToast('Failed to update user: ' + error.message, 'error');
+            }
         });
-
-        if (!balanceResponse.ok) throw new Error('Failed to update balance');
-
-        // Update rank
-        const rankResponse = await fetch(`${API_URL}/admin/users/${userId}/rank?rank=${rank}`, {
-            method: 'PUT'
-        });
-
-        if (!rankResponse.ok) throw new Error('Failed to update rank');
-
-        showToast('User updated successfully', 'success');
-        closeEditModal();
-        loadUsers();
-    } catch (error) {
-        console.error('Error updating user:', error);
-        showToast('Failed to update user', 'error');
     }
 });
 

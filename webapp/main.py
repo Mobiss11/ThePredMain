@@ -17,6 +17,14 @@ app.config['DEV_MODE'] = os.getenv('DEV_MODE', 'true').lower() == 'true'
 app.config['BOT_TOKEN'] = os.getenv('BOT_TOKEN', '')
 app.config['BOT_USERNAME'] = os.getenv('BOT_USERNAME', 'The_Pred_Bot')
 
+# Log configuration on startup
+print("=" * 50)
+print("WEBAPP CONFIGURATION:")
+print(f"DEV_MODE: {app.config['DEV_MODE']} (from env: {os.getenv('DEV_MODE')})")
+print(f"API_URL: {app.config['API_URL']}")
+print(f"BOT_USERNAME: {app.config['BOT_USERNAME']}")
+print("=" * 50)
+
 # Configure API client
 api_client.base_url = app.config['API_URL']
 
@@ -70,16 +78,20 @@ def auth_required(f):
     async def decorated_function(*args, **kwargs):
         # Check if user is authenticated
         user_id = session.get('user_id')
+        print(f"[auth_required] DEV_MODE: {app.config['DEV_MODE']}, user_id: {user_id}")
 
         if not user_id:
             # Not authenticated - redirect based on mode
             if app.config['DEV_MODE']:
+                print("[auth_required] Redirecting to dev_login")
                 return redirect(url_for('dev_login'))
             else:
                 # Production mode - redirect to Telegram bot
+                print("[auth_required] Production mode, showing redirect_to_telegram")
                 bot_username = app.config['BOT_USERNAME']
                 return await render_template('redirect_to_telegram.html', bot_username=bot_username)
 
+        print(f"[auth_required] User authenticated: {user_id}")
         return await f(*args, **kwargs)
     return decorated_function
 
@@ -87,15 +99,20 @@ def auth_required(f):
 @app.route('/')
 async def index():
     """Main page - Auto-login from Telegram or redirect"""
+    print(f"[/] DEV_MODE: {app.config['DEV_MODE']}, Session user_id: {session.get('user_id')}")
+
     # Check if already authenticated
     if session.get('user_id'):
+        print("[/] User authenticated, redirecting to markets")
         return redirect(url_for('markets'))
 
     # Dev mode - redirect to dev login
     if app.config['DEV_MODE']:
+        print("[/] DEV_MODE is ON, redirecting to dev_login")
         return redirect(url_for('dev_login'))
 
     # Production mode - try to get Telegram WebApp data from URL
+    print("[/] Production mode, showing auth.html")
     return await render_template('auth.html', bot_username=app.config['BOT_USERNAME'])
 
 
@@ -148,7 +165,10 @@ async def auth_telegram():
 @app.route('/dev/login', methods=['GET', 'POST'])
 async def dev_login():
     """Dev mode login page"""
+    print(f"[/dev/login] DEV_MODE: {app.config['DEV_MODE']}, method: {request.method}")
+
     if not app.config['DEV_MODE']:
+        print("[/dev/login] Dev mode is disabled!")
         return "Dev mode is disabled", 403
 
     if request.method == 'POST':
@@ -157,8 +177,10 @@ async def dev_login():
         session['user_id'] = user_id
         session['username'] = form.get('username', 'DevUser')
         session['telegram_id'] = form.get('telegram_id', '123456')
+        print(f"[/dev/login] User logged in: {user_id}, redirecting to markets")
         return redirect(url_for('markets'))
 
+    print("[/dev/login] Showing dev_login.html")
     return await render_template('dev_login.html')
 
 
