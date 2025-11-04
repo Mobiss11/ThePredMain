@@ -101,27 +101,51 @@ let currentUsers = [];
 
 async function loadUsers() {
     const tbody = document.getElementById('users-tbody');
-    const response = await fetch(`${API_URL}/admin/users?limit=100`);
-    currentUsers = await response.json();
-    tbody.innerHTML = currentUsers.map(u => `
-        <tr class="border-t border-gray-800 hover:bg-dark-700">
-            <td class="px-6 py-4">#${u.id}</td>
-            <td class="px-6 py-4">${u.username || u.first_name || 'N/A'}</td>
-            <td class="px-6 py-4">${formatNumber(u.pred_balance)}</td>
-            <td class="px-6 py-4">${formatNumber(u.ton_balance)}</td>
-            <td class="px-6 py-4">${u.total_bets}</td>
-            <td class="px-6 py-4"><span class="px-2 py-1 bg-yellow-600 rounded text-xs">${u.rank}</span></td>
-            <td class="px-6 py-4 text-sm text-gray-400">${formatDate(u.created_at)}</td>
-            <td class="px-6 py-4">
-                <button onclick="editUser(${u.id})" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm mr-2">
-                    Редактировать
-                </button>
-                <button onclick="viewUser(${u.id})" class="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-sm">
-                    Просмотр
-                </button>
-            </td>
-        </tr>
-    `).join('');
+    tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-gray-400">Loading...</td></tr>';
+
+    try {
+        console.log('Loading users from:', `${API_URL}/admin/users?limit=100`);
+        const response = await fetch(`${API_URL}/admin/users?limit=100`);
+        console.log('Users response status:', response.status);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Failed to load users:', errorText);
+            tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-red-400">Error loading users: ' + errorText + '</td></tr>';
+            return;
+        }
+
+        currentUsers = await response.json();
+        console.log('Loaded users:', currentUsers.length);
+
+        if (currentUsers.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-gray-400">No users found</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = currentUsers.map(u => `
+            <tr class="border-t border-gray-800 hover:bg-dark-700">
+                <td class="px-6 py-4">#${u.id}</td>
+                <td class="px-6 py-4">${u.username || u.first_name || 'N/A'}</td>
+                <td class="px-6 py-4">${formatNumber(u.pred_balance)}</td>
+                <td class="px-6 py-4">${formatNumber(u.ton_balance)}</td>
+                <td class="px-6 py-4">${u.total_bets}</td>
+                <td class="px-6 py-4"><span class="px-2 py-1 bg-yellow-600 rounded text-xs">${u.rank}</span></td>
+                <td class="px-6 py-4 text-sm text-gray-400">${formatDate(u.created_at)}</td>
+                <td class="px-6 py-4">
+                    <button onclick="editUser(${u.id})" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm mr-2">
+                        Редактировать
+                    </button>
+                    <button onclick="viewUser(${u.id})" class="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-sm">
+                        Просмотр
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading users:', error);
+        tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-red-400">Error: ' + error.message + '</td></tr>';
+    }
 }
 
 function editUser(id) {

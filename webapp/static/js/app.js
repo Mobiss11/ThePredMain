@@ -12,14 +12,14 @@ window.userProfile = null;
 // Load user profile
 async function loadUserProfile() {
     try {
-        console.log('Loading user profile...');
+        console.log('Loading user profile from:', `${API_URL}/profile`);
         const response = await fetch(`${API_URL}/profile`);
-        console.log('Profile response:', response.status);
+        console.log('Profile response status:', response.status);
 
         if (response.ok) {
             userProfile = await response.json();
             window.userProfile = userProfile;
-            console.log('User profile loaded:', userProfile);
+            console.log('User profile loaded successfully:', userProfile);
 
             // Update balance
             userBalance.pred = userProfile.pred_balance;
@@ -28,16 +28,19 @@ async function loadUserProfile() {
             // Update balance displays
             const predBalance = document.getElementById('pred-balance');
             if (predBalance) {
+                console.log('Updating pred-balance to:', userProfile.pred_balance);
                 predBalance.innerText = formatNumber(userProfile.pred_balance);
             }
 
             const predBalanceDisplay = document.getElementById('pred-balance-display');
             if (predBalanceDisplay) {
+                console.log('Updating pred-balance-display to:', userProfile.pred_balance);
                 predBalanceDisplay.innerText = formatNumber(userProfile.pred_balance);
             }
 
             const tonBalanceDisplay = document.getElementById('ton-balance-display');
             if (tonBalanceDisplay) {
+                console.log('Updating ton-balance-display to:', userProfile.ton_balance);
                 tonBalanceDisplay.innerText = formatNumber(userProfile.ton_balance);
             }
 
@@ -70,10 +73,13 @@ async function loadUserProfile() {
             return userProfile;
         } else {
             const errorData = await response.text();
-            console.error('Failed to load profile:', response.status, errorData);
+            console.error('Failed to load profile - Status:', response.status);
+            console.error('Failed to load profile - Response:', errorData);
+            alert('Ошибка загрузки профиля: ' + errorData);
         }
     } catch (error) {
         console.error('Failed to load profile (exception):', error);
+        alert('Ошибка загрузки профиля: ' + error.message);
     }
     return null;
 }

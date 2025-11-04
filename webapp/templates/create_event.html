@@ -156,67 +156,111 @@ function previewEventPhoto(event) {
 
 // Submit create event form
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('Create event page loaded');
+    console.log('window.loadUserProfile exists?', typeof window.loadUserProfile);
+
     // Ensure user profile is loaded
     if (!window.userProfile) {
-        await window.loadUserProfile();
+        console.log('Loading user profile on page load...');
+        if (typeof window.loadUserProfile === 'function') {
+            await window.loadUserProfile();
+        } else {
+            console.error('window.loadUserProfile is not a function!');
+        }
+    } else {
+        console.log('User profile already loaded:', window.userProfile);
     }
 
     const createEventForm = document.getElementById('create-event-form');
+    console.log('Create event form found:', !!createEventForm);
+
     if (createEventForm) {
         createEventForm.addEventListener('submit', async (e) => {
+            console.log('Form submit triggered');
             e.preventDefault();
+            console.log('Default prevented');
+
             window.tgHaptic?.light();
 
             // Load user profile if not loaded
             if (!window.userProfile) {
-                await window.loadUserProfile();
+                console.log('User profile not loaded, loading now...');
+                if (typeof window.loadUserProfile === 'function') {
+                    await window.loadUserProfile();
+                }
             }
+
+            console.log('Current user profile:', window.userProfile);
 
             // Check if user is loaded
             if (!window.userProfile || !window.userProfile.id) {
+                console.error('User profile not loaded or missing ID');
                 window.tgHaptic?.error();
-                window.showTgAlert('Ошибка: пользователь не найден. Попробуйте обновить страницу.');
+                alert('Ошибка: пользователь не найден. Попробуйте обновить страницу.');
                 return;
             }
 
+            console.log('Creating FormData...');
             const formData = new FormData();
             formData.append('user_id', window.userProfile.id);
 
             const photoFile = document.getElementById('event-photo').files[0];
             if (photoFile) {
+                console.log('Adding photo:', photoFile.name);
                 formData.append('photo', photoFile);
             }
 
-            formData.append('title', document.getElementById('event-question').value);
-            formData.append('description', document.getElementById('event-description').value);
-            formData.append('category', document.getElementById('event-category').value);
-            formData.append('resolve_date', document.getElementById('event-end-date').value);
+            const title = document.getElementById('event-question').value;
+            const description = document.getElementById('event-description').value;
+            const category = document.getElementById('event-category').value;
+            const resolveDate = document.getElementById('event-end-date').value;
+
+            console.log('Form values:', { title, description, category, resolveDate });
+
+            formData.append('title', title);
+            formData.append('description', description);
+            formData.append('category', category);
+            formData.append('resolve_date', resolveDate);
 
             try {
+                console.log('Sending request to:', `${API_URL}/markets/create-event`);
                 const response = await fetch(`${API_URL}/markets/create-event`, {
                     method: 'POST',
                     body: formData
                 });
 
+                console.log('Response status:', response.status);
+
                 if (response.ok) {
+                    console.log('Event created successfully!');
                     window.tgHaptic?.success();
                     // Show success modal
                     document.getElementById('success-modal').style.display = 'flex';
                 } else {
-                    const error = await response.json();
+                    const errorText = await response.text();
+                    console.error('Error creating event:', errorText);
+                    let errorMessage;
+                    try {
+                        const error = JSON.parse(errorText);
+                        errorMessage = error.error || error.detail || 'Ошибка создания события';
+                    } catch {
+                        errorMessage = errorText || 'Ошибка создания события';
+                    }
                     window.tgHaptic?.error();
                     // Show error modal
-                    document.getElementById('error-message').innerText = error.error || error.detail || 'Ошибка создания события';
+                    document.getElementById('error-message').innerText = errorMessage;
                     document.getElementById('error-modal').style.display = 'flex';
                 }
             } catch (error) {
                 console.error('Create event error:', error);
                 window.tgHaptic?.error();
                 // Show error modal
-                document.getElementById('error-message').innerText = 'Ошибка сети. Попробуйте снова.';
+                document.getElementById('error-message').innerText = 'Ошибка сети: ' + error.message;
                 document.getElementById('error-modal').style.display = 'flex';
             }
         });
+    } else {
+        console.error('Create event form not found in DOM!');
     }
 });
 
