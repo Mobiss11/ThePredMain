@@ -94,12 +94,17 @@ function formatNumber(num) {
     if (num === null || num === undefined) {
         return '0.00';
     }
-    if (num >= 1000000) {
-        return (num / 1000000).toFixed(1) + 'M';
-    } else if (num >= 1000) {
-        return (num / 1000).toFixed(1) + 'K';
+    // Convert to number if it's a string
+    const n = typeof num === 'string' ? parseFloat(num) : num;
+    if (isNaN(n)) {
+        return '0.00';
     }
-    return parseFloat(num).toFixed(2);
+    if (n >= 1000000) {
+        return (n / 1000000).toFixed(1) + 'M';
+    } else if (n >= 1000) {
+        return (n / 1000).toFixed(1) + 'K';
+    }
+    return n.toFixed(2);
 }
 
 // Place bet
