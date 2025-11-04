@@ -136,13 +136,11 @@
 
     <div class="glass rounded-xl p-4 mb-4">
         <div class="text-gray-400 text-xs mb-2">Ваша Реферальная Ссылка</div>
-        <div class="flex items-center space-x-2">
-            <input type="text" readonly value="https://t.me/ThePredBot?start=abc123"
-                   class="flex-1 bg-transparent text-sm focus:outline-none">
-            <button onclick="copyReferralLink()" class="gold-gradient px-4 py-2 rounded-lg font-bold text-black text-sm">
-                Копировать
-            </button>
-        </div>
+        <input type="text" readonly value="https://t.me/ThePredBot?start=abc123" id="referral-link"
+               class="w-full bg-transparent text-sm focus:outline-none mb-3 p-2 rounded border border-gray-700">
+        <button onclick="copyReferralLink()" class="w-full gold-gradient px-4 py-2 rounded-lg font-bold text-black text-sm">
+            📋 Копировать Ссылку
+        </button>
     </div>
 
     <div class="grid grid-cols-2 gap-4">
@@ -266,21 +264,17 @@ async function loadProfile() {
                 rankBadge.innerHTML = `${rankIcons[profile.rank] || '🏆'} ${rankNames[profile.rank] || profile.rank.toUpperCase()} РАНГ`;
             }
 
-            // Update global rank (show only if available)
-            const globalRank = document.getElementById('user-global-rank');
-            if (globalRank) {
-                if (profile.global_rank) {
-                    globalRank.innerText = `#${profile.global_rank} в мире`;
-                } else {
-                    globalRank.innerText = '';
-                }
-            }
+            // Load and update global rank from leaderboard
+            loadUserRank();
 
             // Update referral link
-            const referralInput = document.querySelector('input[readonly]');
-            if (referralInput && profile.referral_code) {
-                referralInput.value = `https://t.me/ThePredBot?start=${profile.referral_code}`;
+            const referralInput = document.getElementById('referral-link');
+            if (referralInput && profile.telegram_id) {
+                referralInput.value = `https://t.me/The_Pred_Bot?start=${profile.telegram_id}`;
             }
+
+            // Update rank progress section
+            updateRankProgress(profile.rank, profile.total_bets || 0);
         }
     } catch (error) {
         console.error('Failed to load profile:', error);
@@ -344,15 +338,162 @@ async function loadBetHistory() {
     }
 }
 
+// Load user's rank in leaderboard
+async function loadUserRank() {
+    try {
+        const response = await fetch('/api/leaderboard/rank');
+        if (response.ok) {
+            const rankData = await response.json();
+            const globalRank = document.getElementById('user-global-rank');
+            if (globalRank && rankData.rank) {
+                globalRank.innerText = `🏆 #${rankData.rank} в мире`;
+            }
+        }
+    } catch (error) {
+        console.error('Failed to load user rank:', error);
+    }
+}
+
+// Update rank progress section dynamically
+function updateRankProgress(currentRank, totalBets) {
+    const ranks = [
+        { name: 'Bronze', icon: '🥉', min: 0, max: 100, text: 'Бронза' },
+        { name: 'Silver', icon: '🥈', min: 100, max: 500, text: 'Серебро' },
+        { name: 'Gold', icon: '🥇', min: 500, max: 2000, text: 'Золото' },
+        { name: 'Diamond', icon: '💎', min: 2000, max: 10000, text: 'Алмаз' },
+        { name: 'Legend', icon: '🌟', min: 10000, max: Infinity, text: 'Легенда' }
+    ];
+
+    // Find current rank index
+    const currentRankIndex = ranks.findIndex(r => r.name === currentRank);
+    if (currentRankIndex === -1) return;
+
+    const currentRankData = ranks[currentRankIndex];
+    const nextRankData = ranks[currentRankIndex + 1];
+
+    // Update all rank cards
+    const rankProgressSection = document.querySelector('.glass.rounded-2xl.p-6.mb-6:nth-of-type(3) .space-y-3');
+    if (!rankProgressSection) return;
+
+    rankProgressSection.innerHTML = ranks.map((rank, index) => {
+        const isCurrent = rank.name === currentRank;
+        const isPassed = index < currentRankIndex;
+        const isNext = index === currentRankIndex + 1;
+
+        let cardClass = 'glass rounded-xl p-4';
+        if (isPassed) cardClass += ' opacity-50';
+        if (isCurrent) cardClass += ' border-2 border-yellow-400';
+
+        let content = `
+            <div class="flex items-center justify-between mb-2">
+                <span class="font-bold ${isCurrent ? 'text-yellow-400' : ''}">${rank.icon} ${rank.text}</span>
+                ${isCurrent ? '<span class="text-sm text-green-400">ТЕКУЩИЙ</span>' : ''}
+                ${isPassed ? '<span class="text-sm text-gray-500">✓ ПРОЙДЕН</span>' : ''}
+                ${!isCurrent && !isPassed ? `<span class="text-sm text-gray-400">${rank.min}${rank.max === Infinity ? '+' : `-${rank.max}`} прогнозов</span>` : ''}
+            </div>
+        `;
+
+        if (isCurrent && nextRankData) {
+            const progress = ((totalBets - rank.min) / (rank.max - rank.min)) * 100;
+            const remaining = rank.max - totalBets;
+            content += `
+                <div class="w-full bg-gray-800 rounded-full h-2 mb-2">
+                    <div class="gold-gradient h-2 rounded-full" style="width: ${Math.min(progress, 100)}%"></div>
+                </div>
+                <div class="text-xs text-gray-400">${totalBets} / ${rank.max} прогнозов (${remaining} до ${nextRankData.text})</div>
+            `;
+        }
+
+        return `<div class="${cardClass}">${content}</div>`;
+    }).join('');
+}
+
+// Load user's markets (created + with bets)
+async function loadUserMarkets() {
+    try {
+        // Load bet history (markets where user placed bets)
+        const betsResponse = await fetch('/api/bets/history');
+        const userMarkets = new Map(); // Using Map to avoid duplicates
+
+        if (betsResponse.ok) {
+            const bets = await betsResponse.json();
+
+            bets.forEach(bet => {
+                if (!userMarkets.has(bet.market_id)) {
+                    userMarkets.set(bet.market_id, {
+                        id: bet.market_id,
+                        title: bet.market_title || `Событие #${bet.market_id}`,
+                        status: bet.status,
+                        amount: bet.amount,
+                        position: bet.position,
+                        currency: bet.currency,
+                        payout: bet.payout,
+                        potential_win: bet.potential_win,
+                        type: 'bet'
+                    });
+                }
+            });
+        }
+
+        // Render markets
+        if (userMarkets.size > 0) {
+            const recentBetsContainer = document.querySelector('.space-y-3');
+
+            const statusColors = {
+                'WON': 'green-gradient',
+                'LOST': 'red-gradient',
+                'PENDING': 'glass'
+            };
+
+            const statusTextColors = {
+                'WON': 'text-white',
+                'LOST': 'text-white',
+                'PENDING': 'text-yellow-400'
+            };
+
+            const statusTranslations = {
+                'WON': 'ВЫИГРЫШ',
+                'LOST': 'ПРОИГРЫШ',
+                'PENDING': 'ОЖИДАНИЕ'
+            };
+
+            recentBetsContainer.innerHTML = Array.from(userMarkets.values()).slice(0, 10).map(market => {
+                const statusClass = statusColors[market.status] || 'glass';
+                const statusTextClass = statusTextColors[market.status] || 'text-white';
+                const positionText = market.position === 'YES' ? 'ДА' : 'НЕТ';
+
+                return `
+                    <div class="glass rounded-xl p-4">
+                        <div class="flex items-start justify-between mb-2">
+                            <div class="flex-1">
+                                <div class="font-medium mb-1">${market.title}</div>
+                                <div class="text-xs text-gray-400">Прогноз ${positionText} • ${market.amount} ${market.currency}</div>
+                            </div>
+                            <span class="${statusClass} px-3 py-1 rounded-full text-xs font-bold ${statusTextClass}">
+                                ${statusTranslations[market.status] || market.status}
+                            </span>
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            ${market.status === 'WON' ? `+${market.payout} ${market.currency}` : market.status === 'LOST' ? `-${market.amount} ${market.currency}` : `Потенциал: +${market.potential_win} ${market.currency}`}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    } catch (error) {
+        console.error('Failed to load user markets:', error);
+    }
+}
+
 function copyReferralLink() {
-    const input = document.querySelector('input[readonly]');
+    const input = document.getElementById('referral-link');
     window.copyToClipboard(input.value);
 }
 
 // Load data on page load
 document.addEventListener('DOMContentLoaded', () => {
     loadProfile();
-    loadBetHistory();
+    loadUserMarkets();
 });
 </script>
 {% endblock %}
