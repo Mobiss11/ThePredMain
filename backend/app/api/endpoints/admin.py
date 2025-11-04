@@ -585,6 +585,36 @@ async def get_pending_markets(
     return [MarketManagementItem.from_orm(market) for market in markets]
 
 
+@router.get("/markets/approved", response_model=List[MarketManagementItem])
+async def get_approved_markets(
+    db: AsyncSession = Depends(get_db)
+):
+    """Get all approved markets"""
+    query = select(Market).where(
+        Market.moderation_status == ModerationStatus.APPROVED
+    ).order_by(desc(Market.created_at))
+
+    result = await db.execute(query)
+    markets = result.scalars().all()
+
+    return [MarketManagementItem.from_orm(market) for market in markets]
+
+
+@router.get("/markets/cancelled", response_model=List[MarketManagementItem])
+async def get_cancelled_markets(
+    db: AsyncSession = Depends(get_db)
+):
+    """Get all cancelled markets"""
+    query = select(Market).where(
+        Market.status == MarketStatus.CANCELLED
+    ).order_by(desc(Market.created_at))
+
+    result = await db.execute(query)
+    markets = result.scalars().all()
+
+    return [MarketManagementItem.from_orm(market) for market in markets]
+
+
 @router.put("/markets/{market_id}/moderate")
 async def moderate_market(
     market_id: int,

@@ -142,14 +142,14 @@ async def api_admin_markets():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/admin/markets/<int:market_id>/resolve', methods=['POST'])
+@app.route('/admin/markets/<int:market_id>/resolve', methods=['PUT'])
 @login_required
 async def api_admin_resolve_market(market_id):
     """Proxy market resolve request to backend"""
     try:
         data = await request.get_json()
         async with aiohttp.ClientSession() as session_http:
-            async with session_http.post(
+            async with session_http.put(
                 f"{app.config['API_URL']}/admin/markets/{market_id}/resolve",
                 json=data
             ) as response:
@@ -224,6 +224,38 @@ async def api_admin_pending_markets():
                 return jsonify(result)
     except Exception as e:
         print(f"Error fetching pending markets: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/admin/markets/approved', methods=['GET'])
+@login_required
+async def api_admin_approved_markets():
+    """Proxy approved markets request to backend"""
+    try:
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.get(
+                f"{app.config['API_URL']}/admin/markets/approved"
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching approved markets: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/admin/markets/cancelled', methods=['GET'])
+@login_required
+async def api_admin_cancelled_markets():
+    """Proxy cancelled markets request to backend"""
+    try:
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.get(
+                f"{app.config['API_URL']}/admin/markets/cancelled"
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching cancelled markets: {e}")
         return jsonify({"error": str(e)}), 500
 
 

@@ -9,10 +9,13 @@
     <!-- Tabs -->
     <div class="flex space-x-4 mb-6 border-b border-gray-800">
         <button onclick="switchTab('all')" id="tab-all" class="px-4 py-2 font-medium border-b-2 border-yellow-500 text-yellow-500">
-            All Markets
+            Approved Markets
         </button>
         <button onclick="switchTab('pending')" id="tab-pending" class="px-4 py-2 font-medium border-b-2 border-transparent text-gray-400 hover:text-white">
             Pending Moderation <span id="pending-count" class="ml-2 bg-red-600 text-white px-2 py-1 rounded-full text-xs">0</span>
+        </button>
+        <button onclick="switchTab('cancelled')" id="tab-cancelled" class="px-4 py-2 font-medium border-b-2 border-transparent text-gray-400 hover:text-white">
+            Cancelled <span id="cancelled-count" class="ml-2 bg-gray-600 text-white px-2 py-1 rounded-full text-xs">0</span>
         </button>
     </div>
 
@@ -49,14 +52,26 @@ async function loadMarkets(tab = 'all') {
     tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">Loading...</td></tr>';
 
     try {
-        const url = tab === 'pending' ? `${API_URL}/admin/markets/pending` : `${API_URL}/admin/markets?limit=100`;
+        let url;
+        if (tab === 'pending') {
+            url = `${API_URL}/admin/markets/pending`;
+        } else if (tab === 'cancelled') {
+            url = `${API_URL}/admin/markets/cancelled`;
+        } else {
+            // 'all' tab - show only APPROVED markets
+            url = `${API_URL}/admin/markets/approved`;
+        }
+
         console.log('Loading markets from:', url);
         const response = await fetch(url);
         const markets = await response.json();
         console.log('Markets loaded:', markets);
 
+        // Update counts
         if (tab === 'pending') {
             document.getElementById('pending-count').textContent = markets.length;
+        } else if (tab === 'cancelled') {
+            document.getElementById('cancelled-count').textContent = markets.length;
         }
 
         if (markets.length === 0) {
@@ -109,12 +124,15 @@ async function loadMarkets(tab = 'all') {
 
 function switchTab(tab) {
     currentTab = tab;
-    document.getElementById('tab-all').className = tab === 'all'
-        ? 'px-4 py-2 font-medium border-b-2 border-yellow-500 text-yellow-500'
-        : 'px-4 py-2 font-medium border-b-2 border-transparent text-gray-400 hover:text-white';
-    document.getElementById('tab-pending').className = tab === 'pending'
-        ? 'px-4 py-2 font-medium border-b-2 border-yellow-500 text-yellow-500'
-        : 'px-4 py-2 font-medium border-b-2 border-transparent text-gray-400 hover:text-white';
+
+    // Update tab styles
+    const activeClass = 'px-4 py-2 font-medium border-b-2 border-yellow-500 text-yellow-500';
+    const inactiveClass = 'px-4 py-2 font-medium border-b-2 border-transparent text-gray-400 hover:text-white';
+
+    document.getElementById('tab-all').className = tab === 'all' ? activeClass : inactiveClass;
+    document.getElementById('tab-pending').className = tab === 'pending' ? activeClass : inactiveClass;
+    document.getElementById('tab-cancelled').className = tab === 'cancelled' ? activeClass : inactiveClass;
+
     loadMarkets(tab);
 }
 
@@ -200,13 +218,20 @@ function getModerationColor(status) {
 // Load markets on page load
 loadMarkets('all');
 
-// Refresh pending count every 30 seconds
+// Refresh counts every 30 seconds
 setInterval(() => {
     if (currentTab !== 'pending') {
         fetch(`${API_URL}/admin/markets/pending`)
             .then(r => r.json())
             .then(markets => {
                 document.getElementById('pending-count').textContent = markets.length;
+            });
+    }
+    if (currentTab !== 'cancelled') {
+        fetch(`${API_URL}/admin/markets/cancelled`)
+            .then(r => r.json())
+            .then(markets => {
+                document.getElementById('cancelled-count').textContent = markets.length;
             });
     }
 }, 30000);
