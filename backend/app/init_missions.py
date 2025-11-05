@@ -2,7 +2,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.mission import Mission
-from app.core.database import engine, async_session
+from app.core.database import engine, AsyncSessionLocal
 import asyncio
 
 
@@ -75,7 +75,7 @@ DEFAULT_MISSIONS = [
 
 async def init_default_missions():
     """Initialize default missions if they don't exist"""
-    async with async_session() as db:
+    async with AsyncSessionLocal() as db:
         try:
             # Check if missions already exist
             result = await db.execute(select(Mission))
