@@ -2,10 +2,10 @@ module.exports = {
   apps: [
     {
       name: 'backend',
-      script: 'uvicorn',
+      script: 'venv/bin/uvicorn',
       args: 'app.main:app --host 0.0.0.0 --port 8000',
-      cwd: '/root/ThePredMain/backend',
-      interpreter: '/root/ThePredMain/backend/venv/bin/python3',
+      cwd: '/home/ThePredMain/backend',
+      interpreter: 'python3',
       instances: 1,
       autorestart: true,
       watch: false,
@@ -35,8 +35,8 @@ module.exports = {
     {
       name: 'webapp',
       script: 'main.py',
-      cwd: '/root/ThePredMain/webapp',
-      interpreter: '/root/ThePredMain/webapp/venv/bin/python3',
+      cwd: '/home/ThePredMain/webapp',
+      interpreter: 'venv/bin/python3',
       instances: 1,
       autorestart: true,
       watch: false,
@@ -56,8 +56,8 @@ module.exports = {
     {
       name: 'admin',
       script: 'main.py',
-      cwd: '/root/ThePredMain/admin',
-      interpreter: '/root/ThePredMain/admin/venv/bin/python3',
+      cwd: '/home/ThePredMain/admin',
+      interpreter: 'venv/bin/python3',
       instances: 1,
       autorestart: true,
       watch: false,
@@ -74,8 +74,8 @@ module.exports = {
     {
       name: 'bot',
       script: 'main.py',
-      cwd: '/root/ThePredMain/bot',
-      interpreter: '/root/ThePredMain/bot/venv/bin/python3',
+      cwd: '/home/ThePredMain/bot',
+      interpreter: 'venv/bin/python3',
       instances: 1,
       autorestart: true,
       watch: false,
@@ -90,8 +90,8 @@ module.exports = {
     {
       name: 'landing',
       script: 'main.py',
-      cwd: '/root/ThePredMain/landing',
-      interpreter: '/root/ThePredMain/landing/venv/bin/python3',
+      cwd: '/home/ThePredMain/landing',
+      interpreter: 'venv/bin/python3',
       instances: 1,
       autorestart: true,
       watch: false,
