@@ -58,13 +58,30 @@ function renderMarketCard(market, isPromoted = false) {
 
     const categoryIcon = categories[market.category] || '📊';
 
+    // Check if user has active bet on this market
+    const hasActiveBet = window.hasActiveBetOnMarket && window.hasActiveBetOnMarket(market.id);
+
     const promotedBadge = market.is_promoted === 'premium'
         ? '<span class="gold-gradient px-3 py-1 rounded-full text-xs font-bold text-black">🔥 ПРОДВИГАЕМЫЙ</span>'
         : market.is_promoted === 'basic'
         ? '<span class="glass px-3 py-1 rounded-full text-xs font-bold">⭐ ИЗБРАННЫЙ</span>'
         : '';
 
-    const cardClass = isPromoted ? 'glass card-shine rounded-2xl p-5 mb-6 border-2 border-yellow-400 market-card' : 'glass rounded-2xl p-4 market-card';
+    // Active bet badge
+    const activeBetBadge = hasActiveBet
+        ? '<span class="bg-blue-600 px-3 py-1 rounded-full text-xs font-bold">✓ ВАША СТАВКА</span>'
+        : '';
+
+    // Card styling with active bet highlight
+    let cardClass = isPromoted
+        ? 'glass card-shine rounded-2xl p-5 mb-6 border-2 border-yellow-400 market-card'
+        : 'glass rounded-2xl p-4 market-card';
+
+    if (hasActiveBet && !isPromoted) {
+        cardClass = 'glass rounded-2xl p-4 market-card border-2 border-blue-500';
+    } else if (hasActiveBet && isPromoted) {
+        cardClass = 'glass card-shine rounded-2xl p-5 mb-6 border-2 border-blue-500 market-card';
+    }
 
     // Format end date
     let endDateText = '';
@@ -95,7 +112,8 @@ function renderMarketCard(market, isPromoted = false) {
             <div class="flex items-start space-x-3 mb-3">
                 ${avatarHtml}
                 <div class="flex-1 min-w-0">
-                    <div class="flex items-center space-x-2 mb-1">
+                    <div class="flex items-center flex-wrap gap-2 mb-1">
+                        ${activeBetBadge}
                         ${promotedBadge}
                         <span class="glass px-2 py-0.5 rounded-full text-xs font-medium">${categoryIcon} ${market.category}</span>
                     </div>
@@ -170,6 +188,9 @@ async function loadAndRenderMarkets() {
         console.error('Failed to load and render markets:', error);
     }
 }
+
+// Reload markets function (called after placing bet)
+window.reloadMarkets = loadAndRenderMarkets;
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', () => {

@@ -134,21 +134,61 @@ async function placeBet(marketId, position, amount) {
         if (response.ok) {
             const bet = await response.json();
             window.tgHaptic?.success();
-            window.showTgAlert(`Bet placed! Potential win: ${bet.potential_win} PRED`);
+            window.showTgAlert(`✅ Ставка принята!\n💰 Потенциальный выигрыш: ${formatNumber(bet.potential_win)} PRED`);
+
+            // Reload user balance
             await loadUserBalance();
+
+            // Reload user's active bets
+            await loadUserActiveBets();
+
+            // Trigger markets reload if the function exists
+            if (typeof window.reloadMarkets === 'function') {
+                window.reloadMarkets();
+            }
+
             return true;
         } else {
             const error = await response.json();
             window.tgHaptic?.error();
-            window.showTgAlert(error.error || error.detail || 'Failed to place bet');
+            window.showTgAlert('❌ ' + (error.error || error.detail || 'Ошибка при размещении ставки'));
             return false;
         }
     } catch (error) {
         console.error('Bet error:', error);
         window.tgHaptic?.error();
-        window.showTgAlert('Network error. Please try again.');
+        window.showTgAlert('❌ Ошибка сети. Попробуйте снова.');
         return false;
     }
+}
+
+// Load user's active bets
+let userActiveBets = [];
+async function loadUserActiveBets() {
+    try {
+        // Wait for user profile to be loaded
+        if (!userProfile || !userProfile.id) {
+            console.log('User profile not loaded yet, skipping active bets load');
+            return [];
+        }
+
+        const response = await fetch(`${API_URL}/bets/active/${userProfile.id}`);
+        if (response.ok) {
+            userActiveBets = await response.json();
+            window.userActiveBets = userActiveBets;
+            console.log('Loaded active bets:', userActiveBets);
+            return userActiveBets;
+        }
+        return [];
+    } catch (error) {
+        console.error('Failed to load active bets:', error);
+        return [];
+    }
+}
+
+// Check if user has active bet on market
+function hasActiveBetOnMarket(marketId) {
+    return userActiveBets.some(bet => bet.market_id === marketId);
 }
 
 // Load markets
@@ -194,9 +234,10 @@ function copyToClipboard(text) {
 }
 
 // Add button click handlers
-document.addEventListener('DOMContentLoaded', () => {
-    // Load initial data
-    loadUserBalance();
+document.addEventListener('DOMContentLoaded', async () => {
+    // Load initial data (profile first, then bets)
+    await loadUserBalance();
+    await loadUserActiveBets();
 
     // Add haptic feedback to all buttons
     document.querySelectorAll('button, a').forEach(element => {
@@ -205,8 +246,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Refresh balance every 30 seconds
-    setInterval(loadUserBalance, 30000);
+    // Refresh balance and active bets every 30 seconds
+    setInterval(async () => {
+        await loadUserBalance();
+        await loadUserActiveBets();
+    }, 30000);
 });
 
 // Export functions
@@ -216,3 +260,5 @@ window.formatNumber = formatNumber;
 window.loadUserBalance = loadUserBalance;
 window.loadMarkets = loadMarkets;
 window.getMarket = getMarket;
+window.loadUserActiveBets = loadUserActiveBets;
+window.hasActiveBetOnMarket = hasActiveBetOnMarket;

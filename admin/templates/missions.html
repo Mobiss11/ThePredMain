@@ -8,7 +8,7 @@
 
     <!-- Action Buttons -->
     <div class="mb-6 flex items-center gap-4">
-        <button onclick="window.location.href='/admin/missions/create'" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium">
+        <button onclick="window.location.href='/missions/create'" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium">
             + Create Mission
         </button>
         <button onclick="initDefaultMissions()" class="px-6 py-3 bg-green-600 hover:bg-green-700 rounded-lg font-medium">
@@ -44,17 +44,28 @@
 {% block scripts %}
 <script>
 function getIconHtml(iconName) {
-    // Check if it's a default icon name or a URL
-    if (iconName && !iconName.startsWith('http') && !iconName.startsWith('/uploads')) {
-        // Default icon - use SVG from webapp
-        return `<img src="http://localhost:8001/static/icons/missions/${iconName}.svg" alt="icon" class="w-10 h-10 inline-block">`;
-    } else if (iconName) {
-        // Custom uploaded icon
-        return `<img src="${iconName}" alt="icon" class="w-10 h-10 rounded inline-block">`;
-    } else {
-        // Fallback emoji
-        return '<span class="text-2xl">🎯</span>';
+    // Map icon names to emojis
+    const iconEmojis = {
+        'first_bet': '🎯',
+        'beginner': '🌱',
+        'first_win': '🏆',
+        'win_streak': '🔥',
+        'active_trader': '📈',
+        'crypto_lover': '₿',
+        'referral': '👥',
+        'daily_login': '📅',
+        'expert': '💎',
+        'whale': '🐋'
+    };
+
+    // Check if it's a URL (S3 or external)
+    if (iconName && (iconName.startsWith('http') || iconName.startsWith('/'))) {
+        return `<img src="${iconName}" alt="icon" class="w-10 h-10 rounded inline-block object-cover">`;
     }
+
+    // Use emoji for icon name
+    const emoji = iconEmojis[iconName] || '🎯';
+    return `<span class="text-3xl">${emoji}</span>`;
 }
 
 async function loadMissions() {
@@ -130,7 +141,7 @@ function getRequirementText(requirements) {
 
 // Edit mission
 function editMission(missionId) {
-    window.location.href = `/admin/missions/edit/${missionId}`;
+    window.location.href = `/missions/edit/${missionId}`;
 }
 
 // Initialize default missions
