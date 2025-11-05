@@ -331,5 +331,37 @@ async def api_admin_cancel_market(market_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/admin/markets/generate-test', methods=['POST'])
+@login_required
+async def api_admin_generate_test_markets():
+    """Proxy generate test markets request to backend"""
+    try:
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.post(
+                f"{app.config['API_URL']}/admin/markets/generate-test"
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error generating test markets: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/admin/missions', methods=['GET'])
+@login_required
+async def api_admin_missions():
+    """Proxy missions request to backend"""
+    try:
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.get(
+                f"{app.config['API_URL']}/admin/missions"
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching missions: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8002)
