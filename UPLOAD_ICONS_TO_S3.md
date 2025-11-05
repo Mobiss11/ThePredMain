@@ -23,27 +23,28 @@ python3 upload_mission_icons_to_s3.py
 ## Шаг 3: Проверить загрузку
 
 После загрузки иконки будут доступны по URL:
-- `http://localhost:9000/thepred-events/missions/first_bet.svg`
-- `http://localhost:9000/thepred-events/missions/beginner.svg`
-- `http://localhost:9000/thepred-events/missions/first_win.svg`
-- `http://localhost:9000/thepred-events/missions/win_streak.svg`
-- `http://localhost:9000/thepred-events/missions/active_trader.svg`
-- `http://localhost:9000/thepred-events/missions/crypto_lover.svg`
-- `http://localhost:9000/thepred-events/missions/referral.svg`
-
-## Production
-
-На production сервере URL будут:
-- `http://YOUR_DOMAIN:9000/thepred-events/missions/*.svg`
-
-или если настроен публичный URL:
-- `https://s3.your-domain.com/thepred-events/missions/*.svg`
+- `https://thepred.store/thepred-events/missions/first_bet.svg`
+- `https://thepred.store/thepred-events/missions/beginner.svg`
+- `https://thepred.store/thepred-events/missions/first_win.svg`
+- `https://thepred.store/thepred-events/missions/win_streak.svg`
+- `https://thepred.store/thepred-events/missions/active_trader.svg`
+- `https://thepred.store/thepred-events/missions/crypto_lover.svg`
+- `https://thepred.store/thepred-events/missions/referral.svg`
 
 ## Настройка переменных окружения
 
-Убедитесь что в `.env` файлах (backend, webapp, admin) указаны правильные значения:
+Убедитесь что в `.env` файле указаны правильные значения:
 
 ```bash
-S3_PUBLIC_URL=http://localhost:9000  # или https://s3.your-domain.com
+# MinIO S3 Storage
+S3_ENDPOINT=http://minio:9000
+S3_ACCESS_KEY=admin
+S3_SECRET_KEY=Ivanbunin110818
 S3_BUCKET=thepred-events
+S3_PUBLIC_URL=https://thepred.store
 ```
+
+Эти переменные используются:
+- Backend (app/core/config.py) - для загрузки файлов
+- Webapp (main.py) - для отображения иконок
+- Admin (main.py) - для отображения иконок

@@ -42,11 +42,11 @@ class Settings(BaseSettings):
     SENTRY_DSN: Optional[str] = None
 
     # S3 Storage
-    S3_ENDPOINT: str = "http://localhost:9000"
-    S3_ACCESS_KEY: str = "minioadmin"
-    S3_SECRET_KEY: str = "minioadmin"
+    S3_ENDPOINT: str = "http://minio:9000"
+    S3_ACCESS_KEY: str = "admin"
+    S3_SECRET_KEY: str = "Ivanbunin110818"
     S3_BUCKET: str = "thepred-events"
-    S3_PUBLIC_URL: str = "http://localhost:9000"
+    S3_PUBLIC_URL: str = "https://thepred.store"
 
     @property
     def database_url(self) -> str:

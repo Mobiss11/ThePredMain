@@ -28,9 +28,14 @@ ICON_FILES = [
 
 async def upload_icons():
     """Upload mission icons to S3"""
+    print("="*60)
+    print("MISSION ICONS UPLOAD TO S3")
+    print("="*60)
     print(f"S3 Endpoint: {settings.S3_ENDPOINT}")
     print(f"S3 Bucket: {settings.S3_BUCKET}")
     print(f"S3 Public URL: {settings.S3_PUBLIC_URL}")
+    print(f"Access Key: {settings.S3_ACCESS_KEY}")
+    print("="*60)
     print()
 
     # Initialize bucket
