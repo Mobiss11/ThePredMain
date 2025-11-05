@@ -786,10 +786,11 @@ class MissionResponse(BaseModel):
     id: int
     title: str
     description: str
-    mission_type: str
-    requirement: int
-    reward_pred: int
-    reward_ton: Optional[Decimal]
+    icon: Optional[str] = None
+    type: str  # daily, weekly, special, achievement
+    requirements: dict  # {"bets_count": 3} or {"wins_count": 1}
+    reward_amount: Decimal
+    reward_currency: str  # PRED, TON
     is_active: bool
     created_at: datetime
 
@@ -800,10 +801,11 @@ class MissionResponse(BaseModel):
 class CreateMissionRequest(BaseModel):
     title: str
     description: str
-    mission_type: str  # daily_bet, weekly_win, etc
-    requirement: int
-    reward_pred: int
-    reward_ton: Optional[Decimal] = None
+    icon: Optional[str] = "first_bet"
+    type: str  # daily, weekly, special, achievement
+    requirements: dict  # {"bets_count": 3} or {"wins_count": 1}
+    reward_amount: Decimal
+    reward_currency: str = "PRED"
     is_active: bool = True
 
 
@@ -828,10 +830,11 @@ async def create_mission(
     new_mission = Mission(
         title=mission_data.title,
         description=mission_data.description,
-        mission_type=mission_data.mission_type,
-        requirement=mission_data.requirement,
-        reward_pred=mission_data.reward_pred,
-        reward_ton=mission_data.reward_ton,
+        icon=mission_data.icon,
+        type=mission_data.type,
+        requirements=mission_data.requirements,
+        reward_amount=mission_data.reward_amount,
+        reward_currency=mission_data.reward_currency,
         is_active=mission_data.is_active
     )
 
@@ -861,10 +864,11 @@ async def update_mission(
 
     mission.title = mission_data.title
     mission.description = mission_data.description
-    mission.mission_type = mission_data.mission_type
-    mission.requirement = mission_data.requirement
-    mission.reward_pred = mission_data.reward_pred
-    mission.reward_ton = mission_data.reward_ton
+    mission.icon = mission_data.icon
+    mission.type = mission_data.type
+    mission.requirements = mission_data.requirements
+    mission.reward_amount = mission_data.reward_amount
+    mission.reward_currency = mission_data.reward_currency
     mission.is_active = mission_data.is_active
 
     await db.commit()
