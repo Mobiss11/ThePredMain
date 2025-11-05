@@ -6,6 +6,16 @@
 <div class="max-w-7xl">
     <h1 class="text-3xl font-bold mb-8">Missions Management</h1>
 
+    <!-- Action Buttons -->
+    <div class="mb-6 flex items-center gap-4">
+        <button onclick="window.location.href='/admin/missions/create'" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium">
+            + Create Mission
+        </button>
+        <button onclick="initDefaultMissions()" class="px-6 py-3 bg-green-600 hover:bg-green-700 rounded-lg font-medium">
+            🎯 Init Default Missions (7)
+        </button>
+    </div>
+
     <!-- Missions Table -->
     <div class="bg-dark-800 rounded-lg overflow-hidden">
         <table class="w-full">
@@ -18,11 +28,12 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Reward</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Requirements</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Active</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Actions</th>
                 </tr>
             </thead>
             <tbody id="missions-tbody" class="divide-y divide-gray-800">
                 <tr>
-                    <td colspan="7" class="px-6 py-8 text-center text-gray-400">Loading...</td>
+                    <td colspan="8" class="px-6 py-8 text-center text-gray-400">Loading...</td>
                 </tr>
             </tbody>
         </table>
@@ -32,9 +43,23 @@
 
 {% block scripts %}
 <script>
+function getIconHtml(iconName) {
+    // Check if it's a default icon name or a URL
+    if (iconName && !iconName.startsWith('http') && !iconName.startsWith('/uploads')) {
+        // Default icon - use SVG from webapp
+        return `<img src="http://localhost:8001/static/icons/missions/${iconName}.svg" alt="icon" class="w-10 h-10 inline-block">`;
+    } else if (iconName) {
+        // Custom uploaded icon
+        return `<img src="${iconName}" alt="icon" class="w-10 h-10 rounded inline-block">`;
+    } else {
+        // Fallback emoji
+        return '<span class="text-2xl">🎯</span>';
+    }
+}
+
 async function loadMissions() {
     const tbody = document.getElementById('missions-tbody');
-    tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-gray-400">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-gray-400">Loading...</td></tr>';
 
     try {
         const response = await fetch(`${API_URL}/admin/missions`);
@@ -42,18 +67,19 @@ async function loadMissions() {
         console.log('Missions loaded:', missions);
 
         if (missions.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-gray-400">No missions found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-gray-400">No missions found</td></tr>';
             return;
         }
 
         tbody.innerHTML = missions.map(mission => {
             const requirements = JSON.stringify(mission.requirements);
             const requirementText = getRequirementText(mission.requirements);
+            const iconHtml = getIconHtml(mission.icon);
 
             return `
             <tr class="hover:bg-dark-700">
                 <td class="px-6 py-4 text-sm">#${mission.id}</td>
-                <td class="px-6 py-4 text-2xl">${mission.icon || '🎯'}</td>
+                <td class="px-6 py-4">${iconHtml}</td>
                 <td class="px-6 py-4">
                     <div class="text-sm font-medium">${mission.title}</div>
                     <div class="text-xs text-gray-400">${mission.description || ''}</div>
@@ -73,12 +99,17 @@ async function loadMissions() {
                         ${mission.is_active ? 'Active' : 'Inactive'}
                     </span>
                 </td>
+                <td class="px-6 py-4">
+                    <button onclick="editMission(${mission.id})" class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded">
+                        Edit
+                    </button>
+                </td>
             </tr>
             `;
         }).join('');
     } catch (error) {
         console.error('Failed to load missions:', error);
-        tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-red-400">Failed to load missions</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-red-400">Failed to load missions</td></tr>';
     }
 }
 
@@ -95,6 +126,39 @@ function getRequirementText(requirements) {
         return `${requirements.category_bets.count} bets in ${requirements.category_bets.category}`;
     }
     return JSON.stringify(requirements);
+}
+
+// Edit mission
+function editMission(missionId) {
+    window.location.href = `/admin/missions/edit/${missionId}`;
+}
+
+// Initialize default missions
+async function initDefaultMissions() {
+    if (!confirm('Create 7 default missions? This will only work if no missions exist yet.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/admin/missions/init-defaults`, {
+            method: 'POST'
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert(result.message);
+            if (result.created > 0) {
+                // Reload missions table
+                loadMissions();
+            }
+        } else {
+            alert(`Error: ${result.detail || 'Failed to initialize missions'}`);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to initialize missions. Check console for details.');
+    }
 }
 
 // Load missions on page load

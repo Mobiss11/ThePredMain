@@ -66,6 +66,29 @@ async def missions():
     return await render_template('missions.html')
 
 
+@app.route('/missions/create')
+@login_required
+async def create_mission():
+    return await render_template('mission_form.html', mission=None)
+
+
+@app.route('/missions/edit/<int:mission_id>')
+@login_required
+async def edit_mission(mission_id):
+    # Fetch mission from API
+    async with aiohttp.ClientSession() as session_http:
+        async with session_http.get(
+            f"{app.config['API_URL']}/admin/missions"
+        ) as response:
+            if response.status == 200:
+                missions = await response.json()
+                mission = next((m for m in missions if m['id'] == mission_id), None)
+                if mission:
+                    return await render_template('mission_form.html', mission=mission)
+
+    return "Mission not found", 404
+
+
 @app.route('/leaderboard')
 @login_required
 async def leaderboard():

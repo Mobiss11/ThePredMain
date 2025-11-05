@@ -1,0 +1,30 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gold_grad_1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#FFA500;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FF8C00;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="60" cy="60" r="55" fill="url(#gold_grad_1)" opacity="0.1"/>
+
+  <!-- Target circles -->
+  <circle cx="60" cy="60" r="45" stroke="url(#gold_grad_1)" stroke-width="3" fill="none" opacity="0.3"/>
+  <circle cx="60" cy="60" r="35" stroke="url(#gold_grad_1)" stroke-width="3" fill="none" opacity="0.5"/>
+  <circle cx="60" cy="60" r="25" stroke="url(#gold_grad_1)" stroke-width="3" fill="none" opacity="0.7"/>
+
+  <!-- Center dot -->
+  <circle cx="60" cy="60" r="8" fill="url(#gold_grad_1)" filter="url(#glow)"/>
+
+  <!-- Arrow -->
+  <path d="M 80 20 L 65 40 L 75 40 L 60 60 L 70 50 L 60 50 Z" fill="url(#gold_grad_1)" filter="url(#glow)"/>
+</svg>

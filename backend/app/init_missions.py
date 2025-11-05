@@ -14,7 +14,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"bets_count": 1},
-        "icon": "🎯"
+        "icon": "first_bet"
     },
     {
         "title": "Новичок",
@@ -23,7 +23,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"bets_count": 5},
-        "icon": "🌟"
+        "icon": "beginner"
     },
     {
         "title": "Первая Победа",
@@ -32,7 +32,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"wins_count": 1},
-        "icon": "🏆"
+        "icon": "first_win"
     },
     {
         "title": "Серия Побед",
@@ -41,7 +41,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"win_streak": 3},
-        "icon": "🔥"
+        "icon": "win_streak"
     },
     {
         "title": "Активный Трейдер",
@@ -50,7 +50,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"bets_count": 10},
-        "icon": "💼"
+        "icon": "active_trader"
     },
     {
         "title": "Любитель Крипты",
@@ -59,7 +59,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"category_bets": {"category": "Crypto", "count": 3}},
-        "icon": "₿"
+        "icon": "crypto_lover"
     },
     {
         "title": "Пригласи Друга",
@@ -68,7 +68,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"referrals_count": 1},
-        "icon": "🎁"
+        "icon": "referral"
     }
 ]
 

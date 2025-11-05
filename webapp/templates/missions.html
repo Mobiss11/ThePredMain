@@ -253,6 +253,20 @@ function getRequirementValue(requirements) {
 }
 
 // Render missions
+function getIconHtml(iconName) {
+    // Check if it's a default icon name or a URL
+    if (iconName && !iconName.startsWith('http') && !iconName.startsWith('/uploads')) {
+        // Default icon - use SVG
+        return `<img src="/static/icons/missions/${iconName}.svg" alt="icon" class="w-12 h-12">`;
+    } else if (iconName) {
+        // Custom uploaded icon
+        return `<img src="${iconName}" alt="icon" class="w-12 h-12 rounded-lg">`;
+    } else {
+        // Fallback emoji
+        return '<span class="text-4xl">🎯</span>';
+    }
+}
+
 function renderMissions(missions) {
     const dailyContainer = document.querySelector('.space-y-4.mb-6');
 
@@ -262,7 +276,7 @@ function renderMissions(missions) {
     }
 
     dailyContainer.innerHTML = missions.map(mission => {
-        const icon = mission.icon || '🎯';
+        const iconHtml = getIconHtml(mission.icon);
         const progress = mission.progress || 0;
         const required = getRequirementValue(mission.requirements);
         const progressPercent = Math.min((progress / required) * 100, 100);
@@ -273,10 +287,12 @@ function renderMissions(missions) {
             <div class="glass rounded-2xl p-5 ${isCompleted ? 'border-2 border-green-400' : ''}">
                 <div class="flex items-start justify-between mb-4">
                     <div class="flex-1">
-                        <div class="flex items-center space-x-2 mb-2">
-                            <span class="text-2xl">${icon}</span>
-                            <h3 class="text-lg font-bold">${mission.title}</h3>
-                            ${isClaimed ? '<span class="ml-2 text-xs bg-green-600 text-white px-2 py-1 rounded-full">✓</span>' : ''}
+                        <div class="flex items-center space-x-3 mb-2">
+                            ${iconHtml}
+                            <div>
+                                <h3 class="text-lg font-bold">${mission.title}</h3>
+                                ${isClaimed ? '<span class="text-xs bg-green-600 text-white px-2 py-1 rounded-full">✓ Получено</span>' : ''}
+                            </div>
                         </div>
                         <p class="text-gray-400 text-sm">${mission.description || ''}</p>
                     </div>

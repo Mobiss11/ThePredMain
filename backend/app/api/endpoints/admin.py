@@ -1008,3 +1008,259 @@ async def get_leaderboard(
         })
 
     return leaderboard
+
+
+# ============ Mission Management ============
+
+class CreateMissionRequest(BaseModel):
+    """Request model for creating a mission"""
+    title: str
+    description: Optional[str] = None
+    icon: str = "first_bet"  # Icon name or URL
+    reward_amount: Decimal
+    reward_currency: str = "PRED"
+    type: str = "achievement"  # daily, weekly, special, achievement
+    requirements: dict  # {"bets_count": 3} or {"wins_count": 1}
+    is_active: bool = True
+
+
+class UpdateMissionRequest(BaseModel):
+    """Request model for updating a mission"""
+    title: Optional[str] = None
+    description: Optional[str] = None
+    icon: Optional[str] = None
+    reward_amount: Optional[Decimal] = None
+    reward_currency: Optional[str] = None
+    type: Optional[str] = None
+    requirements: Optional[dict] = None
+    is_active: Optional[bool] = None
+
+
+@router.post("/missions", status_code=201)
+async def create_mission(
+    mission_data: CreateMissionRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Create a new mission"""
+    try:
+        mission = Mission(
+            title=mission_data.title,
+            description=mission_data.description,
+            icon=mission_data.icon,
+            reward_amount=mission_data.reward_amount,
+            reward_currency=mission_data.reward_currency,
+            type=mission_data.type,
+            requirements=mission_data.requirements,
+            is_active=mission_data.is_active
+        )
+
+        db.add(mission)
+        await db.commit()
+        await db.refresh(mission)
+
+        return {
+            "id": mission.id,
+            "title": mission.title,
+            "description": mission.description,
+            "icon": mission.icon,
+            "reward_amount": mission.reward_amount,
+            "reward_currency": mission.reward_currency,
+            "type": mission.type,
+            "requirements": mission.requirements,
+            "is_active": mission.is_active,
+            "created_at": mission.created_at
+        }
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to create mission: {str(e)}")
+
+
+@router.put("/missions/{mission_id}")
+async def update_mission(
+    mission_id: int,
+    mission_data: UpdateMissionRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Update an existing mission"""
+    # Get mission
+    result = await db.execute(select(Mission).where(Mission.id == mission_id))
+    mission = result.scalar_one_or_none()
+
+    if not mission:
+        raise HTTPException(status_code=404, detail="Mission not found")
+
+    # Update fields
+    if mission_data.title is not None:
+        mission.title = mission_data.title
+    if mission_data.description is not None:
+        mission.description = mission_data.description
+    if mission_data.icon is not None:
+        mission.icon = mission_data.icon
+    if mission_data.reward_amount is not None:
+        mission.reward_amount = mission_data.reward_amount
+    if mission_data.reward_currency is not None:
+        mission.reward_currency = mission_data.reward_currency
+    if mission_data.type is not None:
+        mission.type = mission_data.type
+    if mission_data.requirements is not None:
+        mission.requirements = mission_data.requirements
+    if mission_data.is_active is not None:
+        mission.is_active = mission_data.is_active
+
+    await db.commit()
+    await db.refresh(mission)
+
+    return {
+        "id": mission.id,
+        "title": mission.title,
+        "description": mission.description,
+        "icon": mission.icon,
+        "reward_amount": mission.reward_amount,
+        "reward_currency": mission.reward_currency,
+        "type": mission.type,
+        "requirements": mission.requirements,
+        "is_active": mission.is_active,
+        "updated_at": mission.updated_at
+    }
+
+
+@router.delete("/missions/{mission_id}")
+async def delete_mission(
+    mission_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """Delete a mission"""
+    result = await db.execute(select(Mission).where(Mission.id == mission_id))
+    mission = result.scalar_one_or_none()
+
+    if not mission:
+        raise HTTPException(status_code=404, detail="Mission not found")
+
+    await db.delete(mission)
+    await db.commit()
+
+    return {"message": f"Mission {mission_id} deleted successfully"}
+
+
+@router.post("/missions/init-defaults")
+async def init_default_missions_endpoint(db: AsyncSession = Depends(get_db)):
+    """Initialize default missions (called from admin panel)"""
+    from app.init_missions import init_default_missions
+
+    try:
+        # Check if missions already exist
+        result = await db.execute(select(Mission))
+        existing_missions = result.scalars().all()
+
+        if len(existing_missions) > 0:
+            return {
+                "message": f"Missions already exist ({len(existing_missions)} missions found)",
+                "created": 0,
+                "existing": len(existing_missions)
+            }
+
+        # Call init function
+        await init_default_missions()
+
+        return {
+            "message": "Default missions created successfully",
+            "created": 7,
+            "existing": 0
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to initialize missions: {str(e)}")
+
+
+# ============ Test Markets Generation ============
+
+@router.post("/markets/generate-test")
+async def generate_test_markets(db: AsyncSession = Depends(get_db)):
+    """Generate 5 test markets with photos for testing"""
+    from datetime import datetime, timedelta
+
+    test_markets = [
+        {
+            "title": "Bitcoin достигнет $100,000 до конца 2025?",
+            "description": "Биткоин показывает сильный рост. Достигнет ли он отметки в $100,000 до 31 декабря 2025?",
+            "category": "Crypto",
+            "resolve_date": datetime.now() + timedelta(days=60),
+            "is_promoted": "premium",
+            "promoted_until": datetime.now() + timedelta(days=30),
+            "photo_url": "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800&h=600&fit=crop"
+        },
+        {
+            "title": "TON Coin вырастет на 50% в ноябре?",
+            "description": "TON показывает активный рост. Вырастет ли цена на 50% или больше до конца ноября 2025?",
+            "category": "Crypto",
+            "resolve_date": datetime.now() + timedelta(days=27),
+            "is_promoted": "basic",
+            "promoted_until": datetime.now() + timedelta(days=7),
+            "photo_url": "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?w=800&h=600&fit=crop"
+        },
+        {
+            "title": "Реал Мадрид победит в Лиге Чемпионов 2025?",
+            "description": "Реал Мадрид - фаворит турнира. Выиграют ли они Лигу Чемпионов в сезоне 2024/2025?",
+            "category": "Sports",
+            "resolve_date": datetime.now() + timedelta(days=200),
+            "is_promoted": "premium",
+            "promoted_until": datetime.now() + timedelta(days=14),
+            "photo_url": "https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=800&h=600&fit=crop"
+        },
+        {
+            "title": "UFC 300: Макгрегор вернется в октагон?",
+            "description": "Conor McGregor объявил о возвращении. Выступит ли он на UFC 300 в 2025 году?",
+            "category": "Sports",
+            "resolve_date": datetime.now() + timedelta(days=120),
+            "is_promoted": "basic",
+            "promoted_until": datetime.now() + timedelta(days=10),
+            "photo_url": "https://images.unsplash.com/photo-1555597673-b21d5c935865?w=800&h=600&fit=crop"
+        },
+        {
+            "title": "Apple выпустит AR очки в 2025?",
+            "description": "Ходят слухи о Apple AR/VR очках нового поколения. Выпустит ли Apple их в 2025 году?",
+            "category": "Tech",
+            "resolve_date": datetime.now() + timedelta(days=365),
+            "is_promoted": "none",
+            "promoted_until": None,
+            "photo_url": "https://images.unsplash.com/photo-1592478411213-6153e4ebc07d?w=800&h=600&fit=crop"
+        }
+    ]
+
+    created_markets = []
+
+    try:
+        for market_data in test_markets:
+            market = Market(
+                title=market_data["title"],
+                description=market_data["description"],
+                category=market_data["category"],
+                resolve_date=market_data["resolve_date"],
+                is_promoted=market_data["is_promoted"],
+                promoted_until=market_data["promoted_until"],
+                photo_url=market_data["photo_url"],
+                status=MarketStatus.ACTIVE,
+                moderation_status=ModerationStatus.APPROVED,
+                total_yes_bets=0,
+                total_no_bets=0,
+                total_pool=0
+            )
+
+            db.add(market)
+            await db.flush()
+            created_markets.append({
+                "id": market.id,
+                "title": market.title,
+                "category": market.category
+            })
+
+        await db.commit()
+
+        return {
+            "message": f"Successfully generated {len(test_markets)} test markets",
+            "created": len(test_markets),
+            "markets": created_markets
+        }
+
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to generate test markets: {str(e)}")

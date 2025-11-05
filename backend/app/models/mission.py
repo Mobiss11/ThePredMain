@@ -9,7 +9,7 @@ class Mission(Base):
     id = Column(BigInteger, primary_key=True, index=True, autoincrement=True)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
-    icon = Column(String(10), nullable=True, default="🎯")
+    icon = Column(String(255), nullable=True, default="first_bet")  # Icon name or URL
 
     reward_amount = Column(DECIMAL(20, 2), nullable=False)
     reward_currency = Column(String(10), default="PRED", nullable=False)

@@ -4,7 +4,14 @@
 
 {% block content %}
 <div class="max-w-7xl">
-    <h1 class="text-3xl font-bold mb-8">Market Management</h1>
+    <h1 class="text-3xl font-bold mb-6">Market Management</h1>
+
+    <!-- Action Buttons -->
+    <div class="mb-6">
+        <button onclick="generateTestMarkets()" class="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium">
+            🎨 Generate Test Events (5)
+        </button>
+    </div>
 
     <!-- Tabs -->
     <div class="flex space-x-4 mb-6 border-b border-gray-800">
@@ -235,5 +242,32 @@ setInterval(() => {
             });
     }
 }, 30000);
+
+// Generate test markets
+async function generateTestMarkets() {
+    if (!confirm('Generate 5 test events with photos?\n\n- Bitcoin $100k\n- TON +50%\n- Real Madrid Champions\n- UFC McGregor\n- Apple AR glasses\n\nThese will be created with Approved status.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/admin/markets/generate-test`, {
+            method: 'POST'
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert(`✅ ${result.message}\n\nCreated events:\n${result.markets.map(m => `- ${m.title} (${m.category})`).join('\n')}`);
+
+            // Reload markets table
+            loadMarkets(currentTab);
+        } else {
+            alert(`Error: ${result.detail || 'Failed to generate test markets'}`);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to generate test markets. Check console for details.');
+    }
+}
 </script>
 {% endblock %}
