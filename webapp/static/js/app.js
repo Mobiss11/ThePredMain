@@ -134,7 +134,7 @@ async function placeBet(marketId, position, amount) {
         if (response.ok) {
             const bet = await response.json();
             window.tgHaptic?.success();
-            window.showTgAlert(`✅ Ставка принята!\n💰 Потенциальный выигрыш: ${formatNumber(bet.potential_win)} PRED`);
+            window.showTgAlert(`✅ Прогноз принят!\n💰 Потенциальный выигрыш: ${formatNumber(bet.potential_win)} PRED`);
 
             // Reload user balance
             await loadUserBalance();
@@ -151,7 +151,7 @@ async function placeBet(marketId, position, amount) {
         } else {
             const error = await response.json();
             window.tgHaptic?.error();
-            window.showTgAlert('❌ ' + (error.error || error.detail || 'Ошибка при размещении ставки'));
+            window.showTgAlert('❌ ' + (error.error || error.detail || 'Ошибка при размещении прогноза'));
             return false;
         }
     } catch (error) {
