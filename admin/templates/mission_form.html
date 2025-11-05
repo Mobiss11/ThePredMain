@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Mission' if mission else 'Create Mission' }} - ThePred Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl">
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-bold">{{ 'Edit Mission' if mission else 'Create Mission' }}</h1>
+        <button onclick="window.location.href='/admin/missions'" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg">
+            ← Back to Missions
+        </button>
+    </div>
+
+    <form id="mission-form" class="bg-dark-800 rounded-lg p-8 space-y-6">
+        <!-- Title -->
+        <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Title</label>
+            <input type="text" id="title" name="title" required
+                   class="w-full bg-dark-700 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+                   placeholder="First Bet"
+                   value="{{ mission.title if mission else '' }}">
+        </div>
+
+        <!-- Description -->
+        <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Description</label>
+            <textarea id="description" name="description" rows="3"
+                      class="w-full bg-dark-700 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+                      placeholder="Make your first bet on any event">{{ mission.description if mission else '' }}</textarea>
+        </div>
+
+        <!-- Icon Selection -->
+        <div>
+            <label class="block text-sm font-medium text-gray-300 mb-3">Icon</label>
+
+            <!-- Default Icons -->
+            <div class="mb-4">
+                <p class="text-sm text-gray-400 mb-3">Choose from default icons:</p>
+                <div class="grid grid-cols-7 gap-3" id="default-icons">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="first_bet" class="hidden icon-radio" {% if mission and mission.icon == 'first_bet' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
+                            <img src="http://localhost:8001/static/icons/missions/first_bet.svg" alt="First Bet" class="w-16 h-16">
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">First Bet</p>
+                    </label>
+
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="beginner" class="hidden icon-radio" {% if mission and mission.icon == 'beginner' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
+                            <img src="http://localhost:8001/static/icons/missions/beginner.svg" alt="Beginner" class="w-16 h-16">
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">Beginner</p>
+                    </label>
+
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="first_win" class="hidden icon-radio" {% if mission and mission.icon == 'first_win' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
+                            <img src="http://localhost:8001/static/icons/missions/first_win.svg" alt="First Win" class="w-16 h-16">
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">First Win</p>
+                    </label>
+
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="win_streak" class="hidden icon-radio" {% if mission and mission.icon == 'win_streak' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
+                            <img src="http://localhost:8001/static/icons/missions/win_streak.svg" alt="Win Streak" class="w-16 h-16">
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">Win Streak</p>
+                    </label>
+
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="active_trader" class="hidden icon-radio" {% if mission and mission.icon == 'active_trader' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
+                            <img src="http://localhost:8001/static/icons/missions/active_trader.svg" alt="Active Trader" class="w-16 h-16">
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">Trader</p>
+                    </label>
+
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="crypto_lover" class="hidden icon-radio" {% if mission and mission.icon == 'crypto_lover' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
+                            <img src="http://localhost:8001/static/icons/missions/crypto_lover.svg" alt="Crypto Lover" class="w-16 h-16">
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">Crypto</p>
+                    </label>
+
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="referral" class="hidden icon-radio" {% if mission and mission.icon == 'referral' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
+                            <img src="http://localhost:8001/static/icons/missions/referral.svg" alt="Referral" class="w-16 h-16">
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">Referral</p>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Custom Icon Upload -->
+            <div class="mt-6 p-4 bg-dark-700 rounded-lg">
+                <p class="text-sm text-gray-400 mb-3">Or upload custom icon:</p>
+                <input type="file" id="custom-icon" accept="image/*" class="hidden">
+                <label for="custom-icon" class="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer">
+                    Choose File
+                </label>
+                <span id="file-name" class="ml-3 text-sm text-gray-400">No file chosen</span>
+                <div id="custom-preview" class="mt-3 hidden">
+                    <img src="" alt="Custom icon preview" class="w-16 h-16 rounded-lg">
+                </div>
+            </div>
+        </div>
+
+        <!-- Reward Amount -->
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Reward Amount</label>
+                <input type="number" id="reward_amount" name="reward_amount" required min="0"
+                       class="w-full bg-dark-700 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+                       placeholder="500"
+                       value="{{ mission.reward_amount if mission else '' }}">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Currency</label>
+                <select id="reward_currency" name="reward_currency"
+                        class="w-full bg-dark-700 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500">
+                    <option value="PRED" {% if not mission or mission.reward_currency == 'PRED' %}selected{% endif %}>PRED</option>
+                    <option value="TON" {% if mission and mission.reward_currency == 'TON' %}selected{% endif %}>TON</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Type -->
+        <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Type</label>
+            <select id="type" name="type"
+                    class="w-full bg-dark-700 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500">
+                <option value="achievement" {% if not mission or mission.type == 'achievement' %}selected{% endif %}>Achievement</option>
+                <option value="daily" {% if mission and mission.type == 'daily' %}selected{% endif %}>Daily</option>
+                <option value="weekly" {% if mission and mission.type == 'weekly' %}selected{% endif %}>Weekly</option>
+                <option value="special" {% if mission and mission.type == 'special' %}selected{% endif %}>Special</option>
+            </select>
+        </div>
+
+        <!-- Requirements -->
+        <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Requirement Type</label>
+            <select id="requirement_type" onchange="updateRequirementInput()"
+                    class="w-full bg-dark-700 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500">
+                <option value="bets_count">Bets Count</option>
+                <option value="wins_count">Wins Count</option>
+                <option value="win_streak">Win Streak</option>
+                <option value="referrals_count">Referrals Count</option>
+                <option value="category_bets">Category Bets</option>
+            </select>
+
+            <div id="requirement-input" class="mt-3">
+                <!-- Dynamic input based on requirement type -->
+            </div>
+        </div>
+
+        <!-- Active Status -->
+        <div class="flex items-center">
+            <input type="checkbox" id="is_active" name="is_active" class="w-5 h-5 rounded bg-dark-700 border-gray-600"
+                   {% if not mission or mission.is_active %}checked{% endif %}>
+            <label for="is_active" class="ml-3 text-sm text-gray-300">Active</label>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="flex items-center justify-end space-x-4 pt-4">
+            <button type="button" onclick="window.location.href='/admin/missions'"
+                    class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-medium">
+                Cancel
+            </button>
+            <button type="submit"
+                    class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium">
+                {{ 'Update Mission' if mission else 'Create Mission' }}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const missionId = {{ mission.id if mission else 'null' }};
+const existingRequirements = {{ mission.requirements | tojson if mission else '{}' }};
+
+// Icon selection handling
+document.querySelectorAll('.icon-radio').forEach(radio => {
+    radio.addEventListener('change', function() {
+        // Update border styling
+        document.querySelectorAll('.icon-option').forEach(opt => {
+            opt.classList.remove('border-blue-500');
+            opt.classList.add('border-transparent');
+        });
+
+        if (this.checked) {
+            this.closest('label').querySelector('.icon-option').classList.remove('border-transparent');
+            this.closest('label').querySelector('.icon-option').classList.add('border-blue-500');
+
+            // Clear custom upload
+            document.getElementById('custom-icon').value = '';
+            document.getElementById('file-name').textContent = 'No file chosen';
+            document.getElementById('custom-preview').classList.add('hidden');
+        }
+    });
+});
+
+// Initialize selected icon border
+const checkedRadio = document.querySelector('.icon-radio:checked');
+if (checkedRadio) {
+    checkedRadio.closest('label').querySelector('.icon-option').classList.add('border-blue-500');
+}
+
+// Custom icon upload
+document.getElementById('custom-icon').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        document.getElementById('file-name').textContent = file.name;
+
+        // Uncheck all radio buttons
+        document.querySelectorAll('.icon-radio').forEach(radio => radio.checked = false);
+        document.querySelectorAll('.icon-option').forEach(opt => {
+            opt.classList.remove('border-blue-500');
+            opt.classList.add('border-transparent');
+        });
+
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('custom-preview');
+            preview.querySelector('img').src = e.target.result;
+            preview.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Requirement input handling
+function updateRequirementInput() {
+    const type = document.getElementById('requirement_type').value;
+    const container = document.getElementById('requirement-input');
+
+    let html = '';
+
+    switch(type) {
+        case 'bets_count':
+        case 'wins_count':
+        case 'win_streak':
+        case 'referrals_count':
+            html = `
+                <label class="block text-sm text-gray-400 mb-2">Count</label>
+                <input type="number" id="requirement_value" min="1" value="${existingRequirements[type] || 1}"
+                       class="w-full bg-dark-700 border border-gray-600 rounded-lg px-4 py-3">
+            `;
+            break;
+        case 'category_bets':
+            const catValue = existingRequirements.category_bets || {};
+            html = `
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Category</label>
+                        <select id="requirement_category" class="w-full bg-dark-700 border border-gray-600 rounded-lg px-4 py-3">
+                            <option value="Crypto" ${catValue.category === 'Crypto' ? 'selected' : ''}>Crypto</option>
+                            <option value="Sports" ${catValue.category === 'Sports' ? 'selected' : ''}>Sports</option>
+                            <option value="Politics" ${catValue.category === 'Politics' ? 'selected' : ''}>Politics</option>
+                            <option value="Tech" ${catValue.category === 'Tech' ? 'selected' : ''}>Tech</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Count</label>
+                        <input type="number" id="requirement_count" min="1" value="${catValue.count || 1}"
+                               class="w-full bg-dark-700 border border-gray-600 rounded-lg px-4 py-3">
+                    </div>
+                </div>
+            `;
+            break;
+    }
+
+    container.innerHTML = html;
+}
+
+// Initialize requirement input
+if (Object.keys(existingRequirements).length > 0) {
+    // Set requirement type based on existing requirements
+    const reqType = Object.keys(existingRequirements)[0];
+    document.getElementById('requirement_type').value = reqType;
+}
+updateRequirementInput();
+
+// Form submission
+document.getElementById('mission-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    // Get icon value
+    let icon = document.querySelector('.icon-radio:checked')?.value || '';
+    const customFile = document.getElementById('custom-icon').files[0];
+
+    // If custom file is uploaded, we need to upload it first
+    if (customFile) {
+        // TODO: Upload custom icon to S3/server and get URL
+        // For now, we'll use a placeholder
+        alert('Custom icon upload will be implemented soon. Please use default icons for now.');
+        return;
+    }
+
+    // Build requirements object
+    const reqType = document.getElementById('requirement_type').value;
+    let requirements = {};
+
+    if (reqType === 'category_bets') {
+        requirements[reqType] = {
+            category: document.getElementById('requirement_category').value,
+            count: parseInt(document.getElementById('requirement_count').value)
+        };
+    } else {
+        requirements[reqType] = parseInt(document.getElementById('requirement_value').value);
+    }
+
+    const data = {
+        title: document.getElementById('title').value,
+        description: document.getElementById('description').value,
+        icon: icon,
+        reward_amount: parseFloat(document.getElementById('reward_amount').value),
+        reward_currency: document.getElementById('reward_currency').value,
+        type: document.getElementById('type').value,
+        requirements: requirements,
+        is_active: document.getElementById('is_active').checked
+    };
+
+    try {
+        const url = missionId
+            ? `${API_URL}/admin/missions/${missionId}`
+            : `${API_URL}/admin/missions`;
+
+        const method = missionId ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            alert(missionId ? 'Mission updated successfully!' : 'Mission created successfully!');
+            window.location.href = '/admin/missions';
+        } else {
+            const error = await response.json();
+            alert(`Error: ${error.detail || 'Failed to save mission'}`);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to save mission. Please try again.');
+    }
+});
+</script>
+{% endblock %}
