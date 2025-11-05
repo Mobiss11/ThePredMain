@@ -52,6 +52,12 @@ async def startup_event():
     await init_default_missions()
     logger.info("Default missions initialized")
 
+    # Initialize seed markets
+    logger.info("Initializing seed markets...")
+    from app.init_seed_markets import init_seed_markets
+    await init_seed_markets()
+    logger.info("Seed markets initialized")
+
 
 @app.get("/")
 async def root():

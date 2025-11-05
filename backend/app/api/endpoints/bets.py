@@ -38,7 +38,7 @@ def calculate_odds(yes_pool: Decimal, no_pool: Decimal, position: str, amount: D
     """Calculate odds based on pool sizes"""
     total_pool = yes_pool + no_pool + amount
 
-    if position == "yes":
+    if position.upper() == "YES":
         new_yes_pool = yes_pool + amount
         if new_yes_pool == 0:
             return Decimal("100.00")

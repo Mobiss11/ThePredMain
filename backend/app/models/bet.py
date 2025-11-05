@@ -5,8 +5,8 @@ import enum
 
 
 class BetPosition(str, enum.Enum):
-    YES = "yes"
-    NO = "no"
+    YES = "YES"
+    NO = "NO"
 
 
 class BetCurrency(str, enum.Enum):
