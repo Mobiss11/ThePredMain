@@ -816,7 +816,7 @@ async def get_all_missions(
     result = await db.execute(query)
     missions = result.scalars().all()
 
-    return [MissionResponse.from_orm(mission) for mission in missions]
+    return [MissionResponse.model_validate(mission) for mission in missions]
 
 
 @router.post("/missions")
@@ -1238,11 +1238,9 @@ async def generate_test_markets(db: AsyncSession = Depends(get_db)):
                 is_promoted=market_data["is_promoted"],
                 promoted_until=market_data["promoted_until"],
                 photo_url=market_data["photo_url"],
-                status=MarketStatus.ACTIVE,
+                status=MarketStatus.OPEN,
                 moderation_status=ModerationStatus.APPROVED,
-                total_yes_bets=0,
-                total_no_bets=0,
-                total_pool=0
+                created_by=1  # Admin user
             )
 
             db.add(market)
