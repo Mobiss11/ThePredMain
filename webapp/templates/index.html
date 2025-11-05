@@ -193,8 +193,25 @@ async function loadAndRenderMarkets() {
 window.reloadMarkets = loadAndRenderMarkets;
 
 // Initialize page
-document.addEventListener('DOMContentLoaded', () => {
-    loadAndRenderMarkets();
+document.addEventListener('DOMContentLoaded', async () => {
+    // Wait for user profile and active bets to load first
+    await new Promise(resolve => {
+        const checkInterval = setInterval(() => {
+            if (window.userProfile && window.userActiveBets !== undefined) {
+                clearInterval(checkInterval);
+                resolve();
+            }
+        }, 100);
+
+        // Timeout after 3 seconds
+        setTimeout(() => {
+            clearInterval(checkInterval);
+            resolve();
+        }, 3000);
+    });
+
+    // Now load and render markets
+    await loadAndRenderMarkets();
 
     // Category filter
     const categoryFilter = document.getElementById('category-filter');
@@ -208,7 +225,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Update promoted market
             if (promotedMarket) {
-                document.getElementById('promoted-market').outerHTML = renderMarketCard(promotedMarket, true);
+                document.getElementById('promoted-market').innerHTML = renderMarketCard(promotedMarket, true);
+            } else {
+                document.getElementById('promoted-market').innerHTML = '';
             }
 
             // Update regular markets

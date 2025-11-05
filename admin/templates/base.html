@@ -94,6 +94,10 @@
     <!-- Global Scripts -->
     <script>
         const API_URL = '';  // Use relative URLs - admin proxies to backend
+        // S3 Configuration
+        const S3_PUBLIC_URL = '{{ config.S3_PUBLIC_URL }}';
+        const S3_BUCKET = '{{ config.S3_BUCKET }}';
+        const S3_MISSIONS_URL = `${S3_PUBLIC_URL}/${S3_BUCKET}/missions`;
 
         // Show toast notification
         function showToast(message, type = 'success') {

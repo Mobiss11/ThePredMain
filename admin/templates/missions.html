@@ -44,28 +44,18 @@
 {% block scripts %}
 <script>
 function getIconHtml(iconName) {
-    // Map icon names to emojis
-    const iconEmojis = {
-        'first_bet': '🎯',
-        'beginner': '🌱',
-        'first_win': '🏆',
-        'win_streak': '🔥',
-        'active_trader': '📈',
-        'crypto_lover': '₿',
-        'referral': '👥',
-        'daily_login': '📅',
-        'expert': '💎',
-        'whale': '🐋'
-    };
-
-    // Check if it's a URL (S3 or external)
-    if (iconName && (iconName.startsWith('http') || iconName.startsWith('/'))) {
+    // Check if it's a full URL (S3 or external)
+    if (iconName && iconName.startsWith('http')) {
         return `<img src="${iconName}" alt="icon" class="w-10 h-10 rounded inline-block object-cover">`;
     }
 
-    // Use emoji for icon name
-    const emoji = iconEmojis[iconName] || '🎯';
-    return `<span class="text-3xl">${emoji}</span>`;
+    // Default icon name - construct S3 URL
+    if (iconName) {
+        return `<img src="${S3_MISSIONS_URL}/${iconName}.svg" alt="icon" class="w-10 h-10 rounded inline-block object-cover">`;
+    }
+
+    // Fallback emoji
+    return `<span class="text-3xl">🎯</span>`;
 }
 
 async function loadMissions() {

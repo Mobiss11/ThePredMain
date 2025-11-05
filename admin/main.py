@@ -10,6 +10,8 @@ app = Quart(__name__)
 app.secret_key = os.getenv('ADMIN_SECRET_KEY', 'change-me-in-production')
 app.config['API_URL'] = os.getenv('API_URL', 'http://backend:8000')
 app.config['ADMIN_PASSWORD'] = os.getenv('ADMIN_PASSWORD', 'admin')
+app.config['S3_PUBLIC_URL'] = os.getenv('S3_PUBLIC_URL', 'http://localhost:9000')
+app.config['S3_BUCKET'] = os.getenv('S3_BUCKET', 'thepred-events')
 
 
 def login_required(f):

@@ -16,6 +16,8 @@ app.config['API_URL'] = os.getenv('API_URL', 'http://backend:8000')
 app.config['DEV_MODE'] = os.getenv('DEV_MODE', 'true').lower() == 'true'
 app.config['BOT_TOKEN'] = os.getenv('BOT_TOKEN', '')
 app.config['BOT_USERNAME'] = os.getenv('BOT_USERNAME', 'The_Pred_Bot')
+app.config['S3_PUBLIC_URL'] = os.getenv('S3_PUBLIC_URL', 'http://localhost:9000')
+app.config['S3_BUCKET'] = os.getenv('S3_BUCKET', 'thepred-events')
 
 # Log configuration on startup
 print("=" * 50)
