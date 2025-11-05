@@ -221,55 +221,67 @@
 
 {% block extra_scripts %}
 <script>
-// Mission icons mapping
-const missionIcons = {
-    'First Bet': '🎯',
-    '3 Bets Today': '🎯',
-    'First Win': '🏆',
-    'Invite a Friend': '👥',
-    '10 Win Streak': '🔥'
-};
-
 // Load missions from API
 async function loadMissions() {
     try {
+        console.log('Loading missions...');
         const response = await fetch('/api/missions');
         if (response.ok) {
             const missions = await response.json();
+            console.log('Missions loaded:', missions);
             renderMissions(missions);
+        } else {
+            console.error('Failed to load missions:', response.status);
         }
     } catch (error) {
         console.error('Failed to load missions:', error);
     }
 }
 
+// Get requirement value from requirements object
+function getRequirementValue(requirements) {
+    // requirements can be {"bets_count": 5} or {"wins_count": 1} or {"win_streak": 3}
+    const values = Object.values(requirements);
+    if (values.length > 0) {
+        // Handle nested objects like {"category_bets": {"category": "Crypto", "count": 3}}
+        if (typeof values[0] === 'object' && values[0].count) {
+            return values[0].count;
+        }
+        return values[0];
+    }
+    return 1;
+}
+
 // Render missions
 function renderMissions(missions) {
     const dailyContainer = document.querySelector('.space-y-4.mb-6');
 
-    // Filter missions by type
-    const dailyMissions = missions.filter(m => m.type === 'daily' || m.type === 'achievement');
+    if (missions.length === 0) {
+        dailyContainer.innerHTML = '<div class="glass rounded-2xl p-8 text-center text-gray-400">Нет доступных миссий</div>';
+        return;
+    }
 
-    dailyContainer.innerHTML = dailyMissions.map(mission => {
-        const icon = missionIcons[mission.title] || '⭐';
+    dailyContainer.innerHTML = missions.map(mission => {
+        const icon = mission.icon || '🎯';
         const progress = mission.progress || 0;
-        const required = Object.values(mission.requirements)[0] || 1;
+        const required = getRequirementValue(mission.requirements);
         const progressPercent = Math.min((progress / required) * 100, 100);
         const isCompleted = mission.completed && !mission.claimed;
         const isClaimed = mission.claimed;
 
         return `
-            <div class="glass rounded-2xl p-5 ${isCompleted ? 'border-2 border-yellow-400' : ''}">
+            <div class="glass rounded-2xl p-5 ${isCompleted ? 'border-2 border-green-400' : ''}">
                 <div class="flex items-start justify-between mb-4">
                     <div class="flex-1">
                         <div class="flex items-center space-x-2 mb-2">
                             <span class="text-2xl">${icon}</span>
                             <h3 class="text-lg font-bold">${mission.title}</h3>
+                            ${isClaimed ? '<span class="ml-2 text-xs bg-green-600 text-white px-2 py-1 rounded-full">✓</span>' : ''}
                         </div>
-                        <p class="text-gray-400 text-sm">${mission.description}</p>
+                        <p class="text-gray-400 text-sm">${mission.description || ''}</p>
                     </div>
                     <div class="text-right">
-                        <div class="font-bold text-yellow-400">+${mission.reward_amount}</div>
+                        <div class="font-bold text-yellow-400">+${window.formatNumber ? window.formatNumber(mission.reward_amount) : mission.reward_amount}</div>
                         <div class="text-xs text-gray-400">${mission.reward_currency}</div>
                     </div>
                 </div>
@@ -280,15 +292,15 @@ function renderMissions(missions) {
                         <span class="text-sm font-bold ${isCompleted ? 'text-green-400' : ''}">${progress} / ${required} ${isCompleted ? '✓' : ''}</span>
                     </div>
                     <div class="w-full bg-gray-800 rounded-full h-2">
-                        <div class="${isCompleted ? 'green-gradient' : 'gold-gradient'} h-2 rounded-full" style="width: ${progressPercent}%"></div>
+                        <div class="${isCompleted ? 'bg-green-500' : 'gold-gradient'} h-2 rounded-full transition-all duration-300" style="width: ${progressPercent}%"></div>
                     </div>
                 </div>
 
                 ${isClaimed
-                    ? '<button class="w-full glass rounded-xl py-3 font-bold opacity-50 cursor-not-allowed">Уже Получено</button>'
+                    ? '<button class="w-full glass rounded-xl py-3 font-bold opacity-50 cursor-not-allowed">✓ Награда Получена</button>'
                     : isCompleted
-                    ? `<button onclick="claimMission(${mission.id})" class="w-full gold-gradient rounded-xl py-3 font-bold text-black hover:opacity-90">Забрать Награду</button>`
-                    : `<button class="w-full glass rounded-xl py-3 font-bold opacity-50 cursor-not-allowed">Ещё ${required - progress}</button>`
+                    ? `<button onclick="claimMission(${mission.id})" class="w-full green-gradient rounded-xl py-3 font-bold text-white hover:opacity-90 pulse-gold">🎉 Забрать Награду</button>`
+                    : `<button class="w-full glass rounded-xl py-3 font-bold opacity-50 cursor-not-allowed">Ещё ${required - progress} до завершения</button>`
                 }
             </div>
         `;
@@ -300,24 +312,22 @@ async function claimMission(missionId) {
     try {
         window.tgHaptic?.light();
 
-        const response = await fetch('/api/missions/claim', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                mission_id: missionId
-            })
+        console.log('Claiming mission:', missionId);
+
+        const response = await fetch(`/api/missions/claim/${missionId}`, {
+            method: 'POST'
         });
 
         if (response.ok) {
             const result = await response.json();
             window.tgHaptic?.success();
-            window.showTgAlert(`Награда получена! +${result.reward.amount} ${result.reward.currency}`);
+            window.showTgAlert(`🎉 Награда получена! +${result.reward.amount} ${result.reward.currency}`);
 
             // Reload missions and balance
             await loadMissions();
-            await window.loadUserBalance();
+            if (window.loadUserBalance) {
+                await window.loadUserBalance();
+            }
         } else {
             const error = await response.json();
             window.tgHaptic?.error();

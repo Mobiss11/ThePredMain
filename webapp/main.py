@@ -372,19 +372,19 @@ async def api_missions():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/api/missions/claim', methods=['POST'])
-async def api_claim_mission():
+@app.route('/api/missions/claim/<int:mission_id>', methods=['POST'])
+async def api_claim_mission(mission_id):
     """Claim mission reward via backend API"""
     try:
-        data = await request.get_json()
         user_id = session.get('user_id', 1)
 
         result = await api_client.claim_mission_reward(
             user_id=int(user_id),
-            mission_id=data['mission_id']
+            mission_id=mission_id
         )
         return jsonify(result)
     except Exception as e:
+        print(f"Error claiming mission: {e}")
         return jsonify({"error": str(e)}), 500
 
 

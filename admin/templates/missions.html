@@ -1,66 +1,103 @@
 {% extends "base.html" %}
+
 {% block title %}Missions - ThePred Admin{% endblock %}
+
 {% block content %}
-<div class="max-w-6xl">
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold">Missions Management</h1>
-        <button onclick="createMission()" class="gradient-gold text-black font-bold px-6 py-2 rounded-lg">+ Create Mission</button>
-    </div>
+<div class="max-w-7xl">
+    <h1 class="text-3xl font-bold mb-8">Missions Management</h1>
+
+    <!-- Missions Table -->
     <div class="bg-dark-800 rounded-lg overflow-hidden">
         <table class="w-full">
             <thead class="bg-dark-700">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Title</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Type</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Requirement</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Reward</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Status</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Actions</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">ID</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Icon</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Title</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Type</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Reward</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Requirements</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Active</th>
                 </tr>
             </thead>
-            <tbody id="missions-tbody"></tbody>
+            <tbody id="missions-tbody" class="divide-y divide-gray-800">
+                <tr>
+                    <td colspan="7" class="px-6 py-8 text-center text-gray-400">Loading...</td>
+                </tr>
+            </tbody>
         </table>
     </div>
 </div>
 {% endblock %}
+
 {% block scripts %}
 <script>
 async function loadMissions() {
     const tbody = document.getElementById('missions-tbody');
-    const response = await fetch(`${API_URL}/admin/missions`);
-    const missions = await response.json();
-    tbody.innerHTML = missions.map(m => `
-        <tr class="border-t border-gray-800">
-            <td class="px-6 py-4">${m.title}</td>
-            <td class="px-6 py-4 text-sm">${m.mission_type}</td>
-            <td class="px-6 py-4">${m.requirement}</td>
-            <td class="px-6 py-4">${m.reward_pred} PRED</td>
-            <td class="px-6 py-4"><span class="px-2 py-1 rounded text-xs ${m.is_active ? 'bg-green-600' : 'bg-red-600'}">${m.is_active ? 'Active' : 'Inactive'}</span></td>
-            <td class="px-6 py-4">
-                <button onclick="deleteMission(${m.id})" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-xs">Delete</button>
-            </td>
-        </tr>
-    `).join('');
+    tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-gray-400">Loading...</td></tr>';
+
+    try {
+        const response = await fetch(`${API_URL}/admin/missions`);
+        const missions = await response.json();
+        console.log('Missions loaded:', missions);
+
+        if (missions.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-gray-400">No missions found</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = missions.map(mission => {
+            const requirements = JSON.stringify(mission.requirements);
+            const requirementText = getRequirementText(mission.requirements);
+
+            return `
+            <tr class="hover:bg-dark-700">
+                <td class="px-6 py-4 text-sm">#${mission.id}</td>
+                <td class="px-6 py-4 text-2xl">${mission.icon || '🎯'}</td>
+                <td class="px-6 py-4">
+                    <div class="text-sm font-medium">${mission.title}</div>
+                    <div class="text-xs text-gray-400">${mission.description || ''}</div>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="px-2 py-1 text-xs rounded bg-blue-600">${mission.type}</span>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="text-sm font-bold text-yellow-400">${formatNumber(mission.reward_amount)}</div>
+                    <div class="text-xs text-gray-400">${mission.reward_currency}</div>
+                </td>
+                <td class="px-6 py-4 text-xs text-gray-400">
+                    ${requirementText}
+                </td>
+                <td class="px-6 py-4">
+                    <span class="px-2 py-1 text-xs rounded ${mission.is_active ? 'bg-green-600' : 'bg-gray-600'}">
+                        ${mission.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                </td>
+            </tr>
+            `;
+        }).join('');
+    } catch (error) {
+        console.error('Failed to load missions:', error);
+        tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-red-400">Failed to load missions</td></tr>';
+    }
 }
-function createMission() {
-    const title = prompt('Mission Title:');
-    const description = prompt('Description:');
-    const type = prompt('Type (daily_bet, weekly_win, etc):');
-    const requirement = parseInt(prompt('Requirement:'));
-    const reward = parseInt(prompt('Reward PRED:'));
-    if (!title || !type || !requirement || !reward) return;
-    fetch(`${API_URL}/admin/missions`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({title, description, mission_type: type, requirement, reward_pred: reward, is_active: true})
-    }).then(() => {showToast('Mission created'); loadMissions();});
+
+function getRequirementText(requirements) {
+    if (requirements.bets_count) {
+        return `${requirements.bets_count} bets`;
+    } else if (requirements.wins_count) {
+        return `${requirements.wins_count} wins`;
+    } else if (requirements.win_streak) {
+        return `${requirements.win_streak} win streak`;
+    } else if (requirements.referrals_count) {
+        return `${requirements.referrals_count} referrals`;
+    } else if (requirements.category_bets) {
+        return `${requirements.category_bets.count} bets in ${requirements.category_bets.category}`;
+    }
+    return JSON.stringify(requirements);
 }
-async function deleteMission(id) {
-    if (!confirm('Delete mission?')) return;
-    await fetch(`${API_URL}/admin/missions/${id}`, {method: 'DELETE'});
-    showToast('Mission deleted');
-    loadMissions();
-}
+
+// Load missions on page load
 loadMissions();
 </script>
 {% endblock %}

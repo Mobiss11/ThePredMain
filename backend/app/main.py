@@ -46,6 +46,12 @@ async def startup_event():
     await s3_client.init_bucket()
     logger.info("S3 bucket initialized")
 
+    # Initialize default missions
+    logger.info("Initializing default missions...")
+    from app.init_missions import init_default_missions
+    await init_default_missions()
+    logger.info("Default missions initialized")
+
 
 @app.get("/")
 async def root():

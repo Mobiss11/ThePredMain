@@ -15,6 +15,7 @@ class MissionResponse(BaseModel):
     id: int
     title: str
     description: str | None
+    icon: str | None = "🎯"
     reward_amount: Decimal
     reward_currency: str
     type: str
@@ -50,6 +51,7 @@ async def get_missions(user_id: int, db: AsyncSession = Depends(get_db)):
             id=mission.id,
             title=mission.title,
             description=mission.description,
+            icon=mission.icon or "🎯",
             reward_amount=mission.reward_amount,
             reward_currency=mission.reward_currency,
             type=mission.type,
