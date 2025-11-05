@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'add_mission_icon'
-down_revision = None
+down_revision = '79fa342a014c'
 branch_labels = None
 depends_on = None
 
