@@ -112,7 +112,7 @@ async def get_leaderboard(
             func.coalesce(profit_subquery.c.bets_count, 0).label("period_bets")
         )
         .outerjoin(profit_subquery, User.id == profit_subquery.c.user_id)
-        .where(profit_subquery.c.bets_count > 0)  # Only users with bets in this period
+        .where(User.total_bets > 0)  # Show all users with any bets (not just in period)
     )
 
     # Apply sorting

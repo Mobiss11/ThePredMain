@@ -332,6 +332,16 @@ async def api_bet_history():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/bets/active/<int:user_id>')
+async def api_active_bets(user_id):
+    """Get user's active bets from backend API"""
+    try:
+        response = await api_client.get(f"/bets/active/{user_id}")
+        return jsonify(response)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/api/profile')
 async def api_profile():
     """Get user profile from backend API"""
