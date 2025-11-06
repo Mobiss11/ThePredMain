@@ -481,7 +481,8 @@ async function loadPeriodsHistory() {
                     <td class="px-4 py-3 text-right">
                         ${period.total_ton_rewards > 0 ? `<div class="font-bold text-blue-400">💎 ${formatNumber(period.total_ton_rewards)} TON</div>` : ''}
                         ${period.total_pred_rewards > 0 ? `<div class="font-bold text-yellow-400">💰 ${formatNumber(period.total_pred_rewards)} PRED</div>` : ''}
-                        ${(period.total_ton_rewards === 0 && period.total_pred_rewards === 0) ? `<div class="text-gray-400">0</div>` : ''}
+                        ${(period.total_ton_rewards === 0 && period.total_pred_rewards === 0 && period.total_rewards_distributed > 0) ? `<div class="font-bold text-yellow-400">💰 ${formatNumber(period.total_rewards_distributed)} PRED</div>` : ''}
+                        ${(period.total_ton_rewards === 0 && period.total_pred_rewards === 0 && period.total_rewards_distributed === 0) ? `<div class="text-gray-400">0</div>` : ''}
                     </td>
                     <td class="px-4 py-3 text-sm text-gray-400">${closedAt}</td>
                 </tr>
