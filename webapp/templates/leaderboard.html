@@ -7,15 +7,13 @@
 <div class="glass card-shine rounded-2xl p-6 mb-6">
     <h1 class="text-2xl font-bold mb-4">🏆 Таблица Лидеров</h1>
 
-    <div class="grid grid-cols-3 gap-2">
-        <button class="gold-gradient rounded-lg py-2 font-bold text-black text-sm">
+    <!-- Period Tabs -->
+    <div class="grid grid-cols-2 gap-2">
+        <button id="tab-week" class="period-tab gold-gradient rounded-lg py-2 font-bold text-black text-sm" onclick="switchPeriod('week')">
             Неделя
         </button>
-        <button class="glass rounded-lg py-2 font-bold text-sm">
+        <button id="tab-month" class="period-tab glass rounded-lg py-2 font-bold text-sm" onclick="switchPeriod('month')">
             Месяц
-        </button>
-        <button class="glass rounded-lg py-2 font-bold text-sm">
-            Всё Время
         </button>
     </div>
 </div>
@@ -41,33 +39,14 @@
 
 <!-- Rewards Info -->
 <div class="glass rounded-2xl p-6">
-    <h2 class="text-xl font-bold mb-4">🎁 Недельные Награды</h2>
-    <div class="space-y-2 text-sm">
-        <div class="flex items-center justify-between">
-            <span>🥇 1-е Место</span>
-            <span class="font-bold text-yellow-400">50,000 PRED</span>
-        </div>
-        <div class="flex items-center justify-between">
-            <span>🥈 2-е Место</span>
-            <span class="font-bold text-yellow-400">30,000 PRED</span>
-        </div>
-        <div class="flex items-center justify-between">
-            <span>🥉 3-е Место</span>
-            <span class="font-bold text-yellow-400">20,000 PRED</span>
-        </div>
-        <div class="flex items-center justify-between">
-            <span>4-10 Места</span>
-            <span class="font-bold text-yellow-400">1,000 PRED</span>
-        </div>
-        <div class="flex items-center justify-between">
-            <span>11-50 Места</span>
-            <span class="font-bold text-yellow-400">5,000 PRED</span>
-        </div>
+    <h2 class="text-xl font-bold mb-4">🎁 <span id="reward-period-title">Недельные</span> Награды</h2>
+    <div id="rewards-list" class="space-y-2 text-sm">
+        <!-- Rewards will be loaded dynamically -->
     </div>
 
     <div class="mt-4 pt-4 border-t border-gray-700">
         <div class="text-center text-gray-400 text-sm">
-            Обновление через <span class="font-bold text-yellow-400">4д 12ч 34м</span>
+            Обновление через <span id="period-countdown" class="font-bold text-yellow-400">--</span>
         </div>
     </div>
 </div>
@@ -93,14 +72,34 @@
         3: '🥉'
     };
 
-    // Current sort option
-    let currentSort = 'profit';
+    // Current period
+    let currentPeriod = 'week';
+
+    // Switch period function
+    function switchPeriod(period) {
+        currentPeriod = period;
+
+        // Update tab styles
+        document.querySelectorAll('.period-tab').forEach(tab => {
+            tab.classList.remove('gold-gradient', 'text-black');
+            tab.classList.add('glass');
+        });
+        document.getElementById(`tab-${period}`).classList.remove('glass');
+        document.getElementById(`tab-${period}`).classList.add('gold-gradient', 'text-black');
+
+        // Update title
+        document.getElementById('reward-period-title').textContent = period === 'week' ? 'Недельные' : 'Месячные';
+
+        // Reload data
+        loadLeaderboard();
+        loadRewards();
+        updateCountdown();
+    }
 
     // Load leaderboard from API
-    async function loadLeaderboard(sortBy = 'profit') {
+    async function loadLeaderboard() {
         try {
-            currentSort = sortBy;
-            const response = await fetch(`/api/leaderboard?limit=100&sort_by=${sortBy}`);
+            const response = await fetch(`/api/leaderboard?limit=100&period=${currentPeriod}`);
             if (!response.ok) {
                 throw new Error('Failed to load leaderboard');
             }
@@ -109,6 +108,70 @@
         } catch (error) {
             console.error('Error loading leaderboard:', error);
         }
+    }
+
+    // Load rewards for current period
+    async function loadRewards() {
+        try {
+            const response = await fetch(`/api/leaderboard/rewards/${currentPeriod}`);
+            if (!response.ok) {
+                throw new Error('Failed to load rewards');
+            }
+            const rewards = await response.json();
+            renderRewards(rewards);
+        } catch (error) {
+            console.error('Error loading rewards:', error);
+        }
+    }
+
+    // Render rewards list
+    function renderRewards(rewards) {
+        if (!rewards || rewards.length === 0) {
+            document.getElementById('rewards-list').innerHTML = '<div class="text-center text-gray-400">Награды не настроены</div>';
+            return;
+        }
+
+        const html = rewards.map(reward => {
+            let rankText;
+            if (reward.rank_from === reward.rank_to) {
+                const medal = medalEmojis[reward.rank_from] || `#${reward.rank_from}`;
+                rankText = `${medal} ${reward.rank_from}-е Место`;
+            } else {
+                rankText = `#${reward.rank_from}-${reward.rank_to} Места`;
+            }
+
+            return `
+                <div class="flex items-center justify-between">
+                    <span>${rankText}</span>
+                    <span class="font-bold text-yellow-400">${window.formatNumber(reward.reward_amount)} PRED</span>
+                </div>
+            `;
+        }).join('');
+
+        document.getElementById('rewards-list').innerHTML = html;
+    }
+
+    // Update countdown timer
+    function updateCountdown() {
+        const now = new Date();
+        let endDate;
+
+        if (currentPeriod === 'week') {
+            // End of week (Sunday 23:59:59)
+            endDate = new Date(now);
+            endDate.setDate(now.getDate() + (7 - now.getDay()));
+            endDate.setHours(23, 59, 59, 999);
+        } else {
+            // End of month
+            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        }
+
+        const diff = endDate - now;
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+        document.getElementById('period-countdown').textContent = `${days}д ${hours}ч ${minutes}м`;
     }
 
     // Render leaderboard entries
@@ -130,11 +193,18 @@
             const profitPrefix = entry.profit >= 0 ? '+' : '';
             const rankBadge = rankBadges[entry.rank_badge] || '🥉 Bronze';
 
+            // Avatar or placeholder
+            const avatarHtml = entry.photo_url
+                ? `<img src="${entry.photo_url}" class="w-10 h-10 rounded-full object-cover" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%23374151%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2250%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22white%22 font-size=%2240%22%3E${entry.first_name ? entry.first_name[0].toUpperCase() : '?'}%3C/text%3E%3C/svg%3E'" />`
+                : `<div class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-lg font-bold">${entry.first_name ? entry.first_name[0].toUpperCase() : '?'}</div>`;
+
+            const rewardBadge = entry.reward ? `<div class="text-xs text-yellow-400 mt-1">+${window.formatNumber(entry.reward)} PRED</div>` : '';
+
             return `
                 <div class="glass rounded-xl p-4 flex items-center justify-between">
                     <div class="flex items-center space-x-3">
                         <div class="font-bold text-lg w-8">#${entry.rank}</div>
-                        <div class="w-10 h-10 bg-gray-700 rounded-full"></div>
+                        ${avatarHtml}
                         <div>
                             <div class="font-bold">${entry.username || entry.first_name || `Player #${entry.user_id}`}</div>
                             <div class="text-xs text-gray-400">${rankBadge}</div>
@@ -144,6 +214,7 @@
                         <div class="font-bold ${profitColor}">${profitPrefix}${window.formatNumber(entry.profit)}</div>
                         <div class="text-xs text-gray-400">PRED</div>
                         <div class="text-xs text-gray-400">${entry.win_rate}% побед</div>
+                        ${rewardBadge}
                     </div>
                 </div>
             `;
@@ -170,13 +241,21 @@
             const nameClass = isFirst ? 'font-bold mb-1' : 'font-bold text-sm mb-1';
             const profitClass = isFirst ? 'text-yellow-400 font-bold text-lg' : 'text-yellow-400 font-bold';
 
+            // Avatar or placeholder
+            const avatarHtml = entry.photo_url
+                ? `<img src="${entry.photo_url}" class="w-${isFirst ? '16' : '14'} h-${isFirst ? '16' : '14'} ${isFirst ? 'gold-gradient pulse-gold border-4 border-yellow-400' : 'border-2 border-gray-600'} rounded-full mx-auto mb-2 object-cover" onerror="this.className='w-${isFirst ? '16' : '14'} h-${isFirst ? '16' : '14'} ${isFirst ? 'gold-gradient pulse-gold' : 'bg-gray-700'} rounded-full mx-auto mb-2 flex items-center justify-center'; this.outerHTML='<div class=\\''+this.className+'\\'><span class=\\'text-2xl\\'>${entry.first_name ? entry.first_name[0].toUpperCase() : '?'}</span></div>'" />`
+                : `<div class="w-${isFirst ? '16' : '14'} h-${isFirst ? '16' : '14'} ${isFirst ? 'gold-gradient pulse-gold' : 'bg-gray-700'} rounded-full mx-auto mb-2 flex items-center justify-center"><span class="text-2xl">${entry.first_name ? entry.first_name[0].toUpperCase() : '?'}</span></div>`;
+
+            const rewardText = entry.reward ? `<div class="text-xs text-yellow-400 mt-1">+${window.formatNumber(entry.reward)} PRED</div>` : '';
+
             return `
                 <div class="${classes}">
                     <div class="${isFirst ? 'text-4xl mb-2' : 'text-3xl mb-2'}">${medal}</div>
-                    <div class="w-${isFirst ? '14' : '12'} h-${isFirst ? '14' : '12'} ${isFirst ? 'gold-gradient pulse-gold' : 'bg-gray-700'} rounded-full mx-auto mb-2"></div>
+                    ${avatarHtml}
                     <div class="${nameClass}">${entry.username || entry.first_name || `Player${actualRank}`}</div>
                     <div class="${profitClass}">${profitPrefix}${window.formatNumber(entry.profit)}</div>
                     <div class="text-gray-400 text-xs">PRED</div>
+                    ${rewardText}
                 </div>
             `;
         }).join('');
@@ -184,88 +263,14 @@
         document.getElementById('top3-container').innerHTML = html;
     }
 
-    // Load user's rank
-    async function loadUserRank() {
-        try {
-            const response = await fetch('/api/leaderboard/rank');
-            if (!response.ok) {
-                throw new Error('Failed to load user rank');
-            }
-            const rankData = await response.json();
-            renderUserRank(rankData);
-        } catch (error) {
-            console.error('Error loading user rank:', error);
-        }
-    }
-
-    // Render user's rank card
-    function renderUserRank(rankData) {
-        if (!rankData.rank) {
-            document.getElementById('user-rank-card').innerHTML = `
-                <div class="glass rounded-2xl p-4 text-center">
-                    <div class="text-gray-400">Делайте прогнозы, чтобы попасть в рейтинг!</div>
-                </div>
-            `;
-            return;
-        }
-
-        const profitPrefix = rankData.profit >= 0 ? '+' : '';
-        const profitColor = rankData.profit >= 0 ? 'text-yellow-400' : 'text-red-400';
-
-        const html = `
-            <div class="glass rounded-2xl p-4 border-2 border-yellow-400">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <div class="font-bold text-2xl text-yellow-400">#${rankData.rank}</div>
-                        <div class="w-10 h-10 gold-gradient rounded-full"></div>
-                        <div>
-                            <div class="font-bold">Вы</div>
-                            <div class="${profitColor} text-sm">${profitPrefix}${window.formatNumber(rankData.profit)} PRED</div>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-gray-400 text-xs">из ${rankData.total_players} игроков</div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        document.getElementById('user-rank-card').innerHTML = html;
-    }
-
-    // Sort button handlers
-    function setupSortButtons() {
-        const sortButtons = {
-            'sort-profit': 'profit',
-            'sort-winrate': 'win_rate',
-            'sort-streak': 'win_streak',
-            'sort-wins': 'total_wins'
-        };
-
-        Object.keys(sortButtons).forEach(buttonId => {
-            const button = document.getElementById(buttonId);
-            if (button) {
-                button.addEventListener('click', () => {
-                    // Update button styles
-                    document.querySelectorAll('.sort-button').forEach(btn => {
-                        btn.classList.remove('gold-gradient', 'text-black');
-                        btn.classList.add('glass');
-                    });
-                    button.classList.remove('glass');
-                    button.classList.add('gold-gradient', 'text-black');
-
-                    // Load with new sort
-                    loadLeaderboard(sortButtons[buttonId]);
-                });
-            }
-        });
-    }
-
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', () => {
         loadLeaderboard();
-        loadUserRank();
-        setupSortButtons();
+        loadRewards();
+        updateCountdown();
+
+        // Update countdown every minute
+        setInterval(updateCountdown, 60000);
     });
 </script>
 {% endblock %}
