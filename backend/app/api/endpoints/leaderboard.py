@@ -1,7 +1,7 @@
 """
 Leaderboard endpoints
 """
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, case, desc, and_
 from app.core.database import get_db
@@ -175,7 +175,7 @@ async def get_leaderboard(
 
 @router.get("/rewards/{period}", response_model=List[RewardInfo])
 async def get_rewards(
-    period: str = Query(..., regex="^(week|month)$"),
+    period: str = Path(..., regex="^(week|month)$"),
     db: AsyncSession = Depends(get_db)
 ):
     """Get rewards configuration for a period"""
