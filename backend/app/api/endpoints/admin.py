@@ -987,15 +987,60 @@ class LeaderboardEntry(BaseModel):
 @router.get("/leaderboard")
 async def get_leaderboard(
     limit: int = 100,
+    period: str = "week",  # week or month
     db: AsyncSession = Depends(get_db)
 ):
-    """Get leaderboard sorted by PRED balance"""
-    query = select(User).order_by(desc(User.pred_balance)).limit(limit)
+    """
+    Get leaderboard sorted by profit for the selected period
+    Uses the same logic as the public leaderboard endpoint
+    """
+    from datetime import timedelta
+    from app.models.bet import Bet, BetStatus
+
+    # Calculate date range based on period
+    now = datetime.utcnow()
+    if period == "week":
+        start_date = now - timedelta(days=7)
+    else:  # month
+        start_date = now - timedelta(days=30)
+
+    # Calculate profit for each user (only for bets in period)
+    profit_subquery = (
+        select(
+            Bet.user_id,
+            func.sum(
+                case(
+                    (Bet.status == BetStatus.WON, Bet.payout - Bet.amount),
+                    (Bet.status == BetStatus.LOST, -Bet.amount),
+                    else_=Decimal("0.00")
+                )
+            ).label("profit"),
+            func.count().label("bets_count")
+        )
+        .where(Bet.created_at >= start_date)
+        .group_by(Bet.user_id)
+        .subquery()
+    )
+
+    # Main query
+    query = (
+        select(
+            User,
+            func.coalesce(profit_subquery.c.profit, Decimal("0.00")).label("profit"),
+            func.coalesce(profit_subquery.c.bets_count, 0).label("period_bets")
+        )
+        .outerjoin(profit_subquery, User.id == profit_subquery.c.user_id)
+        .where(profit_subquery.c.bets_count > 0)  # Only users with bets in this period
+        .order_by(desc("profit"))
+        .order_by(desc(User.total_wins))
+        .limit(limit)
+    )
+
     result = await db.execute(query)
-    users = result.scalars().all()
+    rows = result.all()
 
     leaderboard = []
-    for rank, user in enumerate(users, start=1):
+    for rank, (user, profit, period_bets) in enumerate(rows, start=1):
         win_rate = (user.total_wins / user.total_bets * 100) if user.total_bets > 0 else 0
 
         leaderboard.append({
@@ -1004,14 +1049,160 @@ async def get_leaderboard(
             "telegram_id": user.telegram_id,
             "username": user.username,
             "first_name": user.first_name,
+            "photo_url": user.photo_url,
             "pred_balance": user.pred_balance,
             "total_bets": user.total_bets,
             "total_wins": user.total_wins,
             "win_rate": round(win_rate, 2),
-            "user_rank": user.rank
+            "user_rank": user.rank,
+            "profit": profit,
+            "period_bets": period_bets
         })
 
     return leaderboard
+
+
+# ============ Leaderboard Rewards Management ============
+
+from app.models.leaderboard_reward import LeaderboardReward, RewardPeriod
+
+
+class LeaderboardRewardResponse(BaseModel):
+    """Leaderboard reward response model"""
+    id: int
+    period: str
+    rank_from: int
+    rank_to: int
+    reward_amount: int
+    is_active: bool
+
+    class Config:
+        from_attributes = True
+
+
+class CreateRewardRequest(BaseModel):
+    """Request model for creating a reward"""
+    period: str  # week or month
+    rank_from: int
+    rank_to: int
+    reward_amount: int
+    is_active: bool = True
+
+
+class UpdateRewardRequest(BaseModel):
+    """Request model for updating a reward"""
+    period: Optional[str] = None
+    rank_from: Optional[int] = None
+    rank_to: Optional[int] = None
+    reward_amount: Optional[int] = None
+    is_active: Optional[bool] = None
+
+
+@router.get("/leaderboard/rewards", response_model=List[LeaderboardRewardResponse])
+async def get_all_rewards(
+    period: Optional[str] = None,
+    db: AsyncSession = Depends(get_db)
+):
+    """Get all leaderboard rewards, optionally filtered by period"""
+    from sqlalchemy import and_
+
+    query = select(LeaderboardReward).order_by(
+        LeaderboardReward.period,
+        LeaderboardReward.rank_from
+    )
+
+    if period:
+        reward_period = RewardPeriod.WEEK if period == "week" else RewardPeriod.MONTH
+        query = query.where(LeaderboardReward.period == reward_period)
+
+    result = await db.execute(query)
+    rewards = result.scalars().all()
+
+    return [LeaderboardRewardResponse.model_validate(reward) for reward in rewards]
+
+
+@router.post("/leaderboard/rewards")
+async def create_reward(
+    reward_data: CreateRewardRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Create a new leaderboard reward"""
+    reward_period = RewardPeriod.WEEK if reward_data.period == "week" else RewardPeriod.MONTH
+
+    new_reward = LeaderboardReward(
+        period=reward_period,
+        rank_from=reward_data.rank_from,
+        rank_to=reward_data.rank_to,
+        reward_amount=reward_data.reward_amount,
+        is_active=reward_data.is_active
+    )
+
+    db.add(new_reward)
+    await db.commit()
+    await db.refresh(new_reward)
+
+    return {
+        "id": new_reward.id,
+        "period": new_reward.period.value,
+        "rank_from": new_reward.rank_from,
+        "rank_to": new_reward.rank_to,
+        "reward_amount": new_reward.reward_amount,
+        "message": "Reward created successfully"
+    }
+
+
+@router.put("/leaderboard/rewards/{reward_id}")
+async def update_reward(
+    reward_id: int,
+    reward_data: UpdateRewardRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Update a leaderboard reward"""
+    result = await db.execute(
+        select(LeaderboardReward).where(LeaderboardReward.id == reward_id)
+    )
+    reward = result.scalar_one_or_none()
+
+    if not reward:
+        raise HTTPException(status_code=404, detail="Reward not found")
+
+    if reward_data.period is not None:
+        reward.period = RewardPeriod.WEEK if reward_data.period == "week" else RewardPeriod.MONTH
+    if reward_data.rank_from is not None:
+        reward.rank_from = reward_data.rank_from
+    if reward_data.rank_to is not None:
+        reward.rank_to = reward_data.rank_to
+    if reward_data.reward_amount is not None:
+        reward.reward_amount = reward_data.reward_amount
+    if reward_data.is_active is not None:
+        reward.is_active = reward_data.is_active
+
+    await db.commit()
+
+    return {
+        "id": reward_id,
+        "message": "Reward updated successfully"
+    }
+
+
+@router.delete("/leaderboard/rewards/{reward_id}")
+async def delete_reward(
+    reward_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """Delete a leaderboard reward"""
+    result = await db.execute(
+        select(LeaderboardReward).where(LeaderboardReward.id == reward_id)
+    )
+    reward = result.scalar_one_or_none()
+
+    if not reward:
+        raise HTTPException(status_code=404, detail="Reward not found")
+
+    await db.delete(reward)
+    await db.commit()
+
+    return {"message": f"Reward {reward_id} deleted successfully"}
 
 
 # ============ Mission Management ============

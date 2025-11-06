@@ -1,42 +1,318 @@
 {% extends "base.html" %}
-{% block title %}Leaderboard - ThePred Admin{% endblock %}
+{% block title %}Leaderboard Management - ThePred Admin{% endblock %}
 {% block content %}
-<div class="max-w-6xl">
-    <h1 class="text-3xl font-bold mb-8">Leaderboard (Top 100)</h1>
-    <div class="bg-dark-800 rounded-lg overflow-hidden">
-        <table class="w-full">
-            <thead class="bg-dark-700">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Rank</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Username</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">PRED Balance</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Total Bets</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Win Rate</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">User Rank</th>
-                </tr>
-            </thead>
-            <tbody id="leaderboard-tbody"></tbody>
-        </table>
+<div class="max-w-7xl">
+    <h1 class="text-3xl font-bold mb-8">🏆 Leaderboard Management</h1>
+
+    <!-- Period Tabs -->
+    <div class="mb-6">
+        <div class="flex space-x-2">
+            <button id="tab-week" class="px-6 py-2 rounded-lg bg-yellow-600 font-bold text-black" onclick="switchPeriod('week')">
+                Неделя
+            </button>
+            <button id="tab-month" class="px-6 py-2 rounded-lg bg-dark-700 font-bold" onclick="switchPeriod('month')">
+                Месяц
+            </button>
+        </div>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Leaderboard Table -->
+        <div class="bg-dark-800 rounded-lg p-6">
+            <h2 class="text-2xl font-bold mb-4">
+                <span id="period-title">Недельный</span> Лидерборд
+            </h2>
+            <div class="overflow-y-auto" style="max-height: 600px;">
+                <table class="w-full">
+                    <thead class="bg-dark-700 sticky top-0">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400">Rank</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400">User</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-400">Profit</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-400">Win Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Rewards Management -->
+        <div class="bg-dark-800 rounded-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">
+                    <span id="rewards-period-title">Недельные</span> Награды
+                </h2>
+                <button onclick="showCreateRewardModal()" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg font-bold text-sm">
+                    + Добавить
+                </button>
+            </div>
+
+            <div id="rewards-list" class="space-y-3">
+                <!-- Rewards will be loaded here -->
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- Create/Edit Reward Modal -->
+<div id="rewardModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center" style="z-index: 1000;">
+    <div class="bg-dark-800 rounded-lg p-8 max-w-md w-full mx-4">
+        <h3 id="modalTitle" class="text-2xl font-bold mb-6">Создать награду</h3>
+
+        <form id="rewardForm" class="space-y-4">
+            <input type="hidden" id="rewardId" value="">
+
+            <div>
+                <label class="block text-sm font-medium mb-2">Период</label>
+                <select id="rewardPeriod" class="w-full px-4 py-2 bg-dark-700 rounded-lg border border-gray-700">
+                    <option value="week">Неделя</option>
+                    <option value="month">Месяц</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Ранг от</label>
+                    <input type="number" id="rankFrom" min="1" class="w-full px-4 py-2 bg-dark-700 rounded-lg border border-gray-700" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Ранг до</label>
+                    <input type="number" id="rankTo" min="1" class="w-full px-4 py-2 bg-dark-700 rounded-lg border border-gray-700" required>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-2">Награда (PRED)</label>
+                <input type="number" id="rewardAmount" min="0" class="w-full px-4 py-2 bg-dark-700 rounded-lg border border-gray-700" required>
+            </div>
+
+            <div class="flex items-center">
+                <input type="checkbox" id="isActive" class="mr-2" checked>
+                <label for="isActive" class="text-sm">Активна</label>
+            </div>
+
+            <div class="flex space-x-3 mt-6">
+                <button type="submit" class="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg font-bold">
+                    Сохранить
+                </button>
+                <button type="button" onclick="closeRewardModal()" class="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg font-bold">
+                    Отмена
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 {% endblock %}
 {% block scripts %}
 <script>
-async function loadLeaderboard() {
-    const tbody = document.getElementById('leaderboard-tbody');
-    const response = await fetch(`${API_URL}/admin/leaderboard?limit=100`);
-    const leaderboard = await response.json();
-    tbody.innerHTML = leaderboard.map(entry => `
-        <tr class="border-t border-gray-800">
-            <td class="px-6 py-4 font-bold ${entry.rank <= 3 ? 'text-yellow-400' : ''}">#${entry.rank}</td>
-            <td class="px-6 py-4">${entry.username || entry.first_name || `User ${entry.user_id}`}</td>
-            <td class="px-6 py-4 font-bold">${formatNumber(entry.pred_balance)}</td>
-            <td class="px-6 py-4">${entry.total_bets}</td>
-            <td class="px-6 py-4">${entry.win_rate}%</td>
-            <td class="px-6 py-4"><span class="px-2 py-1 bg-yellow-600 rounded text-xs">${entry.user_rank}</span></td>
-        </tr>
-    `).join('');
+let currentPeriod = 'week';
+
+// Switch period
+function switchPeriod(period) {
+    currentPeriod = period;
+
+    // Update tab styles
+    document.querySelectorAll('button[id^="tab-"]').forEach(tab => {
+        tab.classList.remove('bg-yellow-600', 'text-black');
+        tab.classList.add('bg-dark-700');
+    });
+    document.getElementById(`tab-${period}`).classList.remove('bg-dark-700');
+    document.getElementById(`tab-${period}`).classList.add('bg-yellow-600', 'text-black');
+
+    // Update titles
+    const title = period === 'week' ? 'Недельный' : 'Месячный';
+    const rewardsTitle = period === 'week' ? 'Недельные' : 'Месячные';
+    document.getElementById('period-title').textContent = title;
+    document.getElementById('rewards-period-title').textContent = rewardsTitle;
+
+    // Reload data
+    loadLeaderboard();
+    loadRewards();
 }
+
+// Load leaderboard
+async function loadLeaderboard() {
+    try {
+        const response = await fetch(`${API_URL}/admin/leaderboard?period=${currentPeriod}&limit=100`);
+        const leaderboard = await response.json();
+
+        const tbody = document.getElementById('leaderboard-tbody');
+        tbody.innerHTML = leaderboard.map(entry => {
+            const profitColor = entry.profit >= 0 ? 'text-green-400' : 'text-red-400';
+            const profitPrefix = entry.profit >= 0 ? '+' : '';
+
+            return `
+                <tr class="border-t border-gray-800 hover:bg-dark-700">
+                    <td class="px-4 py-3 font-bold ${entry.rank <= 3 ? 'text-yellow-400' : ''}">#${entry.rank}</td>
+                    <td class="px-4 py-3">
+                        <div class="font-bold">${entry.username || entry.first_name || `User ${entry.user_id}`}</div>
+                        <div class="text-xs text-gray-400">${entry.user_rank} • ${entry.total_wins}W/${entry.total_bets}B</div>
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                        <div class="font-bold ${profitColor}">${profitPrefix}${formatNumber(entry.profit)}</div>
+                        <div class="text-xs text-gray-400">PRED</div>
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                        <div class="font-bold">${entry.win_rate}%</div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    } catch (error) {
+        console.error('Error loading leaderboard:', error);
+        showToast('Failed to load leaderboard', 'error');
+    }
+}
+
+// Load rewards
+async function loadRewards() {
+    try {
+        const response = await fetch(`${API_URL}/admin/leaderboard/rewards?period=${currentPeriod}`);
+        const rewards = await response.json();
+
+        const rewardsList = document.getElementById('rewards-list');
+
+        if (rewards.length === 0) {
+            rewardsList.innerHTML = '<div class="text-center text-gray-400 py-8">Нет настроенных наград</div>';
+            return;
+        }
+
+        rewardsList.innerHTML = rewards.map(reward => {
+            let rankText;
+            if (reward.rank_from === reward.rank_to) {
+                rankText = `#${reward.rank_from}`;
+            } else {
+                rankText = `#${reward.rank_from}-${reward.rank_to}`;
+            }
+
+            return `
+                <div class="bg-dark-700 rounded-lg p-4 flex items-center justify-between">
+                    <div>
+                        <div class="font-bold">${rankText} Место</div>
+                        <div class="text-yellow-400 font-bold">${formatNumber(reward.reward_amount)} PRED</div>
+                        ${reward.is_active ? '' : '<div class="text-xs text-red-400 mt-1">Неактивна</div>'}
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="editReward(${reward.id}, '${reward.period}', ${reward.rank_from}, ${reward.rank_to}, ${reward.reward_amount}, ${reward.is_active})"
+                                class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
+                            Edit
+                        </button>
+                        <button onclick="deleteReward(${reward.id})"
+                                class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (error) {
+        console.error('Error loading rewards:', error);
+        showToast('Failed to load rewards', 'error');
+    }
+}
+
+// Show create reward modal
+function showCreateRewardModal() {
+    document.getElementById('modalTitle').textContent = 'Создать награду';
+    document.getElementById('rewardForm').reset();
+    document.getElementById('rewardId').value = '';
+    document.getElementById('rewardPeriod').value = currentPeriod;
+    document.getElementById('isActive').checked = true;
+    document.getElementById('rewardModal').classList.remove('hidden');
+    document.getElementById('rewardModal').classList.add('flex');
+}
+
+// Edit reward
+function editReward(id, period, rankFrom, rankTo, rewardAmount, isActive) {
+    document.getElementById('modalTitle').textContent = 'Редактировать награду';
+    document.getElementById('rewardId').value = id;
+    document.getElementById('rewardPeriod').value = period;
+    document.getElementById('rankFrom').value = rankFrom;
+    document.getElementById('rankTo').value = rankTo;
+    document.getElementById('rewardAmount').value = rewardAmount;
+    document.getElementById('isActive').checked = isActive;
+    document.getElementById('rewardModal').classList.remove('hidden');
+    document.getElementById('rewardModal').classList.add('flex');
+}
+
+// Close modal
+function closeRewardModal() {
+    document.getElementById('rewardModal').classList.add('hidden');
+    document.getElementById('rewardModal').classList.remove('flex');
+}
+
+// Delete reward
+async function deleteReward(id) {
+    if (!confirm('Удалить эту награду?')) return;
+
+    try {
+        const response = await fetch(`${API_URL}/admin/leaderboard/rewards/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            showToast('Reward deleted successfully', 'success');
+            loadRewards();
+        } else {
+            showToast('Failed to delete reward', 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting reward:', error);
+        showToast('Failed to delete reward', 'error');
+    }
+}
+
+// Handle reward form submission
+document.getElementById('rewardForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const rewardId = document.getElementById('rewardId').value;
+    const data = {
+        period: document.getElementById('rewardPeriod').value,
+        rank_from: parseInt(document.getElementById('rankFrom').value),
+        rank_to: parseInt(document.getElementById('rankTo').value),
+        reward_amount: parseInt(document.getElementById('rewardAmount').value),
+        is_active: document.getElementById('isActive').checked
+    };
+
+    try {
+        const url = rewardId
+            ? `${API_URL}/admin/leaderboard/rewards/${rewardId}`
+            : `${API_URL}/admin/leaderboard/rewards`;
+
+        const method = rewardId ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            showToast(rewardId ? 'Reward updated' : 'Reward created', 'success');
+            closeRewardModal();
+            loadRewards();
+        } else {
+            showToast('Failed to save reward', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving reward:', error);
+        showToast('Failed to save reward', 'error');
+    }
+});
+
+// Close modal on outside click
+document.getElementById('rewardModal').addEventListener('click', (e) => {
+    if (e.target.id === 'rewardModal') {
+        closeRewardModal();
+    }
+});
+
+// Initialize
 loadLeaderboard();
+loadRewards();
 </script>
 {% endblock %}

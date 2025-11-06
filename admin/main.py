@@ -365,5 +365,77 @@ async def api_admin_missions():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/admin/leaderboard', methods=['GET'])
+@login_required
+async def api_admin_leaderboard():
+    """Proxy leaderboard request to backend"""
+    try:
+        period = request.args.get('period', 'week')
+        limit = request.args.get('limit', 100)
+
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.get(
+                f"{app.config['API_URL']}/admin/leaderboard?period={period}&limit={limit}"
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching leaderboard: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/admin/leaderboard/rewards', methods=['GET', 'POST'])
+@login_required
+async def api_admin_rewards():
+    """Proxy rewards request to backend"""
+    try:
+        async with aiohttp.ClientSession() as session_http:
+            if request.method == 'POST':
+                data = await request.get_json()
+                async with session_http.post(
+                    f"{app.config['API_URL']}/admin/leaderboard/rewards",
+                    json=data
+                ) as response:
+                    result = await response.json()
+                    return jsonify(result)
+            else:
+                period = request.args.get('period', '')
+                url = f"{app.config['API_URL']}/admin/leaderboard/rewards"
+                if period:
+                    url += f"?period={period}"
+
+                async with session_http.get(url) as response:
+                    result = await response.json()
+                    return jsonify(result)
+    except Exception as e:
+        print(f"Error with rewards: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/admin/leaderboard/rewards/<int:reward_id>', methods=['PUT', 'DELETE'])
+@login_required
+async def api_admin_reward_action(reward_id):
+    """Proxy reward update/delete request to backend"""
+    try:
+        async with aiohttp.ClientSession() as session_http:
+            if request.method == 'PUT':
+                data = await request.get_json()
+                async with session_http.put(
+                    f"{app.config['API_URL']}/admin/leaderboard/rewards/{reward_id}",
+                    json=data
+                ) as response:
+                    result = await response.json()
+                    return jsonify(result)
+            elif request.method == 'DELETE':
+                async with session_http.delete(
+                    f"{app.config['API_URL']}/admin/leaderboard/rewards/{reward_id}"
+                ) as response:
+                    result = await response.json()
+                    return jsonify(result)
+    except Exception as e:
+        print(f"Error with reward action: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8002)
