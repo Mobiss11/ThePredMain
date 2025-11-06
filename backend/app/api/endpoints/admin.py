@@ -1457,3 +1457,102 @@ async def generate_test_markets(db: AsyncSession = Depends(get_db)):
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to generate test markets: {str(e)}")
+
+
+# ============ Leaderboard Periods Management ============
+
+from app.models.leaderboard_period import LeaderboardPeriod, PeriodStatus
+from app.services.leaderboard_service import LeaderboardService
+
+
+class LeaderboardPeriodResponse(BaseModel):
+    """Leaderboard period response model"""
+    id: int
+    period_type: str
+    start_date: datetime
+    end_date: datetime
+    status: str
+    total_rewards_distributed: int
+    participants_count: int
+    winners_count: int
+    closed_at: Optional[datetime]
+    closed_by_admin_id: Optional[int]
+
+    class Config:
+        from_attributes = True
+
+
+@router.post("/leaderboard/close-period")
+async def close_leaderboard_period(
+    period_type: str = Query(..., regex="^(week|month)$"),
+    admin_id: int = 1,  # TODO: Get from auth
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Закрыть текущий период и рассчитать награды
+
+    Можно закрыть досрочно, даже если срок не подошел.
+    После закрытия начинается новый период.
+    """
+    try:
+        result = await LeaderboardService.close_period_and_calculate_rewards(
+            db=db,
+            period_type=period_type,
+            admin_id=admin_id
+        )
+
+        return result
+    except Exception as e:
+        logger.error(f"Error closing period: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/leaderboard/periods", response_model=List[LeaderboardPeriodResponse])
+async def get_closed_periods(
+    period_type: Optional[str] = Query(None, regex="^(week|month)$"),
+    limit: int = Query(50, ge=1, le=100),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Получить список закрытых периодов
+
+    Для отображения истории в админке
+    """
+    periods = await LeaderboardService.get_closed_periods(
+        db=db,
+        period_type=period_type,
+        limit=limit
+    )
+
+    return [LeaderboardPeriodResponse.model_validate(p) for p in periods]
+
+
+@router.get("/leaderboard/current-stats")
+async def get_current_period_stats(
+    period_type: str = Query(..., regex="^(week|month)$"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Получить статистику текущего (незакрытого) периода
+
+    Показывает сколько участников, потенциальные награды и т.д.
+    """
+    stats = await LeaderboardService.get_current_period_stats(
+        db=db,
+        period_type=period_type
+    )
+
+    return stats
+
+
+@router.get("/notifications/queue-stats")
+async def get_notifications_queue_stats(db: AsyncSession = Depends(get_db)):
+    """
+    Статистика очереди уведомлений
+
+    Для мониторинга воркера отправки
+    """
+    from app.services.telegram_queue_service import TelegramQueueService
+
+    stats = await TelegramQueueService.get_queue_stats(db=db)
+    return stats
