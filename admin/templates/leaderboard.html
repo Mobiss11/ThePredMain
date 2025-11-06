@@ -488,13 +488,10 @@ async function closePeriod() {
     btn.innerHTML = 'Закрытие...';
 
     try {
-        const response = await fetch(`${API_URL}/admin/leaderboard/close-period`, {
+        // Send period_type as query parameter
+        const response = await fetch(`${API_URL}/admin/leaderboard/close-period?period_type=${currentPeriod}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                period_type: currentPeriod,
-                admin_id: 1  // TODO: Get from session
-            })
+            headers: { 'Content-Type': 'application/json' }
         });
 
         const result = await response.json();
