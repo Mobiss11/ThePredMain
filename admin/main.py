@@ -437,5 +437,78 @@ async def api_admin_reward_action(reward_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/admin/leaderboard/close-period', methods=['POST'])
+@login_required
+async def api_admin_close_period():
+    """Proxy close period request to backend"""
+    try:
+        data = await request.get_json()
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.post(
+                f"{app.config['API_URL']}/admin/leaderboard/close-period",
+                json=data
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error closing period: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/admin/leaderboard/periods', methods=['GET'])
+@login_required
+async def api_admin_periods():
+    """Proxy periods history request to backend"""
+    try:
+        period_type = request.args.get('period_type', '')
+        limit = request.args.get('limit', 50)
+
+        url = f"{app.config['API_URL']}/admin/leaderboard/periods?limit={limit}"
+        if period_type:
+            url += f"&period_type={period_type}"
+
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.get(url) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching periods: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/admin/leaderboard/current-stats', methods=['GET'])
+@login_required
+async def api_admin_current_stats():
+    """Proxy current period stats request to backend"""
+    try:
+        period_type = request.args.get('period_type', 'week')
+
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.get(
+                f"{app.config['API_URL']}/admin/leaderboard/current-stats?period_type={period_type}"
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching current stats: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/admin/notifications/queue-stats', methods=['GET'])
+@login_required
+async def api_admin_queue_stats():
+    """Proxy notification queue stats request to backend"""
+    try:
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.get(
+                f"{app.config['API_URL']}/admin/notifications/queue-stats"
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching queue stats: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8002)

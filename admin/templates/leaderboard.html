@@ -16,8 +16,15 @@
         </div>
     </div>
 
+    <!-- UTC Notice -->
+    <div class="bg-blue-900/30 border border-blue-700 rounded-lg p-4 mb-6">
+        <p class="text-blue-300">
+            🌍 <strong>Все расчеты проводятся по UTC времени</strong>
+        </p>
+    </div>
+
     <!-- Two Column Layout -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         <!-- Leaderboard Table -->
         <div class="bg-dark-800 rounded-lg p-6">
             <h2 class="text-2xl font-bold mb-4">
@@ -52,6 +59,59 @@
             <div id="rewards-list" class="space-y-3">
                 <!-- Rewards will be loaded here -->
             </div>
+        </div>
+    </div>
+
+    <!-- Period Management Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <!-- Current Period Stats -->
+        <div class="bg-dark-800 rounded-lg p-6">
+            <h3 class="text-xl font-bold mb-4">📊 Текущий период</h3>
+            <div id="current-stats" class="space-y-3">
+                <!-- Stats will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Close Period -->
+        <div class="bg-dark-800 rounded-lg p-6">
+            <h3 class="text-xl font-bold mb-4">🏁 Закрыть период</h3>
+            <p class="text-sm text-gray-400 mb-4">
+                Закрытие периода запустит расчет наград и отправку уведомлений всем победителям.
+            </p>
+            <button id="close-period-btn" onclick="closePeriod()" class="w-full px-4 py-3 bg-red-600 hover:bg-red-700 rounded-lg font-bold">
+                Закрыть <span id="close-period-type">недельный</span> период
+            </button>
+        </div>
+
+        <!-- Notification Queue Stats -->
+        <div class="bg-dark-800 rounded-lg p-6">
+            <h3 class="text-xl font-bold mb-4">📨 Очередь уведомлений</h3>
+            <div id="queue-stats" class="space-y-2">
+                <!-- Queue stats will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Closed Periods History -->
+    <div class="bg-dark-800 rounded-lg p-6">
+        <h3 class="text-2xl font-bold mb-4">📜 История закрытых периодов</h3>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-dark-700">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-400">ID</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-400">Период</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-400">Даты</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-400">Участники</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-400">Победители</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-400">Награды</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-400">Закрыт</th>
+                    </tr>
+                </thead>
+                <tbody id="periods-tbody">
+                    <!-- Periods will be loaded here -->
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -125,12 +185,16 @@ function switchPeriod(period) {
     // Update titles
     const title = period === 'week' ? 'Недельный' : 'Месячный';
     const rewardsTitle = period === 'week' ? 'Недельные' : 'Месячные';
+    const closePeriodType = period === 'week' ? 'недельный' : 'месячный';
     document.getElementById('period-title').textContent = title;
     document.getElementById('rewards-period-title').textContent = rewardsTitle;
+    document.getElementById('close-period-type').textContent = closePeriodType;
 
     // Reload data
     loadLeaderboard();
     loadRewards();
+    loadCurrentStats();
+    loadPeriodsHistory();
 }
 
 // Load leaderboard
@@ -311,8 +375,158 @@ document.getElementById('rewardModal').addEventListener('click', (e) => {
     }
 });
 
+// Load current period stats
+async function loadCurrentStats() {
+    try {
+        const response = await fetch(`${API_URL}/admin/leaderboard/current-stats?period_type=${currentPeriod}`);
+        const stats = await response.json();
+
+        const statsDiv = document.getElementById('current-stats');
+        statsDiv.innerHTML = `
+            <div class="bg-dark-700 rounded p-3">
+                <div class="text-xs text-gray-400">Участники</div>
+                <div class="text-2xl font-bold">${stats.participants_count || 0}</div>
+            </div>
+            <div class="bg-dark-700 rounded p-3">
+                <div class="text-xs text-gray-400">Потенциальные награды</div>
+                <div class="text-2xl font-bold text-yellow-400">${formatNumber(stats.potential_rewards || 0)} PRED</div>
+            </div>
+            <div class="bg-dark-700 rounded p-3">
+                <div class="text-xs text-gray-400">Настроенные награды</div>
+                <div class="text-2xl font-bold">${stats.rewards_configured || 0}</div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading current stats:', error);
+    }
+}
+
+// Load notification queue stats
+async function loadQueueStats() {
+    try {
+        const response = await fetch(`${API_URL}/admin/notifications/queue-stats`);
+        const stats = await response.json();
+
+        const statsDiv = document.getElementById('queue-stats');
+        statsDiv.innerHTML = `
+            <div class="flex justify-between text-sm">
+                <span class="text-gray-400">Всего:</span>
+                <span class="font-bold">${stats.total || 0}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-gray-400">Pending:</span>
+                <span class="font-bold text-yellow-400">${stats.pending || 0}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-gray-400">Processing:</span>
+                <span class="font-bold text-blue-400">${stats.processing || 0}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-gray-400">Sent:</span>
+                <span class="font-bold text-green-400">${stats.sent || 0}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-gray-400">Failed:</span>
+                <span class="font-bold text-red-400">${stats.failed || 0}</span>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading queue stats:', error);
+    }
+}
+
+// Load closed periods history
+async function loadPeriodsHistory() {
+    try {
+        const response = await fetch(`${API_URL}/admin/leaderboard/periods?period_type=${currentPeriod}&limit=50`);
+        const periods = await response.json();
+
+        const tbody = document.getElementById('periods-tbody');
+
+        if (periods.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-gray-400 py-8">Нет закрытых периодов</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = periods.map(period => {
+            const startDate = new Date(period.start_date).toLocaleDateString('ru-RU');
+            const endDate = new Date(period.end_date).toLocaleDateString('ru-RU');
+            const closedAt = new Date(period.closed_at).toLocaleString('ru-RU');
+            const periodType = period.period_type === 'week' ? 'Неделя' : 'Месяц';
+
+            return `
+                <tr class="border-t border-gray-800 hover:bg-dark-700">
+                    <td class="px-4 py-3 font-mono text-sm text-gray-400">#${period.id}</td>
+                    <td class="px-4 py-3">${periodType}</td>
+                    <td class="px-4 py-3 text-sm">
+                        <div>${startDate}</div>
+                        <div class="text-gray-400">${endDate}</div>
+                    </td>
+                    <td class="px-4 py-3 text-right">${period.participants_count}</td>
+                    <td class="px-4 py-3 text-right font-bold text-green-400">${period.winners_count}</td>
+                    <td class="px-4 py-3 text-right">
+                        <div class="font-bold text-yellow-400">${formatNumber(period.total_rewards_distributed)} PRED</div>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-400">${closedAt}</td>
+                </tr>
+            `;
+        }).join('');
+    } catch (error) {
+        console.error('Error loading periods history:', error);
+    }
+}
+
+// Close period
+async function closePeriod() {
+    const periodName = currentPeriod === 'week' ? 'недельный' : 'месячный';
+    if (!confirm(`Вы уверены что хотите закрыть ${periodName} период?\n\nЭто запустит расчет наград и отправку уведомлений всем победителям.`)) {
+        return;
+    }
+
+    const btn = document.getElementById('close-period-btn');
+    btn.disabled = true;
+    btn.innerHTML = 'Закрытие...';
+
+    try {
+        const response = await fetch(`${API_URL}/admin/leaderboard/close-period`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                period_type: currentPeriod,
+                admin_id: 1  // TODO: Get from session
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showToast(`Период закрыт! Награды: ${result.total_rewards} PRED для ${result.winners_count} победителей`, 'success');
+            // Reload all data
+            loadLeaderboard();
+            loadRewards();
+            loadCurrentStats();
+            loadPeriodsHistory();
+            loadQueueStats();
+        } else {
+            showToast(`Ошибка: ${result.error}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error closing period:', error);
+        showToast('Failed to close period', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `Закрыть <span id="close-period-type">${periodName}</span> период`;
+    }
+}
+
 // Initialize
 loadLeaderboard();
 loadRewards();
+loadCurrentStats();
+loadQueueStats();
+loadPeriodsHistory();
+
+// Auto-refresh queue stats every 30 seconds
+setInterval(loadQueueStats, 30000);
 </script>
 {% endblock %}
