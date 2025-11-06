@@ -479,7 +479,9 @@ async function loadPeriodsHistory() {
                     <td class="px-4 py-3 text-right">${period.participants_count}</td>
                     <td class="px-4 py-3 text-right font-bold text-green-400">${period.winners_count}</td>
                     <td class="px-4 py-3 text-right">
-                        <div class="font-bold text-yellow-400">${formatNumber(period.total_rewards_distributed)} PRED</div>
+                        ${period.total_ton_rewards > 0 ? `<div class="font-bold text-blue-400">💎 ${formatNumber(period.total_ton_rewards)} TON</div>` : ''}
+                        ${period.total_pred_rewards > 0 ? `<div class="font-bold text-yellow-400">💰 ${formatNumber(period.total_pred_rewards)} PRED</div>` : ''}
+                        ${(period.total_ton_rewards === 0 && period.total_pred_rewards === 0) ? `<div class="text-gray-400">0</div>` : ''}
                     </td>
                     <td class="px-4 py-3 text-sm text-gray-400">${closedAt}</td>
                 </tr>
@@ -511,7 +513,12 @@ async function closePeriod() {
         const result = await response.json();
 
         if (result.success) {
-            showToast(`Период закрыт! Награды: ${result.total_rewards} PRED для ${result.winners_count} победителей`, 'success');
+            let rewardsText = [];
+            if (result.total_ton_rewards > 0) rewardsText.push(`${result.total_ton_rewards} TON`);
+            if (result.total_pred_rewards > 0) rewardsText.push(`${result.total_pred_rewards} PRED`);
+            const rewardsStr = rewardsText.length > 0 ? rewardsText.join(' + ') : '0';
+
+            showToast(`Период закрыт! Награды: ${rewardsStr} для ${result.winners_count} победителей`, 'success');
             // Reload all data
             loadLeaderboard();
             loadRewards();

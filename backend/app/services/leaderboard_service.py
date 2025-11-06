@@ -156,6 +156,8 @@ class LeaderboardService:
 
         # 4. Начисляем награды и создаем уведомления
         total_rewards = 0
+        total_ton_rewards = 0
+        total_pred_rewards = 0
         winners_count = 0
         participants_count = len(leaderboard)
 
@@ -170,8 +172,10 @@ class LeaderboardService:
                     # Начисляем награду на правильный баланс
                     if currency == "TON":
                         user.ton_balance += reward_amount
+                        total_ton_rewards += reward_amount
                     else:  # PRED
                         user.pred_balance += reward_amount
+                        total_pred_rewards += reward_amount
 
                     total_rewards += reward_amount
                     winners_count += 1
@@ -203,6 +207,8 @@ class LeaderboardService:
             end_date=end_date,
             status=PeriodStatus.CLOSED,
             total_rewards_distributed=total_rewards,
+            total_ton_rewards=total_ton_rewards,
+            total_pred_rewards=total_pred_rewards,
             participants_count=participants_count,
             winners_count=winners_count,
             closed_at=now,
@@ -212,7 +218,7 @@ class LeaderboardService:
         db.add(period)
         await db.commit()
 
-        logger.info(f"✅ Период {period_type} закрыт. Награды: {total_rewards} PRED для {winners_count} пользователей")
+        logger.info(f"✅ Период {period_type} закрыт. Награды: {total_ton_rewards} TON + {total_pred_rewards} PRED для {winners_count} пользователей")
 
         return {
             "success": True,
@@ -223,6 +229,8 @@ class LeaderboardService:
             "participants_count": participants_count,
             "winners_count": winners_count,
             "total_rewards": total_rewards,
+            "total_ton_rewards": total_ton_rewards,
+            "total_pred_rewards": total_pred_rewards,
             "notifications_queued": winners_count
         }
 

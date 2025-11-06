@@ -34,7 +34,9 @@ class LeaderboardPeriod(Base):
 
     # Статус и награды
     status = Column(SQLEnum(PeriodStatus), default=PeriodStatus.ACTIVE, nullable=False)
-    total_rewards_distributed = Column(Integer, default=0)  # Сумма всех выплаченных наград
+    total_rewards_distributed = Column(Integer, default=0)  # Сумма всех выплаченных наград (deprecated, use ton/pred)
+    total_ton_rewards = Column(Integer, default=0)  # Сумма наград в TON
+    total_pred_rewards = Column(Integer, default=0)  # Сумма наград в PRED
     participants_count = Column(Integer, default=0)  # Количество участников
     winners_count = Column(Integer, default=0)  # Количество получивших награды
 
