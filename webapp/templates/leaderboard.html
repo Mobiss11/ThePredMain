@@ -193,6 +193,16 @@
 
         // Render rest of leaderboard (4+)
         const restOfLeaderboard = leaderboard.slice(3);
+
+        // Hide leaderboard-list container if empty
+        const leaderboardListContainer = document.getElementById('leaderboard-list').parentElement;
+        if (restOfLeaderboard.length === 0) {
+            leaderboardListContainer.style.display = 'none';
+            return;
+        } else {
+            leaderboardListContainer.style.display = 'block';
+        }
+
         const listHTML = restOfLeaderboard.map(entry => {
             const profitColor = entry.profit >= 0 ? 'text-yellow-400' : 'text-red-400';
             const profitPrefix = entry.profit >= 0 ? '+' : '';
@@ -231,6 +241,10 @@
     // Render top 3 specially
     function renderTop3(top3) {
         if (!top3 || top3.length === 0) return;
+
+        // Update grid-cols based on number of users
+        const container = document.getElementById('top3-container');
+        container.className = container.className.replace(/grid-cols-\d+/, `grid-cols-${top3.length}`);
 
         // Order: 2nd, 1st, 3rd (but only if they exist)
         let orderedTop3 = [];
