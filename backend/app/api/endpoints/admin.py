@@ -2,7 +2,7 @@
 Admin Panel API Endpoints
 Requires admin authentication (to be implemented)
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc, case
 from app.core.database import get_db
