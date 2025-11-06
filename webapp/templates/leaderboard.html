@@ -181,12 +181,14 @@
     function renderLeaderboard(leaderboard) {
         if (!leaderboard || leaderboard.length === 0) {
             document.getElementById('leaderboard-list').innerHTML = '<div class="text-center text-gray-400 py-8">Нет данных рейтинга</div>';
+            document.getElementById('top3-container').innerHTML = '';
             return;
         }
 
-        // Render top 3
-        if (leaderboard.length >= 3) {
-            renderTop3(leaderboard.slice(0, 3));
+        // Render top 3 (or less if fewer users)
+        const top3Count = Math.min(leaderboard.length, 3);
+        if (top3Count > 0) {
+            renderTop3(leaderboard.slice(0, top3Count));
         }
 
         // Render rest of leaderboard (4+)
@@ -194,7 +196,7 @@
         const listHTML = restOfLeaderboard.map(entry => {
             const profitColor = entry.profit >= 0 ? 'text-yellow-400' : 'text-red-400';
             const profitPrefix = entry.profit >= 0 ? '+' : '';
-            const rankBadge = rankBadges[entry.rank_badge] || '🥉 Bronze';
+            const rankBadge = rankBadges[entry.rank_badge.toLowerCase()] || '🥉 Бронза';
 
             // Avatar or placeholder
             const avatarHtml = entry.photo_url
@@ -228,12 +230,19 @@
 
     // Render top 3 specially
     function renderTop3(top3) {
-        if (top3.length < 3) return;
+        if (!top3 || top3.length === 0) return;
 
-        // Order: 2nd, 1st, 3rd
-        const orderedTop3 = [top3[1], top3[0], top3[2]];
+        // Order: 2nd, 1st, 3rd (but only if they exist)
+        let orderedTop3 = [];
+        if (top3.length === 1) {
+            orderedTop3 = [top3[0]]; // Only 1st place
+        } else if (top3.length === 2) {
+            orderedTop3 = [top3[1], top3[0]]; // 2nd, 1st
+        } else {
+            orderedTop3 = [top3[1], top3[0], top3[2]]; // 2nd, 1st, 3rd
+        }
 
-        const html = orderedTop3.map((entry, index) => {
+        const html = orderedTop3.filter(entry => entry).map((entry, index) => {
             const actualRank = entry.rank;
             const medal = medalEmojis[actualRank];
             const isFirst = actualRank === 1;

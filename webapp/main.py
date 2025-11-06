@@ -336,7 +336,7 @@ async def api_bet_history():
 async def api_active_bets(user_id):
     """Get user's active bets from backend API"""
     try:
-        response = await api_client.get(f"/bets/active/{user_id}")
+        response = await api_client._get(f"/bets/active/{user_id}")
         return jsonify(response)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
