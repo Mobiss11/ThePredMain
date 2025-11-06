@@ -340,6 +340,24 @@ async def resolve_market(
 
     await db.commit()
 
+    # Update mission progress for all users who had bets on this market
+    try:
+        from app.services.mission_service import MissionService
+        user_ids = set(bet.user_id for bet in bets)
+        for user_id in user_ids:
+            try:
+                await MissionService.check_and_update_all_missions(db, user_id)
+            except Exception as e:
+                # Log error but continue with other users
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to update missions for user {user_id} after market resolve: {e}")
+    except Exception as e:
+        # Log error but don't fail the resolve
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to update mission progress after market resolve: {e}")
+
     return {
         "market_id": market_id,
         "outcome": outcome,
@@ -1563,3 +1581,213 @@ async def get_notifications_queue_stats(db: AsyncSession = Depends(get_db)):
 
     stats = await TelegramQueueService.get_queue_stats(db=db)
     return stats
+
+
+# ============ MISSIONS MANAGEMENT ============
+
+class CreateMissionRequest(BaseModel):
+    """Request model for creating a mission"""
+    title: str
+    description: Optional[str] = None
+    icon: Optional[str] = "🎯"
+    custom_icon_url: Optional[str] = None
+    reward_amount: Decimal
+    reward_currency: str = "PRED"
+    type: str  # daily, weekly, achievement, subscription
+    requirements: dict
+    channel_id: Optional[str] = None
+    channel_username: Optional[str] = None
+    channel_url: Optional[str] = None
+    is_active: bool = True
+
+
+class UpdateMissionRequest(BaseModel):
+    """Request model for updating a mission"""
+    title: Optional[str] = None
+    description: Optional[str] = None
+    icon: Optional[str] = None
+    custom_icon_url: Optional[str] = None
+    reward_amount: Optional[Decimal] = None
+    reward_currency: Optional[str] = None
+    requirements: Optional[dict] = None
+    channel_id: Optional[str] = None
+    channel_username: Optional[str] = None
+    channel_url: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class MissionAdminResponse(BaseModel):
+    """Mission response for admin"""
+    id: int
+    title: str
+    description: Optional[str]
+    icon: Optional[str]
+    custom_icon_url: Optional[str]
+    reward_amount: Decimal
+    reward_currency: str
+    type: str
+    requirements: dict
+    channel_id: Optional[str]
+    channel_username: Optional[str]
+    channel_url: Optional[str]
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+@router.get("/missions", response_model=List[MissionAdminResponse])
+async def get_all_missions(
+    type_filter: Optional[str] = Query(None, description="Filter by type: daily, weekly, achievement, subscription"),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get all missions for admin panel"""
+    query = select(Mission).order_by(Mission.type, Mission.id)
+
+    if type_filter:
+        from app.models.mission import Mission as MissionModel
+        query = query.where(MissionModel.type == type_filter)
+
+    result = await db.execute(query)
+    missions = result.scalars().all()
+
+    return missions
+
+
+@router.post("/missions", response_model=MissionAdminResponse)
+async def create_mission(
+    mission_data: CreateMissionRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Create a new mission"""
+    from app.models.mission import Mission as MissionModel
+
+    mission = MissionModel(
+        title=mission_data.title,
+        description=mission_data.description,
+        icon=mission_data.icon,
+        custom_icon_url=mission_data.custom_icon_url,
+        reward_amount=mission_data.reward_amount,
+        reward_currency=mission_data.reward_currency,
+        type=mission_data.type,
+        requirements=mission_data.requirements,
+        channel_id=mission_data.channel_id,
+        channel_username=mission_data.channel_username,
+        channel_url=mission_data.channel_url,
+        is_active=mission_data.is_active
+    )
+
+    db.add(mission)
+    await db.commit()
+    await db.refresh(mission)
+
+    return mission
+
+
+@router.put("/missions/{mission_id}", response_model=MissionAdminResponse)
+async def update_mission(
+    mission_id: int,
+    mission_data: UpdateMissionRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Update an existing mission"""
+    from app.models.mission import Mission as MissionModel
+
+    result = await db.execute(select(MissionModel).where(MissionModel.id == mission_id))
+    mission = result.scalar_one_or_none()
+
+    if not mission:
+        raise HTTPException(status_code=404, detail="Mission not found")
+
+    # Update fields
+    if mission_data.title is not None:
+        mission.title = mission_data.title
+    if mission_data.description is not None:
+        mission.description = mission_data.description
+    if mission_data.icon is not None:
+        mission.icon = mission_data.icon
+    if mission_data.custom_icon_url is not None:
+        mission.custom_icon_url = mission_data.custom_icon_url
+    if mission_data.reward_amount is not None:
+        mission.reward_amount = mission_data.reward_amount
+    if mission_data.reward_currency is not None:
+        mission.reward_currency = mission_data.reward_currency
+    if mission_data.requirements is not None:
+        mission.requirements = mission_data.requirements
+    if mission_data.channel_id is not None:
+        mission.channel_id = mission_data.channel_id
+    if mission_data.channel_username is not None:
+        mission.channel_username = mission_data.channel_username
+    if mission_data.channel_url is not None:
+        mission.channel_url = mission_data.channel_url
+    if mission_data.is_active is not None:
+        mission.is_active = mission_data.is_active
+
+    await db.commit()
+    await db.refresh(mission)
+
+    return mission
+
+
+@router.delete("/missions/{mission_id}")
+async def delete_mission(
+    mission_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """Delete a mission"""
+    from app.models.mission import Mission as MissionModel
+
+    result = await db.execute(select(MissionModel).where(MissionModel.id == mission_id))
+    mission = result.scalar_one_or_none()
+
+    if not mission:
+        raise HTTPException(status_code=404, detail="Mission not found")
+
+    await db.delete(mission)
+    await db.commit()
+
+    return {"success": True, "message": "Mission deleted"}
+
+
+@router.get("/missions/stats")
+async def get_missions_stats(db: AsyncSession = Depends(get_db)):
+    """Get missions statistics"""
+    from app.models.mission import Mission as MissionModel, UserMission
+
+    # Total missions
+    total_result = await db.execute(select(func.count(MissionModel.id)))
+    total_missions = total_result.scalar()
+
+    # Active missions
+    active_result = await db.execute(
+        select(func.count(MissionModel.id)).where(MissionModel.is_active == True)
+    )
+    active_missions = active_result.scalar()
+
+    # Missions by type
+    type_result = await db.execute(
+        select(MissionModel.type, func.count(MissionModel.id))
+        .group_by(MissionModel.type)
+    )
+    missions_by_type = {row[0]: row[1] for row in type_result.all()}
+
+    # Total completions
+    completions_result = await db.execute(
+        select(func.count(UserMission.mission_id)).where(UserMission.completed == True)
+    )
+    total_completions = completions_result.scalar()
+
+    # Total claims
+    claims_result = await db.execute(
+        select(func.count(UserMission.mission_id)).where(UserMission.claimed == True)
+    )
+    total_claims = claims_result.scalar()
+
+    return {
+        "total_missions": total_missions,
+        "active_missions": active_missions,
+        "missions_by_type": missions_by_type,
+        "total_completions": total_completions,
+        "total_claims": total_claims
+    }

@@ -10,12 +10,18 @@ class Mission(Base):
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     icon = Column(String(255), nullable=True, default="first_bet")  # Icon name or URL
+    custom_icon_url = Column(String(500), nullable=True)  # Custom uploaded icon URL
 
     reward_amount = Column(DECIMAL(20, 2), nullable=False)
     reward_currency = Column(String(10), default="PRED", nullable=False)
 
-    type = Column(String(50), nullable=False)  # daily, weekly, special, achievement
+    type = Column(String(50), nullable=False)  # daily, weekly, achievement, subscription
     requirements = Column(JSON, nullable=False)  # {"bets_count": 3} or {"wins_count": 1}
+
+    # For subscription type missions
+    channel_id = Column(String(255), nullable=True)  # Telegram channel ID
+    channel_username = Column(String(255), nullable=True)  # Channel @username (without @)
+    channel_url = Column(String(500), nullable=True)  # Full URL for subscription button
 
     is_active = Column(Boolean, default=True, nullable=False)
 

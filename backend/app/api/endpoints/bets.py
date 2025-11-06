@@ -165,6 +165,16 @@ async def place_bet(
     await db.commit()
     await db.refresh(bet)
 
+    # Update mission progress after bet creation
+    try:
+        from app.services.mission_service import MissionService
+        await MissionService.check_and_update_all_missions(db, user_id)
+    except Exception as e:
+        # Log error but don't fail the bet
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to update mission progress after bet: {e}")
+
     return bet
 
 

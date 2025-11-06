@@ -7,6 +7,65 @@ import asyncio
 
 
 DEFAULT_MISSIONS = [
+    # DAILY MISSIONS
+    {
+        "title": "Ежедневная Ставка",
+        "description": "Сделай 3 ставки сегодня",
+        "reward_amount": 500,
+        "reward_currency": "PRED",
+        "type": "daily",
+        "requirements": {"daily_bets": 3},
+        "icon": "🎯"
+    },
+    {
+        "title": "Победа Дня",
+        "description": "Выиграй хотя бы 1 ставку сегодня",
+        "reward_amount": 1000,
+        "reward_currency": "PRED",
+        "type": "daily",
+        "requirements": {"wins_count": 1},
+        "icon": "🏆"
+    },
+    {
+        "title": "Ежедневный Вход",
+        "description": "Просто зайди в приложение сегодня",
+        "reward_amount": 100,
+        "reward_currency": "PRED",
+        "type": "daily",
+        "requirements": {"bets_count": 0},
+        "icon": "📅"
+    },
+
+    # WEEKLY MISSIONS
+    {
+        "title": "Недельный Марафон",
+        "description": "Сделай 20 ставок за неделю",
+        "reward_amount": 5000,
+        "reward_currency": "PRED",
+        "type": "weekly",
+        "requirements": {"weekly_bets": 20},
+        "icon": "📊"
+    },
+    {
+        "title": "Мастер Недели",
+        "description": "Выиграй 10 ставок за неделю",
+        "reward_amount": 10000,
+        "reward_currency": "PRED",
+        "type": "weekly",
+        "requirements": {"wins_count": 10},
+        "icon": "🌟"
+    },
+    {
+        "title": "Огненная Серия",
+        "description": "Выиграй 5 ставок подряд",
+        "reward_amount": 15000,
+        "reward_currency": "PRED",
+        "type": "weekly",
+        "requirements": {"win_streak": 5},
+        "icon": "🔥"
+    },
+
+    # ACHIEVEMENTS
     {
         "title": "Первая Ставка",
         "description": "Сделай свою первую ставку на любое событие",
@@ -14,7 +73,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"bets_count": 1},
-        "icon": "first_bet"
+        "icon": "🎯"
     },
     {
         "title": "Новичок",
@@ -23,7 +82,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"bets_count": 5},
-        "icon": "beginner"
+        "icon": "🌱"
     },
     {
         "title": "Первая Победа",
@@ -32,7 +91,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"wins_count": 1},
-        "icon": "first_win"
+        "icon": "🥇"
     },
     {
         "title": "Серия Побед",
@@ -41,7 +100,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"win_streak": 3},
-        "icon": "win_streak"
+        "icon": "🔥"
     },
     {
         "title": "Активный Трейдер",
@@ -50,7 +109,25 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"bets_count": 10},
-        "icon": "active_trader"
+        "icon": "📈"
+    },
+    {
+        "title": "Ветеран",
+        "description": "Сделай 50 ставок",
+        "reward_amount": 10000,
+        "reward_currency": "PRED",
+        "type": "achievement",
+        "requirements": {"bets_count": 50},
+        "icon": "🎖️"
+    },
+    {
+        "title": "Легенда",
+        "description": "Сделай 100 ставок",
+        "reward_amount": 25000,
+        "reward_currency": "PRED",
+        "type": "achievement",
+        "requirements": {"bets_count": 100},
+        "icon": "🏅"
     },
     {
         "title": "Любитель Крипты",
@@ -59,7 +136,25 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"category_bets": {"category": "Crypto", "count": 3}},
-        "icon": "crypto_lover"
+        "icon": "₿"
+    },
+    {
+        "title": "Спортивный Фанат",
+        "description": "Сделай 3 ставки на спортивные события",
+        "reward_amount": 1500,
+        "reward_currency": "PRED",
+        "type": "achievement",
+        "requirements": {"category_bets": {"category": "Sports", "count": 3}},
+        "icon": "⚽"
+    },
+    {
+        "title": "Политический Эксперт",
+        "description": "Сделай 3 ставки на политические события",
+        "reward_amount": 1500,
+        "reward_currency": "PRED",
+        "type": "achievement",
+        "requirements": {"category_bets": {"category": "Politics", "count": 3}},
+        "icon": "🗳️"
     },
     {
         "title": "Пригласи Друга",
@@ -68,7 +163,25 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"referrals_count": 1},
-        "icon": "referral"
+        "icon": "👥"
+    },
+    {
+        "title": "Коллекционер Побед",
+        "description": "Выиграй 25 ставок",
+        "reward_amount": 20000,
+        "reward_currency": "PRED",
+        "type": "achievement",
+        "requirements": {"wins_count": 25},
+        "icon": "🎁"
+    },
+    {
+        "title": "Неудержимый",
+        "description": "Выиграй 10 ставок подряд",
+        "reward_amount": 50000,
+        "reward_currency": "PRED",
+        "type": "achievement",
+        "requirements": {"win_streak": 10},
+        "icon": "🚀"
     }
 ]
 

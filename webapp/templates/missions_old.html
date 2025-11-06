@@ -1,0 +1,364 @@
+{% extends "base.html" %}
+
+{% block title %}Миссии - ThePred{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="glass card-shine rounded-2xl p-6 mb-6">
+    <h1 class="text-2xl font-bold mb-2">🎯 Ежедневные Миссии</h1>
+    <p class="text-gray-400">Выполняйте задания и зарабатывайте PRED!</p>
+    <div class="mt-4 glass rounded-xl p-4">
+        <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-400">Обновление через</span>
+            <span class="font-bold text-yellow-400">12:34:56</span>
+        </div>
+    </div>
+</div>
+
+<!-- Daily Missions -->
+<div class="space-y-4 mb-6">
+    <div class="glass rounded-2xl p-5 border-2 border-yellow-400">
+        <div class="flex items-start justify-between mb-4">
+            <div class="flex-1">
+                <div class="flex items-center space-x-2 mb-2">
+                    <span class="text-2xl">🎯</span>
+                    <h3 class="text-lg font-bold">Сделать 3 Прогноза</h3>
+                </div>
+                <p class="text-gray-400 text-sm">Сделайте минимум 3 прогноза сегодня</p>
+            </div>
+            <div class="text-right">
+                <div class="font-bold text-yellow-400">+500</div>
+                <div class="text-xs text-gray-400">PRED</div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-gray-400">Прогресс</span>
+                <span class="text-sm font-bold">2 / 3</span>
+            </div>
+            <div class="w-full bg-gray-800 rounded-full h-2">
+                <div class="gold-gradient h-2 rounded-full" style="width: 66%"></div>
+            </div>
+        </div>
+
+        <button class="w-full glass rounded-xl py-3 font-bold opacity-50 cursor-not-allowed">
+            Ещё 1 прогноз
+        </button>
+    </div>
+
+    <div class="glass rounded-2xl p-5">
+        <div class="flex items-start justify-between mb-4">
+            <div class="flex-1">
+                <div class="flex items-center space-x-2 mb-2">
+                    <span class="text-2xl">🏆</span>
+                    <h3 class="text-lg font-bold">Выиграть Прогноз</h3>
+                </div>
+                <p class="text-gray-400 text-sm">Выиграйте минимум 1 прогноз сегодня</p>
+            </div>
+            <div class="text-right">
+                <div class="font-bold text-yellow-400">+1,000</div>
+                <div class="text-xs text-gray-400">PRED</div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-gray-400">Прогресс</span>
+                <span class="text-sm font-bold text-green-400">1 / 1 ✓</span>
+            </div>
+            <div class="w-full bg-gray-800 rounded-full h-2">
+                <div class="green-gradient h-2 rounded-full" style="width: 100%"></div>
+            </div>
+        </div>
+
+        <button class="w-full gold-gradient rounded-xl py-3 font-bold text-black hover:opacity-90">
+            Забрать Награду
+        </button>
+    </div>
+
+    <div class="glass rounded-2xl p-5">
+        <div class="flex items-start justify-between mb-4">
+            <div class="flex-1">
+                <div class="flex items-center space-x-2 mb-2">
+                    <span class="text-2xl">👥</span>
+                    <h3 class="text-lg font-bold">Пригласить Друга</h3>
+                </div>
+                <p class="text-gray-400 text-sm">Пригласите 1 друга в ThePred</p>
+            </div>
+            <div class="text-right">
+                <div class="font-bold text-yellow-400">+100</div>
+                <div class="text-xs text-gray-400">PRED</div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-gray-400">Прогресс</span>
+                <span class="text-sm font-bold">0 / 1</span>
+            </div>
+            <div class="w-full bg-gray-800 rounded-full h-2">
+                <div class="gold-gradient h-2 rounded-full" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <button class="w-full glass rounded-xl py-3 font-bold hover:bg-opacity-20">
+            Поделиться Ссылкой
+        </button>
+    </div>
+</div>
+
+<!-- Weekly Missions -->
+<div class="glass rounded-2xl p-6 mb-6">
+    <h2 class="text-xl font-bold mb-4">📅 Недельные Задания</h2>
+
+    <div class="space-y-4">
+        <div class="glass rounded-xl p-4">
+            <div class="flex items-start justify-between mb-3">
+                <div class="flex-1">
+                    <div class="flex items-center space-x-2 mb-1">
+                        <span class="text-xl">🔥</span>
+                        <h4 class="font-bold">Серия из 10 Побед</h4>
+                    </div>
+                    <p class="text-gray-400 text-xs">Выиграйте 10 прогнозов подряд</p>
+                </div>
+                <div class="text-right">
+                    <div class="font-bold text-yellow-400">+5,000</div>
+                    <div class="text-xs text-gray-400">PRED</div>
+                </div>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+                <span class="text-gray-400">Текущая: 7 побед</span>
+                <span class="font-bold">70%</span>
+            </div>
+        </div>
+
+        <div class="glass rounded-xl p-4">
+            <div class="flex items-start justify-between mb-3">
+                <div class="flex-1">
+                    <div class="flex items-center space-x-2 mb-1">
+                        <span class="text-xl">💰</span>
+                        <h4 class="font-bold">Топ 10 по Прибыли</h4>
+                    </div>
+                    <p class="text-gray-400 text-xs">Попасть в топ 10 по недельной прибыли</p>
+                </div>
+                <div class="text-right">
+                    <div class="font-bold text-yellow-400">+1,000</div>
+                    <div class="text-xs text-gray-400">PRED</div>
+                </div>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+                <span class="text-gray-400">Текущее место: #23</span>
+                <span class="text-red-400">Не в топ 10</span>
+            </div>
+        </div>
+
+        <div class="glass rounded-xl p-4">
+            <div class="flex items-start justify-between mb-3">
+                <div class="flex-1">
+                    <div class="flex items-center space-x-2 mb-1">
+                        <span class="text-xl">📊</span>
+                        <h4 class="font-bold">Создатель Рынка</h4>
+                    </div>
+                    <p class="text-gray-400 text-xs">Создайте рынок со 100+ прогнозами</p>
+                </div>
+                <div class="text-right">
+                    <div class="font-bold text-yellow-400">+5,000</div>
+                    <div class="text-xs text-gray-400">PRED</div>
+                </div>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+                <span class="text-gray-400">Создайте свой первый рынок</span>
+                <span>0%</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Special Achievements -->
+<div class="glass rounded-2xl p-6">
+    <h2 class="text-xl font-bold mb-4">🏅 Особые Достижения</h2>
+
+    <div class="grid grid-cols-2 gap-3">
+        <div class="glass rounded-xl p-4 text-center border-2 border-yellow-400">
+            <div class="text-3xl mb-2">🎯</div>
+            <div class="font-bold text-sm mb-1">Первый Прогноз</div>
+            <div class="text-xs text-green-400">Выполнено</div>
+        </div>
+
+        <div class="glass rounded-xl p-4 text-center border-2 border-yellow-400">
+            <div class="text-3xl mb-2">🏆</div>
+            <div class="font-bold text-sm mb-1">Первая Победа</div>
+            <div class="text-xs text-green-400">Выполнено</div>
+        </div>
+
+        <div class="glass rounded-xl p-4 text-center opacity-50">
+            <div class="text-3xl mb-2">💯</div>
+            <div class="font-bold text-sm mb-1">100 Прогнозов</div>
+            <div class="text-xs text-gray-400">Заблокировано</div>
+        </div>
+
+        <div class="glass rounded-xl p-4 text-center opacity-50">
+            <div class="text-3xl mb-2">💎</div>
+            <div class="font-bold text-sm mb-1">Алмазный Ранг</div>
+            <div class="text-xs text-gray-400">Заблокировано</div>
+        </div>
+
+        <div class="glass rounded-xl p-4 text-center opacity-50">
+            <div class="text-3xl mb-2">🔥</div>
+            <div class="font-bold text-sm mb-1">Серия из 15</div>
+            <div class="text-xs text-gray-400">Заблокировано</div>
+        </div>
+
+        <div class="glass rounded-xl p-4 text-center opacity-50">
+            <div class="text-3xl mb-2">👑</div>
+            <div class="font-bold text-sm mb-1">Топ 1</div>
+            <div class="text-xs text-gray-400">Заблокировано</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Load missions from API
+async function loadMissions() {
+    try {
+        console.log('Loading missions...');
+        const response = await fetch('/api/missions');
+        if (response.ok) {
+            const missions = await response.json();
+            console.log('Missions loaded:', missions);
+            renderMissions(missions);
+        } else {
+            console.error('Failed to load missions:', response.status);
+        }
+    } catch (error) {
+        console.error('Failed to load missions:', error);
+    }
+}
+
+// Get requirement value from requirements object
+function getRequirementValue(requirements) {
+    // requirements can be {"bets_count": 5} or {"wins_count": 1} or {"win_streak": 3}
+    const values = Object.values(requirements);
+    if (values.length > 0) {
+        // Handle nested objects like {"category_bets": {"category": "Crypto", "count": 3}}
+        if (typeof values[0] === 'object' && values[0].count) {
+            return values[0].count;
+        }
+        return values[0];
+    }
+    return 1;
+}
+
+// Render missions
+function getIconHtml(iconName) {
+    // Check if it's a default icon name or a URL
+    if (iconName && !iconName.startsWith('http') && !iconName.startsWith('/uploads')) {
+        // Default icon - use S3 URL
+        return `<img src="${S3_MISSIONS_URL}/${iconName}.svg" alt="icon" class="w-12 h-12">`;
+    } else if (iconName) {
+        // Custom uploaded icon (already a full URL)
+        return `<img src="${iconName}" alt="icon" class="w-12 h-12 rounded-lg">`;
+    } else {
+        // Fallback emoji
+        return '<span class="text-4xl">🎯</span>';
+    }
+}
+
+function renderMissions(missions) {
+    const dailyContainer = document.querySelector('.space-y-4.mb-6');
+
+    if (missions.length === 0) {
+        dailyContainer.innerHTML = '<div class="glass rounded-2xl p-8 text-center text-gray-400">Нет доступных миссий</div>';
+        return;
+    }
+
+    dailyContainer.innerHTML = missions.map(mission => {
+        const iconHtml = getIconHtml(mission.icon);
+        const progress = mission.progress || 0;
+        const required = getRequirementValue(mission.requirements);
+        const progressPercent = Math.min((progress / required) * 100, 100);
+        const isCompleted = mission.completed && !mission.claimed;
+        const isClaimed = mission.claimed;
+
+        return `
+            <div class="glass rounded-2xl p-5 ${isCompleted ? 'border-2 border-green-400' : ''}">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3 mb-2">
+                            ${iconHtml}
+                            <div>
+                                <h3 class="text-lg font-bold">${mission.title}</h3>
+                                ${isClaimed ? '<span class="text-xs bg-green-600 text-white px-2 py-1 rounded-full">✓ Получено</span>' : ''}
+                            </div>
+                        </div>
+                        <p class="text-gray-400 text-sm">${mission.description || ''}</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-bold text-yellow-400">+${window.formatNumber ? window.formatNumber(mission.reward_amount) : mission.reward_amount}</div>
+                        <div class="text-xs text-gray-400">${mission.reward_currency}</div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-gray-400">Прогресс</span>
+                        <span class="text-sm font-bold ${isCompleted ? 'text-green-400' : ''}">${progress} / ${required} ${isCompleted ? '✓' : ''}</span>
+                    </div>
+                    <div class="w-full bg-gray-800 rounded-full h-2">
+                        <div class="${isCompleted ? 'bg-green-500' : 'gold-gradient'} h-2 rounded-full transition-all duration-300" style="width: ${progressPercent}%"></div>
+                    </div>
+                </div>
+
+                ${isClaimed
+                    ? '<button class="w-full glass rounded-xl py-3 font-bold opacity-50 cursor-not-allowed">✓ Награда Получена</button>'
+                    : isCompleted
+                    ? `<button onclick="claimMission(${mission.id})" class="w-full green-gradient rounded-xl py-3 font-bold text-white hover:opacity-90 pulse-gold">🎉 Забрать Награду</button>`
+                    : `<button class="w-full glass rounded-xl py-3 font-bold opacity-50 cursor-not-allowed">Ещё ${required - progress} до завершения</button>`
+                }
+            </div>
+        `;
+    }).join('');
+}
+
+// Claim mission reward
+async function claimMission(missionId) {
+    try {
+        window.tgHaptic?.light();
+
+        console.log('Claiming mission:', missionId);
+
+        const response = await fetch(`/api/missions/claim/${missionId}`, {
+            method: 'POST'
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            window.tgHaptic?.success();
+            window.showTgAlert(`🎉 Награда получена! +${result.reward.amount} ${result.reward.currency}`);
+
+            // Reload missions and balance
+            await loadMissions();
+            if (window.loadUserBalance) {
+                await window.loadUserBalance();
+            }
+        } else {
+            const error = await response.json();
+            window.tgHaptic?.error();
+            window.showTgAlert(error.error || error.detail || 'Не удалось получить награду');
+        }
+    } catch (error) {
+        console.error('Claim error:', error);
+        window.tgHaptic?.error();
+        window.showTgAlert('Ошибка сети. Попробуйте снова.');
+    }
+}
+
+// Load missions on page load
+document.addEventListener('DOMContentLoaded', () => {
+    loadMissions();
+});
+</script>
+{% endblock %}

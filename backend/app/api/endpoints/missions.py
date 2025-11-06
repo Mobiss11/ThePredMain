@@ -4,9 +4,11 @@ from sqlalchemy import select, and_
 from app.core.database import get_db
 from app.models.mission import Mission, UserMission
 from app.models.user import User
+from app.services.mission_service import MissionService
 from pydantic import BaseModel
 from decimal import Decimal
 from datetime import datetime
+from typing import Optional
 
 router = APIRouter()
 
@@ -16,13 +18,16 @@ class MissionResponse(BaseModel):
     title: str
     description: str | None
     icon: str | None = "🎯"
+    custom_icon_url: str | None = None
     reward_amount: Decimal
     reward_currency: str
     type: str
     requirements: dict
     progress: int = 0
+    target: int = 0
     completed: bool = False
     claimed: bool = False
+    channel_url: str | None = None  # For subscription missions
 
     class Config:
         from_attributes = True
@@ -30,10 +35,13 @@ class MissionResponse(BaseModel):
 
 @router.get("/{user_id}", response_model=list[MissionResponse])
 async def get_missions(user_id: int, db: AsyncSession = Depends(get_db)):
-    """Get available missions for user"""
+    """Get available missions for user with auto-update progress"""
+    # Update all missions progress first
+    await MissionService.check_and_update_all_missions(db, user_id)
+
     # Get active missions
     result = await db.execute(
-        select(Mission).where(Mission.is_active == True)
+        select(Mission).where(Mission.is_active == True).order_by(Mission.type, Mission.id)
     )
     missions = result.scalars().all()
 
@@ -47,21 +55,100 @@ async def get_missions(user_id: int, db: AsyncSession = Depends(get_db)):
     response = []
     for mission in missions:
         user_mission = user_missions.get(mission.id)
+
+        # Get target from requirements
+        target = _get_mission_target(mission.requirements)
+
+        # Get icon URL (custom or default)
+        icon = mission.custom_icon_url or mission.icon or "🎯"
+
         response.append(MissionResponse(
             id=mission.id,
             title=mission.title,
             description=mission.description,
-            icon=mission.icon or "🎯",
+            icon=icon if not mission.custom_icon_url else mission.icon,
+            custom_icon_url=mission.custom_icon_url,
             reward_amount=mission.reward_amount,
             reward_currency=mission.reward_currency,
             type=mission.type,
             requirements=mission.requirements,
             progress=user_mission.progress if user_mission else 0,
+            target=target,
             completed=user_mission.completed if user_mission else False,
-            claimed=user_mission.claimed if user_mission else False
+            claimed=user_mission.claimed if user_mission else False,
+            channel_url=mission.channel_url
         ))
 
     return response
+
+
+def _get_mission_target(requirements: dict) -> int:
+    """Extract target value from requirements"""
+    if "bets_count" in requirements:
+        return requirements["bets_count"]
+    elif "wins_count" in requirements:
+        return requirements["wins_count"]
+    elif "win_streak" in requirements:
+        return requirements["win_streak"]
+    elif "category_bets" in requirements:
+        return requirements["category_bets"]["count"]
+    elif "referrals_count" in requirements:
+        return requirements["referrals_count"]
+    elif "daily_bets" in requirements:
+        return requirements["daily_bets"]
+    elif "weekly_bets" in requirements:
+        return requirements["weekly_bets"]
+    elif "subscription" in requirements:
+        return 1
+    return 0
+
+
+@router.post("/check-subscription/{user_id}/{mission_id}")
+async def check_subscription(
+    user_id: int,
+    mission_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """Manually check channel subscription for a mission"""
+    # Get mission
+    result = await db.execute(select(Mission).where(Mission.id == mission_id))
+    mission = result.scalar_one_or_none()
+
+    if not mission:
+        raise HTTPException(status_code=404, detail="Mission not found")
+
+    if mission.type != "subscription":
+        raise HTTPException(status_code=400, detail="Mission is not a subscription type")
+
+    # Get user
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Check subscription
+    subscribed = await MissionService.check_channel_subscription(
+        user_id=user.telegram_id,
+        channel_id=mission.channel_id,
+        channel_username=mission.channel_username
+    )
+
+    # Update mission progress
+    if subscribed:
+        await MissionService.update_user_mission_progress(
+            db=db,
+            user_id=user_id,
+            mission_id=mission_id,
+            progress=1,
+            completed=True
+        )
+
+    return {
+        "success": True,
+        "subscribed": subscribed,
+        "completed": subscribed
+    }
 
 
 @router.post("/claim/{user_id}/{mission_id}")
@@ -114,7 +201,8 @@ async def claim_mission_reward(
     return {
         "success": True,
         "reward": {
-            "amount": mission.reward_amount,
+            "amount": float(mission.reward_amount),
             "currency": mission.reward_currency
-        }
+        },
+        "new_balance": float(user.pred_balance if mission.reward_currency == "PRED" else user.ton_balance)
     }

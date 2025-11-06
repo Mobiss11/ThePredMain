@@ -52,6 +52,21 @@ async def startup_event():
     await init_default_missions()
     logger.info("Default missions initialized")
 
+    # Start scheduler for mission resets
+    logger.info("Starting scheduler...")
+    from app.scheduler import start_scheduler
+    start_scheduler()
+    logger.info("Scheduler started")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup on shutdown"""
+    logger.info("Stopping scheduler...")
+    from app.scheduler import stop_scheduler
+    stop_scheduler()
+    logger.info("Scheduler stopped")
+
 
 @app.get("/")
 async def root():

@@ -43,15 +43,24 @@
 
 {% block scripts %}
 <script>
-function getIconHtml(iconName) {
-    // Check if it's a full URL (S3 or external)
-    if (iconName && iconName.startsWith('http')) {
-        return `<img src="${iconName}" alt="icon" class="w-10 h-10 rounded inline-block object-cover">`;
+function getIconHtml(mission) {
+    // Priority 1: Custom icon URL
+    if (mission.custom_icon_url) {
+        return `<img src="${mission.custom_icon_url}" alt="icon" class="w-10 h-10 rounded inline-block object-cover">`;
     }
 
-    // Default icon name - construct S3 URL
-    if (iconName) {
-        return `<img src="${S3_MISSIONS_URL}/${iconName}.svg" alt="icon" class="w-10 h-10 rounded inline-block object-cover">`;
+    // Priority 2: Icon field (could be emoji or URL)
+    if (mission.icon) {
+        // Check if it's a full URL
+        if (mission.icon.startsWith('http')) {
+            return `<img src="${mission.icon}" alt="icon" class="w-10 h-10 rounded inline-block object-cover">`;
+        }
+        // Check if it's an icon name (no emoji characters)
+        if (!/[\u{1F000}-\u{1F9FF}]/u.test(mission.icon)) {
+            return `<img src="${S3_MISSIONS_URL}/${mission.icon}.svg" alt="icon" class="w-10 h-10 rounded inline-block object-cover">`;
+        }
+        // It's an emoji
+        return `<span class="text-3xl">${mission.icon}</span>`;
     }
 
     // Fallback emoji
@@ -75,7 +84,13 @@ async function loadMissions() {
         tbody.innerHTML = missions.map(mission => {
             const requirements = JSON.stringify(mission.requirements);
             const requirementText = getRequirementText(mission.requirements);
-            const iconHtml = getIconHtml(mission.icon);
+            const iconHtml = getIconHtml(mission);
+
+            // Add channel info for subscription missions
+            let subscriptionInfo = '';
+            if (mission.type === 'subscription' && mission.channel_username) {
+                subscriptionInfo = `<div class="text-xs text-blue-400 mt-1">@${mission.channel_username}</div>`;
+            }
 
             return `
             <tr class="hover:bg-dark-700">
@@ -84,6 +99,7 @@ async function loadMissions() {
                 <td class="px-6 py-4">
                     <div class="text-sm font-medium">${mission.title}</div>
                     <div class="text-xs text-gray-400">${mission.description || ''}</div>
+                    ${subscriptionInfo}
                 </td>
                 <td class="px-6 py-4">
                     <span class="px-2 py-1 text-xs rounded bg-blue-600">${mission.type}</span>
@@ -101,8 +117,11 @@ async function loadMissions() {
                     </span>
                 </td>
                 <td class="px-6 py-4">
-                    <button onclick="editMission(${mission.id})" class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded">
+                    <button onclick="editMission(${mission.id})" class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded mr-2">
                         Edit
+                    </button>
+                    <button onclick="deleteMission(${mission.id})" class="px-3 py-1 text-xs bg-red-600 hover:bg-red-700 rounded">
+                        Delete
                     </button>
                 </td>
             </tr>
@@ -121,10 +140,16 @@ function getRequirementText(requirements) {
         return `${requirements.wins_count} wins`;
     } else if (requirements.win_streak) {
         return `${requirements.win_streak} win streak`;
+    } else if (requirements.daily_bets) {
+        return `${requirements.daily_bets} daily bets`;
+    } else if (requirements.weekly_bets) {
+        return `${requirements.weekly_bets} weekly bets`;
     } else if (requirements.referrals_count) {
         return `${requirements.referrals_count} referrals`;
     } else if (requirements.category_bets) {
         return `${requirements.category_bets.count} bets in ${requirements.category_bets.category}`;
+    } else if (requirements.subscription) {
+        return 'Subscribe to channel';
     }
     return JSON.stringify(requirements);
 }
@@ -134,31 +159,47 @@ function editMission(missionId) {
     window.location.href = `/missions/edit/${missionId}`;
 }
 
-// Initialize default missions
-async function initDefaultMissions() {
-    if (!confirm('Create 7 default missions? This will only work if no missions exist yet.')) {
+// Delete mission
+async function deleteMission(missionId) {
+    if (!confirm('Are you sure you want to delete this mission? This action cannot be undone.')) {
         return;
     }
 
     try {
-        const response = await fetch(`${API_URL}/admin/missions/init-defaults`, {
-            method: 'POST'
+        const response = await fetch(`${API_URL}/admin/missions/${missionId}`, {
+            method: 'DELETE'
         });
 
         const result = await response.json();
 
         if (response.ok) {
-            alert(result.message);
-            if (result.created > 0) {
-                // Reload missions table
-                loadMissions();
-            }
+            showToast('Mission deleted successfully!', 'success');
+            loadMissions();
         } else {
-            alert(`Error: ${result.detail || 'Failed to initialize missions'}`);
+            showToast(`Error: ${result.detail || 'Failed to delete mission'}`, 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Failed to initialize missions. Check console for details.');
+        showToast('Failed to delete mission', 'error');
+    }
+}
+
+// Initialize default missions
+async function initDefaultMissions() {
+    if (!confirm('Create 20 default missions? (3 daily, 3 weekly, 14 achievements)')) {
+        return;
+    }
+
+    try {
+        // Run the init script
+        showToast('Initializing missions... This may take a moment.', 'success');
+
+        // Since we don't have an API endpoint for this, we'll need to ask user to run manually
+        alert('Please run the following command on the server:\ncd backend && python3 app/init_missions.py');
+
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to initialize missions', 'error');
     }
 }
 

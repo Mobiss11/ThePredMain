@@ -349,19 +349,72 @@ async def api_admin_generate_test_markets():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/admin/missions', methods=['GET'])
+@app.route('/admin/missions', methods=['GET', 'POST'])
 @login_required
 async def api_admin_missions():
     """Proxy missions request to backend"""
     try:
         async with aiohttp.ClientSession() as session_http:
+            if request.method == 'POST':
+                data = await request.get_json()
+                async with session_http.post(
+                    f"{app.config['API_URL']}/admin/missions",
+                    json=data
+                ) as response:
+                    result = await response.json()
+                    return jsonify(result)
+            else:
+                type_filter = request.args.get('type', '')
+                url = f"{app.config['API_URL']}/admin/missions"
+                if type_filter:
+                    url += f"?type={type_filter}"
+
+                async with session_http.get(url) as response:
+                    result = await response.json()
+                    return jsonify(result)
+    except Exception as e:
+        print(f"Error with missions: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/admin/missions/<int:mission_id>', methods=['PUT', 'DELETE'])
+@login_required
+async def api_admin_mission_action(mission_id):
+    """Proxy mission update/delete request to backend"""
+    try:
+        async with aiohttp.ClientSession() as session_http:
+            if request.method == 'PUT':
+                data = await request.get_json()
+                async with session_http.put(
+                    f"{app.config['API_URL']}/admin/missions/{mission_id}",
+                    json=data
+                ) as response:
+                    result = await response.json()
+                    return jsonify(result)
+            elif request.method == 'DELETE':
+                async with session_http.delete(
+                    f"{app.config['API_URL']}/admin/missions/{mission_id}"
+                ) as response:
+                    result = await response.json()
+                    return jsonify(result)
+    except Exception as e:
+        print(f"Error with mission action: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/admin/missions/stats', methods=['GET'])
+@login_required
+async def api_admin_missions_stats():
+    """Proxy mission stats request to backend"""
+    try:
+        async with aiohttp.ClientSession() as session_http:
             async with session_http.get(
-                f"{app.config['API_URL']}/admin/missions"
+                f"{app.config['API_URL']}/admin/missions/stats"
             ) as response:
                 result = await response.json()
                 return jsonify(result)
     except Exception as e:
-        print(f"Error fetching missions: {e}")
+        print(f"Error fetching mission stats: {e}")
         return jsonify({"error": str(e)}), 500
 
 

@@ -384,9 +384,39 @@ async def api_missions():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/missions/<int:user_id>')
+async def api_missions_by_user(user_id):
+    """Get missions for specific user"""
+    try:
+        response = await api_client._get(f"/missions/{user_id}")
+        return jsonify(response)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/missions/claim/<int:user_id>/<int:mission_id>', methods=['POST'])
+async def api_claim_mission_new(user_id, mission_id):
+    """Claim mission reward via backend API"""
+    try:
+        response = await api_client._post(f"/missions/claim/{user_id}/{mission_id}")
+        return jsonify(response)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/missions/check-subscription/<int:user_id>/<int:mission_id>', methods=['POST'])
+async def api_check_subscription(user_id, mission_id):
+    """Check channel subscription for mission"""
+    try:
+        response = await api_client._post(f"/missions/check-subscription/{user_id}/{mission_id}")
+        return jsonify(response)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/api/missions/claim/<int:mission_id>', methods=['POST'])
 async def api_claim_mission(mission_id):
-    """Claim mission reward via backend API"""
+    """Claim mission reward via backend API (legacy)"""
     try:
         user_id = session.get('user_id', 1)
 

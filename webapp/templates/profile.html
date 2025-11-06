@@ -78,6 +78,21 @@
     </div>
 </div>
 
+<!-- Achievements -->
+<div class="glass rounded-2xl p-6 mb-6">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold">🏆 Достижения</h2>
+        <a href="/missions" class="text-yellow-400 text-sm">Все миссии</a>
+    </div>
+
+    <div id="achievements-container" class="grid grid-cols-2 gap-3">
+        <!-- Achievements will be loaded dynamically -->
+        <div class="glass rounded-xl p-4 text-center">
+            <div class="text-gray-400 text-sm">Загрузка...</div>
+        </div>
+    </div>
+</div>
+
 <!-- Rank Progress -->
 <div class="glass rounded-2xl p-6 mb-6">
     <h2 class="text-xl font-bold mb-4">🎖 Прогресс Ранга</h2>
@@ -490,10 +505,80 @@ function copyReferralLink() {
     window.copyToClipboard(input.value);
 }
 
+// Load achievements
+async function loadAchievements() {
+    try {
+        const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+        if (!userId) {
+            console.error('No user ID found');
+            return;
+        }
+
+        const response = await fetch(`/api/missions/${userId}`);
+        if (response.ok) {
+            const missions = await response.json();
+
+            // Filter only achievements
+            const achievements = missions.filter(m => m.type === 'achievement');
+
+            const container = document.getElementById('achievements-container');
+
+            if (achievements.length === 0) {
+                container.innerHTML = '<div class="col-span-2 glass rounded-xl p-4 text-center text-gray-400 text-sm">Пока нет достижений</div>';
+                return;
+            }
+
+            container.innerHTML = achievements.map(achievement => {
+                const isCompleted = achievement.completed;
+                const progress = achievement.progress || 0;
+                const target = achievement.target || 1;
+                const percentage = Math.min((progress / target) * 100, 100);
+
+                // Display icon (emoji or URL)
+                let iconHtml = '🎯';
+                if (achievement.custom_icon_url) {
+                    iconHtml = `<img src="${achievement.custom_icon_url}" alt="icon" class="w-12 h-12 mx-auto mb-2 rounded">`;
+                } else if (achievement.icon) {
+                    iconHtml = `<span class="text-4xl">${achievement.icon}</span>`;
+                }
+
+                return `
+                    <div class="glass rounded-xl p-4 text-center relative ${isCompleted ? 'border-2 border-green-500' : ''}">
+                        <div class="mb-2">
+                            ${typeof iconHtml === 'string' && iconHtml.startsWith('<') ? iconHtml : `<span class="text-4xl">${iconHtml}</span>`}
+                        </div>
+                        ${isCompleted ? '<div class="absolute top-2 right-2 text-green-500 text-xl">✓</div>' : ''}
+                        <div class="font-bold text-sm mb-1">${achievement.title}</div>
+                        <div class="text-xs text-gray-400 mb-2">${achievement.description}</div>
+
+                        ${!isCompleted ? `
+                            <div class="w-full bg-gray-800 rounded-full h-1.5 mb-1">
+                                <div class="gold-gradient h-1.5 rounded-full" style="width: ${percentage}%"></div>
+                            </div>
+                            <div class="text-xs text-gray-500">${progress}/${target}</div>
+                        ` : `
+                            <div class="text-xs text-green-400 font-bold">✓ Завершено</div>
+                        `}
+
+                        <div class="text-xs text-yellow-400 font-bold mt-2">
+                            +${achievement.reward_amount} ${achievement.reward_currency}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    } catch (error) {
+        console.error('Failed to load achievements:', error);
+        const container = document.getElementById('achievements-container');
+        container.innerHTML = '<div class="col-span-2 glass rounded-xl p-4 text-center text-red-400 text-sm">Ошибка загрузки достижений</div>';
+    }
+}
+
 // Load data on page load
 document.addEventListener('DOMContentLoaded', () => {
     loadProfile();
     loadUserMarkets();
+    loadAchievements();
 });
 </script>
 {% endblock %}

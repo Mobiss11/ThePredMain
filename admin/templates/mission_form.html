@@ -6,7 +6,7 @@
 <div class="max-w-4xl">
     <div class="flex items-center justify-between mb-8">
         <h1 class="text-3xl font-bold">{{ 'Edit Mission' if mission else 'Create Mission' }}</h1>
-        <button onclick="window.location.href='/admin/missions'" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg">
+        <button onclick="window.location.href='/missions'" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg">
             ← Back to Missions
         </button>
     </div>
@@ -33,79 +33,148 @@
         <div>
             <label class="block text-sm font-medium text-gray-300 mb-3">Icon</label>
 
-            <!-- Default Icons -->
+            <!-- Default Icons (Emoji) -->
             <div class="mb-4">
-                <p class="text-sm text-gray-400 mb-3">Choose from default icons:</p>
-                <div class="grid grid-cols-7 gap-3" id="default-icons">
+                <p class="text-sm text-gray-400 mb-3">Choose from default emoji icons:</p>
+                <div class="grid grid-cols-8 gap-3" id="default-icons">
+                    <!-- Daily/Achievement Icons -->
                     <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="first_bet" class="hidden icon-radio" {% if mission and mission.icon == 'first_bet' %}checked{% endif %}>
+                        <input type="radio" name="icon" value="🎯" class="hidden icon-radio" {% if mission and mission.icon == '🎯' %}checked{% endif %}>
                         <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <img src="http://localhost:8001/static/icons/missions/first_bet.svg" alt="First Bet" class="w-16 h-16">
+                            <span class="text-4xl">🎯</span>
                         </div>
-                        <p class="text-xs text-center mt-1 text-gray-400">First Bet</p>
+                        <p class="text-xs text-center mt-1 text-gray-400">Target</p>
                     </label>
 
                     <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="beginner" class="hidden icon-radio" {% if mission and mission.icon == 'beginner' %}checked{% endif %}>
+                        <input type="radio" name="icon" value="🌱" class="hidden icon-radio" {% if mission and mission.icon == '🌱' %}checked{% endif %}>
                         <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <img src="http://localhost:8001/static/icons/missions/beginner.svg" alt="Beginner" class="w-16 h-16">
+                            <span class="text-4xl">🌱</span>
                         </div>
                         <p class="text-xs text-center mt-1 text-gray-400">Beginner</p>
                     </label>
 
                     <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="first_win" class="hidden icon-radio" {% if mission and mission.icon == 'first_win' %}checked{% endif %}>
+                        <input type="radio" name="icon" value="🥇" class="hidden icon-radio" {% if mission and mission.icon == '🥇' %}checked{% endif %}>
                         <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <img src="http://localhost:8001/static/icons/missions/first_win.svg" alt="First Win" class="w-16 h-16">
+                            <span class="text-4xl">🥇</span>
                         </div>
                         <p class="text-xs text-center mt-1 text-gray-400">First Win</p>
                     </label>
 
                     <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="win_streak" class="hidden icon-radio" {% if mission and mission.icon == 'win_streak' %}checked{% endif %}>
+                        <input type="radio" name="icon" value="🔥" class="hidden icon-radio" {% if mission and mission.icon == '🔥' %}checked{% endif %}>
                         <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <img src="http://localhost:8001/static/icons/missions/win_streak.svg" alt="Win Streak" class="w-16 h-16">
+                            <span class="text-4xl">🔥</span>
                         </div>
-                        <p class="text-xs text-center mt-1 text-gray-400">Win Streak</p>
+                        <p class="text-xs text-center mt-1 text-gray-400">Streak</p>
                     </label>
 
                     <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="active_trader" class="hidden icon-radio" {% if mission and mission.icon == 'active_trader' %}checked{% endif %}>
+                        <input type="radio" name="icon" value="📈" class="hidden icon-radio" {% if mission and mission.icon == '📈' %}checked{% endif %}>
                         <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <img src="http://localhost:8001/static/icons/missions/active_trader.svg" alt="Active Trader" class="w-16 h-16">
+                            <span class="text-4xl">📈</span>
                         </div>
                         <p class="text-xs text-center mt-1 text-gray-400">Trader</p>
                     </label>
 
                     <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="crypto_lover" class="hidden icon-radio" {% if mission and mission.icon == 'crypto_lover' %}checked{% endif %}>
+                        <input type="radio" name="icon" value="₿" class="hidden icon-radio" {% if mission and mission.icon == '₿' %}checked{% endif %}>
                         <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <img src="http://localhost:8001/static/icons/missions/crypto_lover.svg" alt="Crypto Lover" class="w-16 h-16">
+                            <span class="text-4xl">₿</span>
                         </div>
                         <p class="text-xs text-center mt-1 text-gray-400">Crypto</p>
                     </label>
 
                     <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="referral" class="hidden icon-radio" {% if mission and mission.icon == 'referral' %}checked{% endif %}>
+                        <input type="radio" name="icon" value="👥" class="hidden icon-radio" {% if mission and mission.icon == '👥' %}checked{% endif %}>
                         <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <img src="http://localhost:8001/static/icons/missions/referral.svg" alt="Referral" class="w-16 h-16">
+                            <span class="text-4xl">👥</span>
                         </div>
                         <p class="text-xs text-center mt-1 text-gray-400">Referral</p>
+                    </label>
+
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="💎" class="hidden icon-radio" {% if mission and mission.icon == '💎' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
+                            <span class="text-4xl">💎</span>
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">Premium</p>
+                    </label>
+
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="🏆" class="hidden icon-radio" {% if mission and mission.icon == '🏆' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
+                            <span class="text-4xl">🏆</span>
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">Victory</p>
+                    </label>
+
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="⚽" class="hidden icon-radio" {% if mission and mission.icon == '⚽' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
+                            <span class="text-4xl">⚽</span>
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">Sports</p>
+                    </label>
+
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="🗳️" class="hidden icon-radio" {% if mission and mission.icon == '🗳️' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
+                            <span class="text-4xl">🗳️</span>
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">Politics</p>
+                    </label>
+
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="🎖️" class="hidden icon-radio" {% if mission and mission.icon == '🎖️' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
+                            <span class="text-4xl">🎖️</span>
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">Veteran</p>
+                    </label>
+
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="🏅" class="hidden icon-radio" {% if mission and mission.icon == '🏅' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
+                            <span class="text-4xl">🏅</span>
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">Legend</p>
+                    </label>
+
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="🚀" class="hidden icon-radio" {% if mission and mission.icon == '🚀' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
+                            <span class="text-4xl">🚀</span>
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">Rocket</p>
+                    </label>
+
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="📊" class="hidden icon-radio" {% if mission and mission.icon == '📊' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
+                            <span class="text-4xl">📊</span>
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">Stats</p>
+                    </label>
+
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="📢" class="hidden icon-radio" {% if mission and mission.icon == '📢' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
+                            <span class="text-4xl">📢</span>
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">Subscribe</p>
                     </label>
                 </div>
             </div>
 
             <!-- Custom Icon Upload -->
             <div class="mt-6 p-4 bg-dark-700 rounded-lg">
-                <p class="text-sm text-gray-400 mb-3">Or upload custom icon:</p>
-                <input type="file" id="custom-icon" accept="image/*" class="hidden">
-                <label for="custom-icon" class="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer">
-                    Choose File
-                </label>
-                <span id="file-name" class="ml-3 text-sm text-gray-400">No file chosen</span>
-                <div id="custom-preview" class="mt-3 hidden">
-                    <img src="" alt="Custom icon preview" class="w-16 h-16 rounded-lg">
-                </div>
+                <p class="text-sm text-gray-400 mb-3">Or upload custom icon URL:</p>
+                <input type="text" id="custom-icon-url" placeholder="https://example.com/icon.png or emoji"
+                       class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+                       value="{{ mission.custom_icon_url if mission and mission.custom_icon_url else '' }}">
+                <p class="text-xs text-gray-400 mt-2">Enter a URL to an image or paste an emoji (e.g., 😎)</p>
             </div>
         </div>
 
@@ -132,13 +201,46 @@
         <!-- Type -->
         <div>
             <label class="block text-sm font-medium text-gray-300 mb-2">Type</label>
-            <select id="type" name="type"
+            <select id="type" name="type" onchange="toggleSubscriptionFields()"
                     class="w-full bg-dark-700 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500">
                 <option value="achievement" {% if not mission or mission.type == 'achievement' %}selected{% endif %}>Achievement</option>
                 <option value="daily" {% if mission and mission.type == 'daily' %}selected{% endif %}>Daily</option>
                 <option value="weekly" {% if mission and mission.type == 'weekly' %}selected{% endif %}>Weekly</option>
+                <option value="subscription" {% if mission and mission.type == 'subscription' %}selected{% endif %}>Subscription</option>
                 <option value="special" {% if mission and mission.type == 'special' %}selected{% endif %}>Special</option>
             </select>
+        </div>
+
+        <!-- Subscription Fields (shown only for subscription type) -->
+        <div id="subscription-fields" class="space-y-4 p-4 bg-dark-700 rounded-lg" style="display: none;">
+            <p class="text-sm text-blue-400 mb-3">📢 Subscription Mission Settings</p>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Channel ID</label>
+                <input type="text" id="channel_id" name="channel_id"
+                       class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+                       placeholder="-1001234567890"
+                       value="{{ mission.channel_id if mission else '' }}">
+                <p class="text-xs text-gray-400 mt-1">Telegram channel ID (numeric with -100 prefix)</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Channel Username</label>
+                <input type="text" id="channel_username" name="channel_username"
+                       class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+                       placeholder="thepred_official"
+                       value="{{ mission.channel_username if mission else '' }}">
+                <p class="text-xs text-gray-400 mt-1">Without @ symbol</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Channel URL</label>
+                <input type="text" id="channel_url" name="channel_url"
+                       class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+                       placeholder="https://t.me/thepred_official"
+                       value="{{ mission.channel_url if mission else '' }}">
+                <p class="text-xs text-gray-400 mt-1">Full Telegram channel link</p>
+            </div>
         </div>
 
         <!-- Requirements -->
@@ -149,8 +251,11 @@
                 <option value="bets_count">Bets Count</option>
                 <option value="wins_count">Wins Count</option>
                 <option value="win_streak">Win Streak</option>
+                <option value="daily_bets">Daily Bets</option>
+                <option value="weekly_bets">Weekly Bets</option>
                 <option value="referrals_count">Referrals Count</option>
                 <option value="category_bets">Category Bets</option>
+                <option value="subscription">Subscription</option>
             </select>
 
             <div id="requirement-input" class="mt-3">
@@ -167,7 +272,7 @@
 
         <!-- Submit Button -->
         <div class="flex items-center justify-end space-x-4 pt-4">
-            <button type="button" onclick="window.location.href='/admin/missions'"
+            <button type="button" onclick="window.location.href='/missions'"
                     class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-medium">
                 Cancel
             </button>
@@ -198,10 +303,8 @@ document.querySelectorAll('.icon-radio').forEach(radio => {
             this.closest('label').querySelector('.icon-option').classList.remove('border-transparent');
             this.closest('label').querySelector('.icon-option').classList.add('border-blue-500');
 
-            // Clear custom upload
-            document.getElementById('custom-icon').value = '';
-            document.getElementById('file-name').textContent = 'No file chosen';
-            document.getElementById('custom-preview').classList.add('hidden');
+            // Clear custom icon URL when selecting emoji
+            document.getElementById('custom-icon-url').value = '';
         }
     });
 });
@@ -212,29 +315,32 @@ if (checkedRadio) {
     checkedRadio.closest('label').querySelector('.icon-option').classList.add('border-blue-500');
 }
 
-// Custom icon upload
-document.getElementById('custom-icon').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        document.getElementById('file-name').textContent = file.name;
-
+// Custom icon URL input - clear radio buttons when typing
+document.getElementById('custom-icon-url').addEventListener('input', function() {
+    if (this.value.trim()) {
         // Uncheck all radio buttons
         document.querySelectorAll('.icon-radio').forEach(radio => radio.checked = false);
         document.querySelectorAll('.icon-option').forEach(opt => {
             opt.classList.remove('border-blue-500');
             opt.classList.add('border-transparent');
         });
-
-        // Show preview
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const preview = document.getElementById('custom-preview');
-            preview.querySelector('img').src = e.target.result;
-            preview.classList.remove('hidden');
-        };
-        reader.readAsDataURL(file);
     }
 });
+
+// Toggle subscription fields visibility
+function toggleSubscriptionFields() {
+    const type = document.getElementById('type').value;
+    const subscriptionFields = document.getElementById('subscription-fields');
+
+    if (type === 'subscription') {
+        subscriptionFields.style.display = 'block';
+        // Auto-select subscription requirement type
+        document.getElementById('requirement_type').value = 'subscription';
+        updateRequirementInput();
+    } else {
+        subscriptionFields.style.display = 'none';
+    }
+}
 
 // Requirement input handling
 function updateRequirementInput() {
@@ -247,9 +353,19 @@ function updateRequirementInput() {
         case 'bets_count':
         case 'wins_count':
         case 'win_streak':
+        case 'daily_bets':
+        case 'weekly_bets':
         case 'referrals_count':
+            const labelMap = {
+                'bets_count': 'Total Bets Count',
+                'wins_count': 'Total Wins Count',
+                'win_streak': 'Win Streak Length',
+                'daily_bets': 'Daily Bets Count',
+                'weekly_bets': 'Weekly Bets Count',
+                'referrals_count': 'Referrals Count'
+            };
             html = `
-                <label class="block text-sm text-gray-400 mb-2">Count</label>
+                <label class="block text-sm text-gray-400 mb-2">${labelMap[type]}</label>
                 <input type="number" id="requirement_value" min="1" value="${existingRequirements[type] || 1}"
                        class="w-full bg-dark-700 border border-gray-600 rounded-lg px-4 py-3">
             `;
@@ -275,6 +391,14 @@ function updateRequirementInput() {
                 </div>
             `;
             break;
+        case 'subscription':
+            html = `
+                <div class="p-3 bg-blue-900 bg-opacity-20 border border-blue-600 rounded-lg text-sm text-blue-300">
+                    ℹ️ Subscription missions automatically check if user is subscribed to the channel specified above.
+                    Make sure to fill in the Channel ID, Username, and URL fields.
+                </div>
+            `;
+            break;
     }
 
     container.innerHTML = html;
@@ -288,21 +412,16 @@ if (Object.keys(existingRequirements).length > 0) {
 }
 updateRequirementInput();
 
+// Initialize subscription fields visibility
+toggleSubscriptionFields();
+
 // Form submission
 document.getElementById('mission-form').addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    // Get icon value
-    let icon = document.querySelector('.icon-radio:checked')?.value || '';
-    const customFile = document.getElementById('custom-icon').files[0];
-
-    // If custom file is uploaded, we need to upload it first
-    if (customFile) {
-        // TODO: Upload custom icon to S3/server and get URL
-        // For now, we'll use a placeholder
-        alert('Custom icon upload will be implemented soon. Please use default icons for now.');
-        return;
-    }
+    // Get icon value - priority: custom URL > selected emoji
+    const customIconUrl = document.getElementById('custom-icon-url').value.trim();
+    let icon = customIconUrl || document.querySelector('.icon-radio:checked')?.value || '🎯';
 
     // Build requirements object
     const reqType = document.getElementById('requirement_type').value;
@@ -313,20 +432,37 @@ document.getElementById('mission-form').addEventListener('submit', async functio
             category: document.getElementById('requirement_category').value,
             count: parseInt(document.getElementById('requirement_count').value)
         };
+    } else if (reqType === 'subscription') {
+        requirements[reqType] = true;
     } else {
-        requirements[reqType] = parseInt(document.getElementById('requirement_value').value);
+        const valueInput = document.getElementById('requirement_value');
+        if (valueInput) {
+            requirements[reqType] = parseInt(valueInput.value);
+        }
     }
+
+    const missionType = document.getElementById('type').value;
 
     const data = {
         title: document.getElementById('title').value,
         description: document.getElementById('description').value,
         icon: icon,
+        custom_icon_url: customIconUrl || null,
         reward_amount: parseFloat(document.getElementById('reward_amount').value),
         reward_currency: document.getElementById('reward_currency').value,
-        type: document.getElementById('type').value,
+        type: missionType,
         requirements: requirements,
         is_active: document.getElementById('is_active').checked
     };
+
+    // Add subscription fields if type is subscription
+    if (missionType === 'subscription') {
+        data.channel_id = document.getElementById('channel_id').value || null;
+        data.channel_username = document.getElementById('channel_username').value || null;
+        data.channel_url = document.getElementById('channel_url').value || null;
+    }
+
+    console.log('Submitting mission data:', data);
 
     try {
         const url = missionId
@@ -345,7 +481,7 @@ document.getElementById('mission-form').addEventListener('submit', async functio
 
         if (response.ok) {
             alert(missionId ? 'Mission updated successfully!' : 'Mission created successfully!');
-            window.location.href = '/admin/missions';
+            window.location.href = '/missions';
         } else {
             const error = await response.json();
             alert(`Error: ${error.detail || 'Failed to save mission'}`);
