@@ -137,7 +137,7 @@ async def create_tables():
                     sent_at TIMESTAMPTZ,
                     error_message TEXT,
                     last_error_at TIMESTAMPTZ,
-                    metadata TEXT,
+                    notification_metadata TEXT,
                     created_at TIMESTAMPTZ DEFAULT NOW(),
                     updated_at TIMESTAMPTZ DEFAULT NOW()
                 );

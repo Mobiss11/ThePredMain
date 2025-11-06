@@ -45,7 +45,7 @@ class TelegramQueueService:
             notification_type=notification_type,
             status=NotificationStatus.PENDING,
             scheduled_at=scheduled_at,
-            metadata=json.dumps(metadata) if metadata else None
+            notification_metadata=json.dumps(metadata) if metadata else None
         )
 
         db.add(notification)

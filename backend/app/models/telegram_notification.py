@@ -57,7 +57,7 @@ class TelegramNotification(Base):
     last_error_at = Column(DateTime(timezone=True), nullable=True)
 
     # Метаданные
-    metadata = Column(Text, nullable=True)  # JSON для дополнительной информации
+    notification_metadata = Column(Text, nullable=True)  # JSON для дополнительной информации
 
     # Автоматические поля
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
