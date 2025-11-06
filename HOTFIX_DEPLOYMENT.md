@@ -1,12 +1,17 @@
-# 🚨 HOTFIX: Исправление миграций Alembic
+# 🚨 HOTFIX: Исправление миграций Alembic и Path параметра
 
-## Проблема
-- **Multiple head revisions** в Alembic
-- Backend не запускается из-за конфликта миграций
-- Ошибка: `Multiple head revisions are present for given argument 'head'`
+## Проблемы
+1. **Multiple head revisions** в Alembic
+   - Backend не запускается из-за конфликта миграций
+   - Ошибка: `Multiple head revisions are present for given argument 'head'`
 
-## Решение
-Объединены ветки миграций - теперь `leaderboard_rewards` миграция идет после `update_mission_icon_size`.
+2. **AssertionError в FastAPI**
+   - Ошибка: `Cannot use Query for path param 'period'`
+   - В `/rewards/{period}` использовался `Query` вместо `Path`
+
+## Решения
+1. ✅ Объединены ветки миграций - теперь `leaderboard_rewards` миграция идет после `update_mission_icon_size`
+2. ✅ Заменен `Query` на `Path` для параметра `period` в endpoint `/rewards/{period}`
 
 ---
 
@@ -144,6 +149,16 @@ POSTGRES_HOST=localhost alembic downgrade update_mission_icon_size
 # 3. Перезапустить
 pm2 restart all
 ```
+
+---
+
+---
+
+## 📝 Коммиты
+
+1. `823474c` - Fix: Объединены ветки миграций Alembic
+2. `3482671` - Добавлена инструкция для hotfix деплоя
+3. **`797517a`** - **Fix: Исправлен path параметр period** ⚡
 
 ---
 
