@@ -60,17 +60,32 @@ class LeaderboardService:
         last_period_result = await db.execute(last_period_query)
         last_period = last_period_result.scalar_one_or_none()
 
-        if last_period:
-            # Новый период начинается с конца предыдущего
-            start_date = last_period.end_date
-            logger.info(f"📅 Период начинается после закрытия предыдущего: {start_date}")
-        else:
-            # Нет закрытых периодов - берем начало текущей недели/месяца
-            if period_type == "week":
+        if period_type == "week":
+            # НЕДЕЛИ ВСЕГДА: Понедельник 00:00 - Воскресенье 23:59
+            if last_period:
+                # Следующий понедельник после закрытия предыдущего периода
+                days_until_monday = (7 - last_period.end_date.weekday()) % 7
+                if days_until_monday == 0:
+                    days_until_monday = 7  # Если закрыли в воскресенье, берем следующий понедельник
+                start_date = last_period.end_date + timedelta(days=days_until_monday)
+                start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+                logger.info(f"📅 Следующий недельный период начинается с понедельника: {start_date}")
+            else:
                 # Начало текущей недели (понедельник)
                 start_date = now - timedelta(days=now.weekday())
                 start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
                 logger.info(f"📅 Первый период недели, начало с понедельника: {start_date}")
+        else:
+            # МЕСЯЦЫ ВСЕГДА: 1-е число 00:00 - Последнее число 23:59
+            if last_period:
+                # 1-е число следующего месяца после закрытия предыдущего
+                if last_period.end_date.month == 12:
+                    # Если декабрь, переходим на январь следующего года
+                    start_date = last_period.end_date.replace(year=last_period.end_date.year + 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+                else:
+                    # Иначе просто следующий месяц
+                    start_date = last_period.end_date.replace(month=last_period.end_date.month + 1, day=1, hour=0, minute=0, second=0, microsecond=0)
+                logger.info(f"📅 Следующий месячный период начинается с 1-го числа: {start_date}")
             else:
                 # Начало текущего месяца
                 start_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
