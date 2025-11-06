@@ -1,7 +1,7 @@
 """add leaderboard rewards
 
 Revision ID: b8c9d4e5f6a7
-Revises: 79fa342a014c
+Revises: update_mission_icon_size
 Create Date: 2025-11-06 06:00:00.000000
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'b8c9d4e5f6a7'
-down_revision = '79fa342a014c'
+down_revision = 'update_mission_icon_size'
 branch_labels = None
 depends_on = None
 
