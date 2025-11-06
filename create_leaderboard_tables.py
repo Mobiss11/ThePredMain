@@ -8,6 +8,7 @@
 import asyncio
 import os
 import sys
+from urllib.parse import quote_plus
 from sqlalchemy.ext.asyncio import create_async_engine
 
 # Получаем параметры подключения из env
@@ -15,9 +16,20 @@ POSTGRES_HOST = os.getenv('POSTGRES_HOST', 'localhost')
 POSTGRES_PORT = os.getenv('POSTGRES_PORT', '5432')
 POSTGRES_DB = os.getenv('POSTGRES_DB', 'thepred')
 POSTGRES_USER = os.getenv('POSTGRES_USER', 'thepred')
-POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD', 'thepred2024')
+POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD')
 
-DATABASE_URL = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
+if not POSTGRES_PASSWORD:
+    print("❌ ОШИБКА: Переменная окружения POSTGRES_PASSWORD не установлена!")
+    print("\nУстанови переменную:")
+    print('  export POSTGRES_PASSWORD="твой_пароль"')
+    print("\nИли передай через командную строку:")
+    print('  POSTGRES_PASSWORD="твой_пароль" python3 create_leaderboard_tables.py')
+    sys.exit(1)
+
+# URL-кодируем пароль чтобы обработать спецсимволы (!@# и т.д.)
+POSTGRES_PASSWORD_ENCODED = quote_plus(POSTGRES_PASSWORD)
+
+DATABASE_URL = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD_ENCODED}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 
 async def create_tables():
     """Создать таблицы лидерборда"""
