@@ -41,16 +41,40 @@ class LeaderboardService:
 
         # 1. Определяем даты периода
         now = datetime.now(timezone.utc)
+
         if period_type == "week":
-            # Последние 7 дней
-            start_date = now - timedelta(days=7)
             reward_period = RewardPeriod.WEEK
             db_period_type = PeriodType.WEEK
         else:
-            # Последние 30 дней
-            start_date = now - timedelta(days=30)
             reward_period = RewardPeriod.MONTH
             db_period_type = PeriodType.MONTH
+
+        # Находим последний закрытый период этого типа
+        last_period_query = select(LeaderboardPeriod).where(
+            and_(
+                LeaderboardPeriod.period_type == db_period_type,
+                LeaderboardPeriod.status == PeriodStatus.CLOSED
+            )
+        ).order_by(desc(LeaderboardPeriod.closed_at)).limit(1)
+
+        last_period_result = await db.execute(last_period_query)
+        last_period = last_period_result.scalar_one_or_none()
+
+        if last_period:
+            # Новый период начинается с конца предыдущего
+            start_date = last_period.end_date
+            logger.info(f"📅 Период начинается после закрытия предыдущего: {start_date}")
+        else:
+            # Нет закрытых периодов - берем начало текущей недели/месяца
+            if period_type == "week":
+                # Начало текущей недели (понедельник)
+                start_date = now - timedelta(days=now.weekday())
+                start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+                logger.info(f"📅 Первый период недели, начало с понедельника: {start_date}")
+            else:
+                # Начало текущего месяца
+                start_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+                logger.info(f"📅 Первый период месяца, начало с 1-го числа: {start_date}")
 
         end_date = now
 

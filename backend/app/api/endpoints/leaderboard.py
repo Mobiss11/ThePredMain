@@ -8,6 +8,7 @@ from app.core.database import get_db
 from app.models.user import User
 from app.models.bet import Bet, BetStatus
 from app.models.leaderboard_reward import LeaderboardReward, RewardPeriod
+from app.models.leaderboard_period import LeaderboardPeriod, PeriodType, PeriodStatus
 from pydantic import BaseModel
 from decimal import Decimal
 from typing import List, Optional
@@ -64,14 +65,40 @@ async def get_leaderboard(
     - total_wins: Total number of wins
     """
 
-    # Calculate date range based on period
+    # Calculate date range based on last closed period
     now = datetime.now()
+
+    # Determine period type
     if period == "week":
-        start_date = now - timedelta(days=7)
+        period_type = PeriodType.WEEK
         reward_period = RewardPeriod.WEEK
     else:  # month
-        start_date = now - timedelta(days=30)
+        period_type = PeriodType.MONTH
         reward_period = RewardPeriod.MONTH
+
+    # Find last closed period of this type
+    last_period_query = select(LeaderboardPeriod).where(
+        and_(
+            LeaderboardPeriod.period_type == period_type,
+            LeaderboardPeriod.status == PeriodStatus.CLOSED
+        )
+    ).order_by(desc(LeaderboardPeriod.closed_at)).limit(1)
+
+    last_period_result = await db.execute(last_period_query)
+    last_period = last_period_result.scalar_one_or_none()
+
+    if last_period:
+        # Start from end of last closed period
+        start_date = last_period.end_date
+    else:
+        # No closed periods yet - use beginning of current week/month
+        if period == "week":
+            # Start of current week (Monday)
+            start_date = now - timedelta(days=now.weekday())
+            start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        else:
+            # Start of current month
+            start_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     # Get rewards for this period
     rewards_query = select(LeaderboardReward).where(
