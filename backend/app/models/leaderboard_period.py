@@ -10,15 +10,15 @@ from datetime import datetime
 
 class PeriodType(str, enum.Enum):
     """Тип периода"""
-    WEEK = "week"
-    MONTH = "month"
+    WEEK = "WEEK"
+    MONTH = "MONTH"
 
 
 class PeriodStatus(str, enum.Enum):
     """Статус периода"""
-    ACTIVE = "active"  # Текущий активный период
-    CLOSED = "closed"  # Закрыт и награды начислены
-    SCHEDULED = "scheduled"  # Запланирован к закрытию
+    ACTIVE = "ACTIVE"  # Текущий активный период
+    CLOSED = "CLOSED"  # Закрыт и награды начислены
+    SCHEDULED = "SCHEDULED"  # Запланирован к закрытию
 
 
 class LeaderboardPeriod(Base):

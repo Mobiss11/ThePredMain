@@ -10,21 +10,21 @@ from datetime import datetime
 
 class NotificationStatus(str, enum.Enum):
     """Статус уведомления"""
-    PENDING = "pending"  # Ожидает отправки
-    PROCESSING = "processing"  # В процессе отправки
-    SENT = "sent"  # Успешно отправлено
-    FAILED = "failed"  # Ошибка отправки (будет retry)
-    PERMANENT_FAILURE = "permanent_failure"  # Необратимая ошибка (не делать retry)
+    PENDING = "PENDING"  # Ожидает отправки
+    PROCESSING = "PROCESSING"  # В процессе отправки
+    SENT = "SENT"  # Успешно отправлено
+    FAILED = "FAILED"  # Ошибка отправки (будет retry)
+    PERMANENT_FAILURE = "PERMANENT_FAILURE"  # Необратимая ошибка (не делать retry)
 
 
 class NotificationType(str, enum.Enum):
     """Тип уведомления"""
-    LEADERBOARD_REWARD = "leaderboard_reward"  # Награда за место в лидерборде
-    MARKET_RESOLVED = "market_resolved"  # Рынок разрешен
-    BET_WON = "bet_won"  # Ставка выиграла
-    BET_LOST = "bet_lost"  # Ставка проиграла
-    MISSION_COMPLETED = "mission_completed"  # Миссия выполнена
-    SYSTEM = "system"  # Системное уведомление
+    LEADERBOARD_REWARD = "LEADERBOARD_REWARD"  # Награда за место в лидерборде
+    MARKET_RESOLVED = "MARKET_RESOLVED"  # Рынок разрешен
+    BET_WON = "BET_WON"  # Ставка выиграла
+    BET_LOST = "BET_LOST"  # Ставка проиграла
+    MISSION_COMPLETED = "MISSION_COMPLETED"  # Миссия выполнена
+    SYSTEM = "SYSTEM"  # Системное уведомление
 
 
 class TelegramNotification(Base):
