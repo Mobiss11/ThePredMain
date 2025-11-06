@@ -139,15 +139,20 @@ class BackendAPIClient:
     async def get_leaderboard(
         self,
         limit: int = 100,
+        period: str = "week",
         sort_by: str = "profit"  # profit, win_rate, win_streak, total_wins
     ) -> List[Dict]:
         """Get leaderboard rankings"""
-        endpoint = f"/leaderboard/?limit={limit}&sort_by={sort_by}"
+        endpoint = f"/leaderboard/?limit={limit}&period={period}&sort_by={sort_by}"
         return await self._get(endpoint)
 
     async def get_user_rank(self, user_id: int) -> Dict:
         """Get user's rank in leaderboard"""
         return await self._get(f"/leaderboard/user/{user_id}")
+
+    async def get_leaderboard_rewards(self, period: str = "week") -> List[Dict]:
+        """Get leaderboard rewards for a period"""
+        return await self._get(f"/leaderboard/rewards/{period}")
 
     # ============ Admin ============
 

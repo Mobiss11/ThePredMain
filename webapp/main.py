@@ -395,9 +395,10 @@ async def api_leaderboard():
     """Get leaderboard from backend API"""
     try:
         limit = request.args.get('limit', 100, type=int)
+        period = request.args.get('period', 'week')
         sort_by = request.args.get('sort_by', 'profit')
 
-        leaderboard = await api_client.get_leaderboard(limit=limit, sort_by=sort_by)
+        leaderboard = await api_client.get_leaderboard(limit=limit, period=period, sort_by=sort_by)
         return jsonify(leaderboard)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -410,6 +411,16 @@ async def api_user_rank():
         user_id = session.get('user_id', 1)
         rank_info = await api_client.get_user_rank(int(user_id))
         return jsonify(rank_info)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/leaderboard/rewards/<period>')
+async def api_leaderboard_rewards(period):
+    """Get leaderboard rewards for a period from backend API"""
+    try:
+        rewards = await api_client.get_leaderboard_rewards(period=period)
+        return jsonify(rewards)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
