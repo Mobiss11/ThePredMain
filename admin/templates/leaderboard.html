@@ -144,8 +144,16 @@
             </div>
 
             <div>
-                <label class="block text-sm font-medium mb-2">Награда (PRED)</label>
+                <label class="block text-sm font-medium mb-2">Награда</label>
                 <input type="number" id="rewardAmount" min="0" class="w-full px-4 py-2 bg-dark-700 rounded-lg border border-gray-700" required>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-2">Валюта</label>
+                <select id="rewardCurrency" class="w-full px-4 py-2 bg-dark-700 rounded-lg border border-gray-700">
+                    <option value="PRED">💰 PRED</option>
+                    <option value="TON">💎 TON</option>
+                </select>
             </div>
 
             <div class="flex items-center">
@@ -252,15 +260,18 @@ async function loadRewards() {
                 rankText = `#${reward.rank_from}-${reward.rank_to}`;
             }
 
+            const currencyEmoji = reward.currency === 'TON' ? '💎' : '💰';
+            const currencyColor = reward.currency === 'TON' ? 'text-blue-400' : 'text-yellow-400';
+
             return `
                 <div class="bg-dark-700 rounded-lg p-4 flex items-center justify-between">
                     <div>
                         <div class="font-bold">${rankText} Место</div>
-                        <div class="text-yellow-400 font-bold">${formatNumber(reward.reward_amount)} PRED</div>
+                        <div class="${currencyColor} font-bold">${currencyEmoji} ${formatNumber(reward.reward_amount)} ${reward.currency}</div>
                         ${reward.is_active ? '' : '<div class="text-xs text-red-400 mt-1">Неактивна</div>'}
                     </div>
                     <div class="flex space-x-2">
-                        <button onclick="editReward(${reward.id}, '${reward.period}', ${reward.rank_from}, ${reward.rank_to}, ${reward.reward_amount}, ${reward.is_active})"
+                        <button onclick="editReward(${reward.id}, '${reward.period}', ${reward.rank_from}, ${reward.rank_to}, ${reward.reward_amount}, '${reward.currency}', ${reward.is_active})"
                                 class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
                             Edit
                         </button>
@@ -284,19 +295,21 @@ function showCreateRewardModal() {
     document.getElementById('rewardForm').reset();
     document.getElementById('rewardId').value = '';
     document.getElementById('rewardPeriod').value = currentPeriod;
+    document.getElementById('rewardCurrency').value = 'PRED';
     document.getElementById('isActive').checked = true;
     document.getElementById('rewardModal').classList.remove('hidden');
     document.getElementById('rewardModal').classList.add('flex');
 }
 
 // Edit reward
-function editReward(id, period, rankFrom, rankTo, rewardAmount, isActive) {
+function editReward(id, period, rankFrom, rankTo, rewardAmount, currency, isActive) {
     document.getElementById('modalTitle').textContent = 'Редактировать награду';
     document.getElementById('rewardId').value = id;
     document.getElementById('rewardPeriod').value = period;
     document.getElementById('rankFrom').value = rankFrom;
     document.getElementById('rankTo').value = rankTo;
     document.getElementById('rewardAmount').value = rewardAmount;
+    document.getElementById('rewardCurrency').value = currency;
     document.getElementById('isActive').checked = isActive;
     document.getElementById('rewardModal').classList.remove('hidden');
     document.getElementById('rewardModal').classList.add('flex');
@@ -339,6 +352,7 @@ document.getElementById('rewardForm').addEventListener('submit', async (e) => {
         rank_from: parseInt(document.getElementById('rankFrom').value),
         rank_to: parseInt(document.getElementById('rankTo').value),
         reward_amount: parseInt(document.getElementById('rewardAmount').value),
+        currency: document.getElementById('rewardCurrency').value,
         is_active: document.getElementById('isActive').checked
     };
 

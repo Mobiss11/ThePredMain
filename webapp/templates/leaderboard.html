@@ -143,10 +143,13 @@
                 rankText = `#${reward.rank_from}-${reward.rank_to} Места`;
             }
 
+            const currencyEmoji = reward.currency === 'TON' ? '💎' : '💰';
+            const currencyColor = reward.currency === 'TON' ? 'text-blue-400' : 'text-yellow-400';
+
             return `
                 <div class="flex items-center justify-between">
                     <span>${rankText}</span>
-                    <span class="font-bold text-yellow-400">${window.formatNumber(reward.reward_amount)} PRED</span>
+                    <span class="font-bold ${currencyColor}">${currencyEmoji} ${window.formatNumber(reward.reward_amount)} ${reward.currency}</span>
                 </div>
             `;
         }).join('');
@@ -213,7 +216,9 @@
                 ? `<img src="${entry.photo_url}" class="w-10 h-10 rounded-full object-cover" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%23374151%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2250%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22white%22 font-size=%2240%22%3E${entry.first_name ? entry.first_name[0].toUpperCase() : '?'}%3C/text%3E%3C/svg%3E'" />`
                 : `<div class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-lg font-bold">${entry.first_name ? entry.first_name[0].toUpperCase() : '?'}</div>`;
 
-            const rewardBadge = entry.reward ? `<div class="text-xs text-yellow-400 mt-1">+${window.formatNumber(entry.reward)} PRED</div>` : '';
+            const rewardEmoji = entry.reward_currency === 'TON' ? '💎' : '💰';
+            const rewardColor = entry.reward_currency === 'TON' ? 'text-blue-400' : 'text-yellow-400';
+            const rewardBadge = entry.reward ? `<div class="text-xs ${rewardColor} mt-1">${rewardEmoji} +${window.formatNumber(entry.reward)} ${entry.reward_currency}</div>` : '';
 
             return `
                 <div class="glass rounded-xl p-4 flex items-center justify-between">
@@ -264,6 +269,9 @@
                 ? `<img src="${entry.photo_url}" class="w-12 h-12 rounded-full object-cover ${isFirst ? 'border-2 border-yellow-400' : ''}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect fill=%22%23374151%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%22 y=%2250%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22white%22 font-size=%2240%22%3E${entry.first_name ? entry.first_name[0].toUpperCase() : '?'}%3C/text%3E%3C/svg%3E'" />`
                 : `<div class="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center text-xl font-bold ${isFirst ? 'border-2 border-yellow-400' : ''}">${entry.first_name ? entry.first_name[0].toUpperCase() : '?'}</div>`;
 
+            const rewardEmoji = entry.reward_currency === 'TON' ? '💎' : '💰';
+            const rewardColor = entry.reward_currency === 'TON' ? 'text-blue-400' : 'text-yellow-400';
+
             return `
                 <div class="${containerClass}">
                     <div class="flex items-center space-x-3 flex-1">
@@ -277,7 +285,7 @@
                     <div class="text-right">
                         <div class="font-bold ${profitColor} ${isFirst ? 'text-lg' : ''}">${profitPrefix}${window.formatNumber(entry.profit)}</div>
                         <div class="text-xs text-gray-400">PRED</div>
-                        ${entry.reward ? `<div class="text-xs text-yellow-400 mt-1">+${window.formatNumber(entry.reward)} PRED</div>` : ''}
+                        ${entry.reward ? `<div class="text-xs ${rewardColor} mt-1">${rewardEmoji} +${window.formatNumber(entry.reward)} ${entry.reward_currency}</div>` : ''}
                     </div>
                 </div>
             `;

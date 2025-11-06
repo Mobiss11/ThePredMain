@@ -1074,6 +1074,7 @@ class LeaderboardRewardResponse(BaseModel):
     rank_from: int
     rank_to: int
     reward_amount: int
+    currency: str  # PRED or TON
     is_active: bool
 
     class Config:
@@ -1086,6 +1087,7 @@ class CreateRewardRequest(BaseModel):
     rank_from: int
     rank_to: int
     reward_amount: int
+    currency: str = "PRED"  # PRED or TON
     is_active: bool = True
 
 
@@ -1095,6 +1097,7 @@ class UpdateRewardRequest(BaseModel):
     rank_from: Optional[int] = None
     rank_to: Optional[int] = None
     reward_amount: Optional[int] = None
+    currency: Optional[str] = None  # PRED or TON
     is_active: Optional[bool] = None
 
 
@@ -1134,6 +1137,7 @@ async def create_reward(
         rank_from=reward_data.rank_from,
         rank_to=reward_data.rank_to,
         reward_amount=reward_data.reward_amount,
+        currency=reward_data.currency,
         is_active=reward_data.is_active
     )
 
@@ -1147,6 +1151,7 @@ async def create_reward(
         "rank_from": new_reward.rank_from,
         "rank_to": new_reward.rank_to,
         "reward_amount": new_reward.reward_amount,
+        "currency": new_reward.currency,
         "message": "Reward created successfully"
     }
 
@@ -1174,6 +1179,8 @@ async def update_reward(
         reward.rank_to = reward_data.rank_to
     if reward_data.reward_amount is not None:
         reward.reward_amount = reward_data.reward_amount
+    if reward_data.currency is not None:
+        reward.currency = reward_data.currency
     if reward_data.is_active is not None:
         reward.is_active = reward_data.is_active
 

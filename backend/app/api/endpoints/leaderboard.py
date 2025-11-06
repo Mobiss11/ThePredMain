@@ -22,6 +22,7 @@ class RewardInfo(BaseModel):
     rank_from: int
     rank_to: int
     reward_amount: int
+    currency: str  # PRED or TON
 
 
 class LeaderboardEntry(BaseModel):
@@ -39,6 +40,7 @@ class LeaderboardEntry(BaseModel):
     win_streak: int
     profit: Decimal
     reward: int | None  # Reward for this rank
+    reward_currency: str | None  # PRED or TON
 
     class Config:
         from_attributes = True
@@ -183,17 +185,20 @@ async def get_leaderboard(
     rows = result.all()
 
     # Helper function to find reward for rank
-    def get_reward_for_rank(rank: int) -> Optional[int]:
+    def get_reward_for_rank(rank: int) -> Optional[tuple]:
         for reward in rewards.values():
             if reward.rank_from <= rank <= reward.rank_to:
-                return reward.reward_amount
+                return (reward.reward_amount, reward.currency)
         return None
 
     # Build leaderboard entries
     leaderboard = []
     for rank, (user, profit, period_bets) in enumerate(rows, start=1):
         win_rate = (user.total_wins / user.total_bets * 100) if user.total_bets > 0 else 0
-        reward = get_reward_for_rank(rank)
+        reward_info = get_reward_for_rank(rank)
+
+        reward_amount = reward_info[0] if reward_info else None
+        reward_currency = reward_info[1] if reward_info else None
 
         leaderboard.append(LeaderboardEntry(
             rank=rank,
@@ -208,7 +213,8 @@ async def get_leaderboard(
             win_rate=round(win_rate, 2),
             win_streak=user.win_streak,
             profit=profit,
-            reward=reward
+            reward=reward_amount,
+            reward_currency=reward_currency
         ))
 
     return leaderboard
@@ -236,7 +242,8 @@ async def get_rewards(
         RewardInfo(
             rank_from=r.rank_from,
             rank_to=r.rank_to,
-            reward_amount=r.reward_amount
+            reward_amount=r.reward_amount,
+            currency=r.currency
         )
         for r in rewards
     ]

@@ -161,32 +161,40 @@ class LeaderboardService:
 
         for rank, (user, profit, period_bets) in enumerate(leaderboard, start=1):
             # Находим награду для этого rank
-            reward_amount = LeaderboardService._find_reward_for_rank(rank, rewards)
+            reward_info = LeaderboardService._find_reward_for_rank(rank, rewards)
 
-            if reward_amount and reward_amount > 0:
-                # Начисляем награду
-                user.pred_balance += reward_amount
-                total_rewards += reward_amount
-                winners_count += 1
+            if reward_info:
+                reward_amount, currency = reward_info
 
-                # Создаем уведомление
-                message = LeaderboardService._format_reward_notification(
-                    rank=rank,
-                    reward_amount=reward_amount,
-                    profit=profit,
-                    period_type=period_type
-                )
+                if reward_amount > 0:
+                    # Начисляем награду на правильный баланс
+                    if currency == "TON":
+                        user.ton_balance += reward_amount
+                    else:  # PRED
+                        user.pred_balance += reward_amount
 
-                await TelegramQueueService.add_notification(
-                    db=db,
-                    telegram_id=user.telegram_id,
-                    user_id=user.id,
-                    message_text=message,
-                    notification_type=NotificationType.LEADERBOARD_REWARD,
-                    parse_mode="HTML"
-                )
+                    total_rewards += reward_amount
+                    winners_count += 1
 
-                logger.info(f"💰 Награда {reward_amount} PRED для {user.username or user.first_name} (rank #{rank})")
+                    # Создаем уведомление
+                    message = LeaderboardService._format_reward_notification(
+                        rank=rank,
+                        reward_amount=reward_amount,
+                        currency=currency,
+                        profit=profit,
+                        period_type=period_type
+                    )
+
+                    await TelegramQueueService.add_notification(
+                        db=db,
+                        telegram_id=user.telegram_id,
+                        user_id=user.id,
+                        message_text=message,
+                        notification_type=NotificationType.LEADERBOARD_REWARD,
+                        parse_mode="HTML"
+                    )
+
+                    logger.info(f"💰 Награда {reward_amount} {currency} для {user.username or user.first_name} (rank #{rank})")
 
         # 5. Сохраняем период в историю
         period = LeaderboardPeriod(
@@ -219,15 +227,19 @@ class LeaderboardService:
         }
 
     @staticmethod
-    def _find_reward_for_rank(rank: int, rewards: List[LeaderboardReward]) -> Optional[int]:
-        """Найти награду для конкретного rank"""
+    def _find_reward_for_rank(rank: int, rewards: List[LeaderboardReward]) -> Optional[Tuple[int, str]]:
+        """Найти награду для конкретного rank
+
+        Returns:
+            Tuple[amount, currency] or None
+        """
         for reward in rewards:
             if reward.rank_from <= rank <= reward.rank_to:
-                return reward.reward_amount
+                return (reward.reward_amount, reward.currency)
         return None
 
     @staticmethod
-    def _format_reward_notification(rank: int, reward_amount: int, profit: Decimal, period_type: str) -> str:
+    def _format_reward_notification(rank: int, reward_amount: int, currency: str, profit: Decimal, period_type: str) -> str:
         """Форматировать уведомление о награде"""
         period_text = "недельного" if period_type == "week" else "месячного"
         medal = ""
@@ -243,12 +255,15 @@ class LeaderboardService:
 
         profit_text = f"+{profit:,.0f}" if profit >= 0 else f"{profit:,.0f}"
 
+        # Emoji для валюты
+        currency_emoji = "💎" if currency == "TON" else "💰"
+
         return f"""
 {medal} <b>Поздравляем!</b>
 
 Вы заняли <b>#{rank} место</b> в {period_text} лидерборде!
 
-💰 Ваша награда: <b>{reward_amount:,} PRED</b>
+{currency_emoji} Ваша награда: <b>{reward_amount:,} {currency}</b>
 📈 Ваш профит: <b>{profit_text} PRED</b>
 
 Награда уже начислена на ваш баланс. Продолжайте в том же духе! 🚀

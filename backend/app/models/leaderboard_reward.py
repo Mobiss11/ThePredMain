@@ -13,6 +13,12 @@ class RewardPeriod(str, enum.Enum):
     MONTH = "month"
 
 
+class RewardCurrency(str, enum.Enum):
+    """Reward currency types"""
+    PRED = "PRED"
+    TON = "TON"
+
+
 class LeaderboardReward(Base):
     """Leaderboard reward configuration"""
     __tablename__ = "leaderboard_rewards"
@@ -21,10 +27,11 @@ class LeaderboardReward(Base):
     period = Column(SQLEnum(RewardPeriod), nullable=False)  # week or month
     rank_from = Column(Integer, nullable=False)  # Starting rank (e.g., 1)
     rank_to = Column(Integer, nullable=False)    # Ending rank (e.g., 1 for 1st place, 3 for 1-3)
-    reward_amount = Column(Integer, nullable=False)  # PRED reward
+    reward_amount = Column(Integer, nullable=False)  # Reward amount
+    currency = Column(String(10), default="PRED", nullable=False)  # PRED or TON
     is_active = Column(Boolean, default=True)
 
     def __repr__(self):
         if self.rank_from == self.rank_to:
-            return f"<LeaderboardReward {self.period} #{self.rank_from}: {self.reward_amount} PRED>"
-        return f"<LeaderboardReward {self.period} #{self.rank_from}-{self.rank_to}: {self.reward_amount} PRED>"
+            return f"<LeaderboardReward {self.period} #{self.rank_from}: {self.reward_amount} {self.currency}>"
+        return f"<LeaderboardReward {self.period} #{self.rank_from}-{self.rank_to}: {self.reward_amount} {self.currency}>"
