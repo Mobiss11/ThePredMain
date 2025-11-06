@@ -442,11 +442,14 @@ async def api_admin_reward_action(reward_id):
 async def api_admin_close_period():
     """Proxy close period request to backend"""
     try:
-        data = await request.get_json()
+        # Get period_type from query params
+        period_type = request.args.get('period_type')
+        if not period_type:
+            return jsonify({"error": "period_type is required"}), 400
+
         async with aiohttp.ClientSession() as session_http:
             async with session_http.post(
-                f"{app.config['API_URL']}/admin/leaderboard/close-period",
-                json=data
+                f"{app.config['API_URL']}/admin/leaderboard/close-period?period_type={period_type}"
             ) as response:
                 result = await response.json()
                 return jsonify(result)
