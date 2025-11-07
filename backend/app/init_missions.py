@@ -202,10 +202,22 @@ async def init_default_missions():
             # Delete old missions if any exist
             if len(existing_missions) > 0:
                 print(f"⚠️ Found {len(existing_missions)} old missions, deleting...")
+
+                # First delete all user_missions records that reference these missions
+                from app.models.mission import UserMission
+                mission_ids = [m.id for m in existing_missions]
+                await db.execute(
+                    UserMission.__table__.delete().where(
+                        UserMission.mission_id.in_(mission_ids)
+                    )
+                )
+                print(f"✓ Deleted user_missions records")
+
+                # Now delete the missions themselves
                 for mission in existing_missions:
                     await db.delete(mission)
                 await db.commit()
-                print(f"✓ Deleted old missions")
+                print(f"✓ Deleted {len(existing_missions)} old missions")
 
             # Create default missions
             print(f"Creating {len(DEFAULT_MISSIONS)} default missions...")
