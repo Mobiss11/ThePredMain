@@ -100,7 +100,7 @@
 
     <!-- Global Scripts -->
     <script>
-        const API_URL = '';  // Use relative URLs - admin proxies to backend
+        const API_URL = '{{ config.API_URL }}';  // Backend API URL
         // S3 Configuration
         const S3_PUBLIC_URL = '{{ config.S3_PUBLIC_URL }}';
         const S3_BUCKET = '{{ config.S3_BUCKET }}';
