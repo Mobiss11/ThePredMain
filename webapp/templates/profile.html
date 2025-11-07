@@ -173,7 +173,7 @@
 </div>
 
 <!-- My Events - For Gold+ users only -->
-<div id="my-events-section" class="glass rounded-2xl p-6 mb-6 relative overflow-hidden" style="display: none;">
+<div id="my-events-section" class="glass rounded-2xl p-6 mb-6 relative" style="display: none; min-height: 200px;">
     <!-- Will be shown/hidden based on rank -->
 </div>
 
@@ -973,13 +973,29 @@ async function loadMyEvents() {
     // Gold+ users - load their events
     section.style.display = 'block';
 
+    // Check if userId is available
+    if (!userId) {
+        section.innerHTML = `
+            <h2 class="text-xl font-bold mb-4">🎯 Мои События</h2>
+            <div class="glass rounded-xl p-4 text-center text-gray-400 text-sm">
+                Загрузка...
+            </div>
+        `;
+        return;
+    }
+
     try {
+        console.log('Loading events for user:', userId);
         const response = await fetch(`/api/markets/user/${userId}`);
+
         if (!response.ok) {
-            throw new Error('Failed to load events');
+            const errorText = await response.text();
+            console.error('Failed to load events:', response.status, errorText);
+            throw new Error(`Failed to load events: ${response.status}`);
         }
 
         const events = await response.json();
+        console.log('Loaded events:', events);
 
         section.innerHTML = `
             <div class="flex items-center justify-between mb-4">
@@ -1054,8 +1070,11 @@ async function loadMyEvents() {
         console.error('Failed to load my events:', error);
         section.innerHTML = `
             <h2 class="text-xl font-bold mb-4">🎯 Мои События</h2>
-            <div class="glass rounded-xl p-4 text-center text-red-400 text-sm">
-                Ошибка загрузки событий
+            <div class="glass rounded-xl p-4 text-center">
+                <div class="text-red-400 text-sm mb-3">Ошибка загрузки событий</div>
+                <button onclick="loadMyEvents()" class="gold-gradient px-4 py-2 rounded-lg text-black font-bold text-sm">
+                    Повторить попытку
+                </button>
             </div>
         `;
     }

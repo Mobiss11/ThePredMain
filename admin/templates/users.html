@@ -2,11 +2,27 @@
 {% block title %}Users - ThePred Admin{% endblock %}
 {% block content %}
 <div class="max-w-7xl">
-    <h1 class="text-3xl font-bold mb-8">User Management</h1>
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-bold">User Management</h1>
+        <div class="relative">
+            <input
+                type="text"
+                id="user-search"
+                placeholder="Поиск по имени, ID, Telegram..."
+                class="bg-dark-700 rounded-lg px-4 py-2 pl-10 w-80 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                oninput="filterUsers()"
+            >
+            <svg class="w-5 h-5 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+        </div>
+    </div>
+
     <div class="bg-dark-800 rounded-lg overflow-hidden">
         <table class="w-full">
             <thead class="bg-dark-700">
                 <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Avatar</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">ID</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Username</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">PRED</th>
@@ -140,7 +156,7 @@ let currentUsers = [];
 
 async function loadUsers() {
     const tbody = document.getElementById('users-tbody');
-    tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-gray-400">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-8 text-center text-gray-400">Loading...</td></tr>';
 
     try {
         console.log('Loading users from:', `${API_URL}/admin/users?limit=100`);
@@ -150,7 +166,7 @@ async function loadUsers() {
         if (!response.ok) {
             const errorText = await response.text();
             console.error('Failed to load users:', errorText);
-            tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-red-400">Error loading users: ' + errorText + '</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-8 text-center text-red-400">Error loading users: ' + errorText + '</td></tr>';
             return;
         }
 
@@ -158,14 +174,39 @@ async function loadUsers() {
         console.log('Loaded users:', currentUsers.length);
 
         if (currentUsers.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-gray-400">No users found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-8 text-center text-gray-400">No users found</td></tr>';
             return;
         }
 
-        tbody.innerHTML = currentUsers.map(u => `
-            <tr class="border-t border-gray-800 hover:bg-dark-700">
+        renderUsers(currentUsers);
+    } catch (error) {
+        console.error('Error loading users:', error);
+        tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-8 text-center text-red-400">Error: ' + error.message + '</td></tr>';
+    }
+}
+
+function renderUsers(users) {
+    const tbody = document.getElementById('users-tbody');
+
+    if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-8 text-center text-gray-400">Нет пользователей</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = users.map(u => {
+        const displayName = u.username || u.first_name || 'N/A';
+        const avatarHtml = u.photo_url
+            ? `<img src="${u.photo_url}" alt="${displayName}" class="w-10 h-10 rounded-full object-cover">`
+            : `<div class="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center font-bold text-black">${displayName.charAt(0).toUpperCase()}</div>`;
+
+        return `
+            <tr class="border-t border-gray-800 hover:bg-dark-700" data-user-id="${u.id}" data-user-name="${displayName.toLowerCase()}" data-telegram-id="${u.telegram_id}">
+                <td class="px-6 py-4">${avatarHtml}</td>
                 <td class="px-6 py-4">#${u.id}</td>
-                <td class="px-6 py-4">${u.username || u.first_name || 'N/A'}</td>
+                <td class="px-6 py-4">
+                    <div>${displayName}</div>
+                    <div class="text-xs text-gray-500">TG: ${u.telegram_id}</div>
+                </td>
                 <td class="px-6 py-4">${formatNumber(u.pred_balance)}</td>
                 <td class="px-6 py-4">${formatNumber(u.ton_balance)}</td>
                 <td class="px-6 py-4">${u.total_bets}</td>
@@ -178,16 +219,34 @@ async function loadUsers() {
                     <button onclick="viewUser(${u.id})" class="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-sm mr-2">
                         Просмотр
                     </button>
-                    <button onclick="confirmDeleteUser(${u.id}, '${u.username || u.first_name || 'User #' + u.id}')" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm">
+                    <button onclick="confirmDeleteUser(${u.id}, '${displayName.replace(/'/g, "\\'")}')" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm">
                         Удалить
                     </button>
                 </td>
             </tr>
-        `).join('');
-    } catch (error) {
-        console.error('Error loading users:', error);
-        tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-red-400">Error: ' + error.message + '</td></tr>';
+        `;
+    }).join('');
+}
+
+function filterUsers() {
+    const searchTerm = document.getElementById('user-search').value.toLowerCase();
+
+    if (!searchTerm) {
+        renderUsers(currentUsers);
+        return;
     }
+
+    const filtered = currentUsers.filter(u => {
+        const username = (u.username || u.first_name || '').toLowerCase();
+        const telegramId = String(u.telegram_id || '');
+        const userId = String(u.id || '');
+
+        return username.includes(searchTerm) ||
+               telegramId.includes(searchTerm) ||
+               userId.includes(searchTerm);
+    });
+
+    renderUsers(filtered);
 }
 
 function editUser(id) {
