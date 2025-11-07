@@ -381,6 +381,47 @@ async def api_admin_generate_test_markets():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/admin/markets/create', methods=['POST'])
+@login_required
+async def api_admin_create_market():
+    """Proxy create market request to backend"""
+    try:
+        form = await request.form
+        files = await request.files
+
+        # Prepare FormData for backend
+        data = aiohttp.FormData()
+        data.add_field('title', form.get('title'))
+        data.add_field('description', form.get('description'))
+        data.add_field('category', form.get('category'))
+        data.add_field('resolve_date', form.get('resolve_date'))
+
+        # Add photo if exists
+        if 'photo' in files and files['photo'].filename:
+            photo = files['photo']
+            photo_bytes = photo.read()
+            data.add_field('photo', photo_bytes,
+                          filename=photo.filename,
+                          content_type=photo.content_type)
+
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.post(
+                f"{app.config['API_URL']}/admin/markets/create",
+                data=data
+            ) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    return jsonify(result)
+                else:
+                    error_text = await response.text()
+                    return jsonify({"error": error_text}), response.status
+    except Exception as e:
+        print(f"Error creating market: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/admin/missions', methods=['GET', 'POST'])
 @login_required
 async def api_admin_missions():
