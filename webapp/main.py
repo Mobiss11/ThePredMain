@@ -398,7 +398,7 @@ async def api_missions_by_user(user_id):
 async def api_claim_mission_new(user_id, mission_id):
     """Claim mission reward via backend API"""
     try:
-        response = await api_client._post(f"/missions/claim/{user_id}/{mission_id}")
+        response = await api_client._post(f"/missions/claim/{user_id}/{mission_id}", {})
         return jsonify(response)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -408,7 +408,7 @@ async def api_claim_mission_new(user_id, mission_id):
 async def api_check_subscription(user_id, mission_id):
     """Check channel subscription for mission"""
     try:
-        response = await api_client._post(f"/missions/check-subscription/{user_id}/{mission_id}")
+        response = await api_client._post(f"/missions/check-subscription/{user_id}/{mission_id}", {})
         return jsonify(response)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
