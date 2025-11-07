@@ -42,7 +42,7 @@ async def send_telegram_notification(telegram_id: int, ticket_id: int, subject: 
             "inline_keyboard": [[
                 {
                     "text": "📱 Открыть тикет",
-                    "url": f"{settings.WEBAPP_URL}?startapp=support_ticket_{ticket_id}"
+                    "web_app": {"url": f"{settings.WEBAPP_URL}?startapp=support_ticket_{ticket_id}"}
                 }
             ]]
         }
