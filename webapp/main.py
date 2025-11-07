@@ -356,6 +356,46 @@ async def api_market_detail(market_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/markets/user/<int:user_id>')
+async def api_user_markets(user_id):
+    """Get markets created by a specific user"""
+    try:
+        status = request.args.get('status')
+        url = f"{api_client.base_url}/markets/user/{user_id}"
+        params = {}
+        if status:
+            params['status'] = status
+
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.get(url, params=params) as response:
+                if response.status == 200:
+                    markets = await response.json()
+                    return jsonify(markets)
+                else:
+                    error_text = await response.text()
+                    return jsonify({"error": error_text}), response.status
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/markets/promote', methods=['POST'])
+async def api_promote_market():
+    """Promote a market (purchase promotion)"""
+    try:
+        data = await request.get_json()
+        url = f"{api_client.base_url}/markets/promote"
+
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.post(url, json=data) as response:
+                result = await response.json()
+                if response.status == 200:
+                    return jsonify(result)
+                else:
+                    return jsonify({"error": result.get('detail', 'Failed to promote market')}), response.status
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/api/bets', methods=['POST'])
 async def api_create_bet():
     """Create bet via backend API"""

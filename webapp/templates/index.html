@@ -5,12 +5,10 @@
 {% block content %}
 <!-- Filter Section -->
 <div class="mb-6 space-y-3">
-    <a href="/create-event" class="block">
-        <button class="w-full gold-gradient rounded-xl px-6 py-3.5 font-bold text-base text-black hover:opacity-90 transition flex items-center justify-center space-x-2">
-            <span>+</span>
-            <span>Создать Событие</span>
-        </button>
-    </a>
+    <!-- Create Event Button - Only for Gold+ users -->
+    <div id="create-event-button-container">
+        <!-- Will be loaded dynamically based on user rank -->
+    </div>
     <select id="category-filter" class="w-full glass px-6 py-3.5 rounded-xl text-base font-medium focus:outline-none focus:ring-2 focus:ring-yellow-400 appearance-none cursor-pointer">
         <option value="">Категории</option>
         <option value="Crypto">💰 Крипто</option>
@@ -210,6 +208,39 @@ async function loadAndRenderMarkets() {
 // Reload markets function (called after placing bet)
 window.reloadMarkets = loadAndRenderMarkets;
 
+// Initialize create event button based on user rank
+function initializeCreateEventButton() {
+    const container = document.getElementById('create-event-button-container');
+    if (!container) return;
+
+    const userRank = window.userProfile?.rank || 'Bronze';
+    const goldPlusRanks = ['Gold', 'Diamond', 'Legend'];
+    const hasAccess = goldPlusRanks.includes(userRank);
+
+    if (hasAccess) {
+        // Show active button for Gold+ users
+        container.innerHTML = `
+            <a href="/create-event" class="block">
+                <button class="w-full gold-gradient rounded-xl px-6 py-3.5 font-bold text-base text-black hover:opacity-90 transition flex items-center justify-center space-x-2">
+                    <span>+</span>
+                    <span>Создать Событие</span>
+                </button>
+            </a>
+        `;
+    } else {
+        // Show locked button for non-Gold users
+        container.innerHTML = `
+            <div class="relative">
+                <button disabled class="w-full glass rounded-xl px-6 py-3.5 font-bold text-base text-gray-500 cursor-not-allowed flex items-center justify-center space-x-2 opacity-60">
+                    <span>🔒</span>
+                    <span>Создать Событие</span>
+                    <span class="text-xs text-gray-400">(доступно с Gold ранга)</span>
+                </button>
+            </div>
+        `;
+    }
+}
+
 // Initialize page
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('[Markets Page] Initializing...');
@@ -232,6 +263,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             resolve();
         }, 3000);
     });
+
+    // Initialize create event button based on rank
+    initializeCreateEventButton();
 
     // Now load and render markets
     console.log('[Markets Page] Loading and rendering markets...');

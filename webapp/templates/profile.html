@@ -172,6 +172,11 @@
     </div>
 </div>
 
+<!-- My Events - For Gold+ users only -->
+<div id="my-events-section" class="glass rounded-2xl p-6 mb-6 relative overflow-hidden" style="display: none;">
+    <!-- Will be shown/hidden based on rank -->
+</div>
+
 <!-- AI Assistant - Coming Soon -->
 <div class="glass rounded-2xl p-6 mb-6 relative overflow-hidden" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(109, 40, 217, 0.15) 100%); border: 2px solid rgba(139, 92, 246, 0.3);">
     <!-- Lock overlay -->
@@ -253,6 +258,167 @@
     <div class="glass rounded-xl p-4 text-center" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(109, 40, 217, 0.3) 100%);">
         <div class="text-sm text-purple-300 font-semibold mb-1">🚀 Ожидается запуск</div>
         <div class="text-xs text-gray-400">AI помощник станет доступен пользователям с рангом Золото и выше</div>
+    </div>
+</div>
+
+<!-- Promote Event Modal -->
+<div id="promote-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4" style="display: none;">
+    <div class="glass rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold">🚀 Продвижение События</h2>
+                <button onclick="closePromoteModal()" class="text-gray-400 hover:text-white text-2xl">×</button>
+            </div>
+
+            <!-- Event Title -->
+            <div class="glass rounded-xl p-4 mb-6">
+                <div class="text-sm text-gray-400 mb-1">Событие:</div>
+                <div class="font-bold" id="promote-event-title">Loading...</div>
+            </div>
+
+            <!-- Promotion Options -->
+            <div class="space-y-4 mb-6">
+                <!-- Basic Promotion -->
+                <div class="glass rounded-xl p-5 hover:bg-opacity-30 transition cursor-pointer border-2 border-transparent hover:border-yellow-400" onclick="selectPromotion('basic')">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <div class="text-lg font-bold mb-1">⭐ Базовое Продвижение</div>
+                            <div class="text-sm text-gray-400">Приоритет в ленте на 7 дней</div>
+                        </div>
+                        <input type="radio" name="promotion-type" value="basic" class="mt-1">
+                    </div>
+                    <div class="flex items-center space-x-4 text-sm">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-yellow-400 font-bold">500 PRED</span>
+                        </div>
+                        <div class="text-gray-500">или</div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-blue-400 font-bold">0.5 TON</span>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-gray-700">
+                        <div class="text-xs text-gray-400">✓ Показ выше обычных событий</div>
+                        <div class="text-xs text-gray-400">✓ Бейдж "Избранное"</div>
+                    </div>
+                </div>
+
+                <!-- Top Category -->
+                <div class="glass rounded-xl p-5 hover:bg-opacity-30 transition cursor-pointer border-2 border-transparent hover:border-yellow-400" onclick="selectPromotion('top_category')">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <div class="text-lg font-bold mb-1">🔥 Топ Категории</div>
+                            <div class="text-sm text-gray-400">Первое место в категории на 3 дня</div>
+                        </div>
+                        <input type="radio" name="promotion-type" value="top_category" class="mt-1">
+                    </div>
+                    <div class="flex items-center space-x-4 text-sm">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-yellow-400 font-bold">1000 PRED</span>
+                        </div>
+                        <div class="text-gray-500">или</div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-blue-400 font-bold">1 TON</span>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-gray-700">
+                        <div class="text-xs text-gray-400">✓ Закрепление в топе своей категории</div>
+                        <div class="text-xs text-gray-400">✓ Увеличение видимости в 3 раза</div>
+                        <div class="text-xs text-gray-400">✓ Золотая рамка</div>
+                    </div>
+                </div>
+
+                <!-- Pinned Top -->
+                <div class="glass rounded-xl p-5 hover:bg-opacity-30 transition cursor-pointer border-2 border-transparent hover:border-yellow-400" onclick="selectPromotion('pinned')">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <div class="text-lg font-bold mb-1">📌 Закрепление в Топе</div>
+                            <div class="text-sm text-gray-400">Первая позиция во всей ленте на 24 часа</div>
+                        </div>
+                        <input type="radio" name="promotion-type" value="pinned" class="mt-1">
+                    </div>
+                    <div class="flex items-center space-x-4 text-sm">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-yellow-400 font-bold">2000 PRED</span>
+                        </div>
+                        <div class="text-gray-500">или</div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-blue-400 font-bold">2 TON</span>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-gray-700">
+                        <div class="text-xs text-gray-400">✓ Самая верхняя позиция</div>
+                        <div class="text-xs text-gray-400">✓ Максимальная видимость</div>
+                        <div class="text-xs text-gray-400">✓ Анимированная золотая рамка</div>
+                        <div class="text-xs text-gray-400">✓ Пуш-уведомление всем пользователям</div>
+                    </div>
+                </div>
+
+                <!-- VIP Premium -->
+                <div class="glass rounded-xl p-5 hover:bg-opacity-30 transition cursor-pointer border-2 border-yellow-400 relative overflow-hidden" onclick="selectPromotion('premium')">
+                    <div class="absolute top-0 right-0 bg-gradient-to-br from-yellow-400 to-orange-500 px-3 py-1 text-xs font-bold text-black rounded-bl-lg">
+                        VIP
+                    </div>
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <div class="text-lg font-bold mb-1 text-yellow-400">👑 VIP Продвижение</div>
+                            <div class="text-sm text-gray-400">Максимальное продвижение на 7 дней</div>
+                        </div>
+                        <input type="radio" name="promotion-type" value="premium" class="mt-1">
+                    </div>
+                    <div class="flex items-center space-x-4 text-sm">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-yellow-400 font-bold">5000 PRED</span>
+                        </div>
+                        <div class="text-gray-500">или</div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-blue-400 font-bold">5 TON</span>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-gray-700">
+                        <div class="text-xs text-gray-400">✓ Закрепление в самом верху на 7 дней</div>
+                        <div class="text-xs text-gray-400">✓ Премиум анимация и эффекты</div>
+                        <div class="text-xs text-gray-400">✓ Бейдж "🔥 ПРОДВИГАЕМЫЙ"</div>
+                        <div class="text-xs text-gray-400">✓ Пуш-уведомления всем пользователям</div>
+                        <div class="text-xs text-gray-400">✓ Упоминание в рассылке</div>
+                        <div class="text-xs text-gray-400">✓ Приоритет в рекомендациях</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Method -->
+            <div class="glass rounded-xl p-5 mb-6">
+                <div class="text-sm font-bold mb-3">Способ оплаты:</div>
+                <div class="flex space-x-3">
+                    <button onclick="selectPaymentMethod('pred')" id="payment-pred" class="flex-1 glass rounded-lg px-4 py-3 font-semibold hover:bg-opacity-30 transition border-2 border-transparent">
+                        <div class="text-yellow-400 text-lg mb-1">💰 PRED</div>
+                        <div class="text-xs text-gray-400">Баланс: <span id="user-pred-balance">...</span></div>
+                    </button>
+                    <button onclick="selectPaymentMethod('ton')" id="payment-ton" class="flex-1 glass rounded-lg px-4 py-3 font-semibold hover:bg-opacity-30 transition border-2 border-transparent">
+                        <div class="text-blue-400 text-lg mb-1">💎 TON</div>
+                        <div class="text-xs text-gray-400">Баланс: <span id="user-ton-balance">...</span></div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Total -->
+            <div class="glass rounded-xl p-5 mb-6">
+                <div class="flex items-center justify-between">
+                    <div class="text-lg font-bold">Итого:</div>
+                    <div class="text-2xl font-bold" id="promotion-total">Выберите план</div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex space-x-3">
+                <button onclick="closePromoteModal()" class="flex-1 glass rounded-xl px-6 py-3 font-bold hover:bg-opacity-30 transition">
+                    Отмена
+                </button>
+                <button onclick="confirmPromotion()" id="confirm-promotion-btn" disabled class="flex-1 gold-gradient rounded-xl px-6 py-3 font-bold text-black hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    Оплатить
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -768,6 +934,286 @@ async function loadAchievements() {
     }
 }
 
+// Load user's created events
+async function loadMyEvents() {
+    const userRank = window.userProfile?.rank || 'Bronze';
+    const userId = window.userProfile?.id;
+    const goldPlusRanks = ['Gold', 'Diamond', 'Legend'];
+    const hasAccess = goldPlusRanks.includes(userRank);
+
+    const section = document.getElementById('my-events-section');
+    if (!section) return;
+
+    if (!hasAccess) {
+        // Show locked version for non-Gold users
+        section.style.display = 'block';
+        section.style.background = 'linear-gradient(135deg, rgba(255, 215, 0, 0.05) 0%, rgba(255, 165, 0, 0.1) 100%)';
+        section.style.border = '2px solid rgba(255, 215, 0, 0.2)';
+        section.innerHTML = `
+            <div class="absolute inset-0 backdrop-blur-sm bg-black bg-opacity-50 flex items-center justify-center z-10">
+                <div class="text-center">
+                    <div class="text-6xl mb-3">🔒</div>
+                    <div class="text-xl font-bold text-yellow-300 mb-2">Создание Событий</div>
+                    <div class="text-sm text-gray-400 mb-3">Доступно с Gold ранга и выше</div>
+                    <a href="/markets" class="inline-block gold-gradient px-6 py-2 rounded-lg text-black font-bold text-sm">
+                        Повысить Ранг
+                    </a>
+                </div>
+            </div>
+            <div class="opacity-40">
+                <h2 class="text-xl font-bold mb-4">🎯 Мои События</h2>
+                <div class="glass rounded-xl p-4 text-center">
+                    <div class="text-gray-400 text-sm">У вас пока нет созданных событий</div>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    // Gold+ users - load their events
+    section.style.display = 'block';
+
+    try {
+        const response = await fetch(`/api/markets/user/${userId}`);
+        if (!response.ok) {
+            throw new Error('Failed to load events');
+        }
+
+        const events = await response.json();
+
+        section.innerHTML = `
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold">🎯 Мои События</h2>
+                <a href="/create-event" class="gold-gradient px-4 py-2 rounded-lg text-black font-bold text-sm">
+                    + Создать
+                </a>
+            </div>
+            <div id="user-events-container" class="space-y-3">
+                ${events.length === 0 ? `
+                    <div class="glass rounded-xl p-6 text-center">
+                        <div class="text-4xl mb-2">📊</div>
+                        <div class="text-gray-400 text-sm mb-3">У вас пока нет созданных событий</div>
+                        <a href="/create-event" class="inline-block gold-gradient px-4 py-2 rounded-lg text-black font-bold text-sm">
+                            Создать первое событие
+                        </a>
+                    </div>
+                ` : events.map(event => `
+                    <div class="glass rounded-xl p-4">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex-1">
+                                <div class="font-semibold mb-1">${event.title}</div>
+                                <div class="text-xs text-gray-400">${event.category || 'Без категории'}</div>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-xs font-bold ${
+                                event.status === 'open' ? 'bg-green-600' :
+                                event.status === 'resolved' ? 'bg-blue-600' : 'bg-gray-600'
+                            }">${
+                                event.status === 'open' ? 'Активно' :
+                                event.status === 'resolved' ? 'Завершено' : 'Отменено'
+                            }</span>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2 mb-3 text-xs">
+                            <div class="glass rounded-lg p-2 text-center">
+                                <div class="text-gray-400">Объём</div>
+                                <div class="font-bold">${window.formatNumber(event.total_volume_pred)} PRED</div>
+                            </div>
+                            <div class="glass rounded-lg p-2 text-center">
+                                <div class="text-gray-400">Ставок</div>
+                                <div class="font-bold">${event.bets_count || 0}</div>
+                            </div>
+                            <div class="glass rounded-lg p-2 text-center">
+                                <div class="text-gray-400">Просмотры</div>
+                                <div class="font-bold">${event.views_count || 0}</div>
+                            </div>
+                        </div>
+
+                        ${event.is_promoted && event.is_promoted !== 'none' ? `
+                            <div class="mb-3">
+                                <span class="gold-gradient px-3 py-1 rounded-full text-xs font-bold text-black">
+                                    🔥 ${event.is_promoted === 'premium' ? 'VIP Продвижение' : 'Продвигается'}
+                                </span>
+                            </div>
+                        ` : ''}
+
+                        <div class="flex items-center space-x-2">
+                            <a href="/market/${event.id}" class="flex-1 glass rounded-lg px-4 py-2 text-center text-sm font-semibold hover:bg-opacity-30 transition">
+                                Открыть
+                            </a>
+                            ${event.status === 'open' ? `
+                                <button onclick="openPromoteModal(${event.id}, '${event.title}')" class="flex-1 gold-gradient rounded-lg px-4 py-2 text-center text-sm font-bold text-black hover:opacity-90 transition">
+                                    🚀 Продвинуть
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } catch (error) {
+        console.error('Failed to load my events:', error);
+        section.innerHTML = `
+            <h2 class="text-xl font-bold mb-4">🎯 Мои События</h2>
+            <div class="glass rounded-xl p-4 text-center text-red-400 text-sm">
+                Ошибка загрузки событий
+            </div>
+        `;
+    }
+}
+
+// Promotion modal state
+let currentPromotionData = {
+    eventId: null,
+    eventTitle: null,
+    promotionType: null,
+    paymentMethod: null
+};
+
+const promotionPrices = {
+    basic: { pred: 500, ton: 0.5 },
+    top_category: { pred: 1000, ton: 1 },
+    pinned: { pred: 2000, ton: 2 },
+    premium: { pred: 5000, ton: 5 }
+};
+
+// Open promote modal
+window.openPromoteModal = function(eventId, eventTitle) {
+    currentPromotionData.eventId = eventId;
+    currentPromotionData.eventTitle = eventTitle;
+    currentPromotionData.promotionType = null;
+    currentPromotionData.paymentMethod = 'pred'; // Default
+
+    // Update modal
+    document.getElementById('promote-event-title').textContent = eventTitle;
+    document.getElementById('user-pred-balance').textContent = window.formatNumber(window.userProfile?.pred_balance || 0);
+    document.getElementById('user-ton-balance').textContent = window.formatNumber(window.userProfile?.ton_balance || 0);
+
+    // Reset selections
+    document.querySelectorAll('input[name="promotion-type"]').forEach(input => input.checked = false);
+    document.getElementById('payment-pred').classList.add('border-yellow-400');
+    document.getElementById('payment-ton').classList.remove('border-blue-400');
+    document.getElementById('promotion-total').textContent = 'Выберите план';
+    document.getElementById('confirm-promotion-btn').disabled = true;
+
+    // Show modal
+    document.getElementById('promote-modal').style.display = 'flex';
+};
+
+// Close promote modal
+window.closePromoteModal = function() {
+    document.getElementById('promote-modal').style.display = 'none';
+    currentPromotionData = {
+        eventId: null,
+        eventTitle: null,
+        promotionType: null,
+        paymentMethod: null
+    };
+};
+
+// Select promotion type
+window.selectPromotion = function(type) {
+    currentPromotionData.promotionType = type;
+
+    // Update radio button
+    document.querySelector(`input[name="promotion-type"][value="${type}"]`).checked = true;
+
+    // Update total
+    updatePromotionTotal();
+};
+
+// Select payment method
+window.selectPaymentMethod = function(method) {
+    currentPromotionData.paymentMethod = method;
+
+    // Update button styles
+    if (method === 'pred') {
+        document.getElementById('payment-pred').classList.add('border-yellow-400');
+        document.getElementById('payment-ton').classList.remove('border-blue-400');
+    } else {
+        document.getElementById('payment-pred').classList.remove('border-yellow-400');
+        document.getElementById('payment-ton').classList.add('border-blue-400');
+    }
+
+    // Update total
+    updatePromotionTotal();
+};
+
+// Update total display
+function updatePromotionTotal() {
+    const { promotionType, paymentMethod } = currentPromotionData;
+
+    if (!promotionType || !paymentMethod) {
+        document.getElementById('promotion-total').textContent = 'Выберите план';
+        document.getElementById('confirm-promotion-btn').disabled = true;
+        return;
+    }
+
+    const price = promotionPrices[promotionType][paymentMethod];
+    const currency = paymentMethod === 'pred' ? 'PRED' : 'TON';
+    const color = paymentMethod === 'pred' ? 'text-yellow-400' : 'text-blue-400';
+
+    document.getElementById('promotion-total').innerHTML = `<span class="${color}">${price} ${currency}</span>`;
+
+    // Check if user has enough balance
+    const userBalance = paymentMethod === 'pred'
+        ? window.userProfile?.pred_balance || 0
+        : window.userProfile?.ton_balance || 0;
+
+    if (userBalance >= price) {
+        document.getElementById('confirm-promotion-btn').disabled = false;
+    } else {
+        document.getElementById('confirm-promotion-btn').disabled = true;
+        document.getElementById('promotion-total').innerHTML += ` <span class="text-red-400 text-sm">(Недостаточно средств)</span>`;
+    }
+}
+
+// Confirm and purchase promotion
+window.confirmPromotion = async function() {
+    const { eventId, promotionType, paymentMethod } = currentPromotionData;
+
+    if (!eventId || !promotionType || !paymentMethod) {
+        alert('Пожалуйста, выберите план продвижения');
+        return;
+    }
+
+    const confirmBtn = document.getElementById('confirm-promotion-btn');
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Обработка...';
+
+    try {
+        const response = await fetch('/api/markets/promote', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                market_id: eventId,
+                promotion_type: promotionType,
+                currency: paymentMethod
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert('✅ Событие успешно продвинуто!');
+            closePromoteModal();
+
+            // Reload profile and events
+            await loadProfile();
+            await loadMyEvents();
+        } else {
+            alert(`❌ Ошибка: ${result.error || 'Не удалось продвинуть событие'}`);
+        }
+    } catch (error) {
+        console.error('Failed to promote event:', error);
+        alert('❌ Ошибка при продвижении события');
+    } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Оплатить';
+    }
+};
+
 // Clear session and re-authenticate
 async function clearSessionAndReauth() {
     if (confirm('Сбросить сессию и заново авторизоваться?')) {
@@ -790,6 +1236,11 @@ document.addEventListener('DOMContentLoaded', () => {
     loadProfile();
     loadUserMarkets();
     loadAchievements();
+
+    // Load my events after profile is loaded
+    setTimeout(() => {
+        loadMyEvents();
+    }, 500);
 });
 </script>
 {% endblock %}

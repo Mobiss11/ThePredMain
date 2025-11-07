@@ -198,3 +198,154 @@ async def get_top_markets(
     markets = result.scalars().all()
 
     return markets
+
+
+@router.get("/user/{user_id}", response_model=list[MarketResponse])
+async def get_user_markets(
+    user_id: int,
+    status: Optional[str] = Query(default=None),
+    limit: int = Query(default=50, le=100),
+    offset: int = Query(default=0),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get markets created by a specific user"""
+    query = select(Market).where(
+        Market.created_by == user_id
+    )
+
+    # Filter by status if provided
+    if status:
+        if status == "open":
+            query = query.where(Market.status == MarketStatus.OPEN)
+        elif status == "resolved":
+            query = query.where(Market.status == MarketStatus.RESOLVED)
+        elif status == "cancelled":
+            query = query.where(Market.status == MarketStatus.CANCELLED)
+
+    # Order by creation date (newest first)
+    query = query.order_by(desc(Market.created_at)).limit(limit).offset(offset)
+
+    result = await db.execute(query)
+    markets = result.scalars().all()
+
+    return markets
+
+
+class PromoteMarketRequest(BaseModel):
+    market_id: int
+    promotion_type: str  # basic, top_category, pinned, premium
+    currency: str  # pred, ton
+
+
+@router.post("/promote")
+async def promote_market(
+    request: PromoteMarketRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Purchase promotion for a market"""
+    from app.models.user import User
+    from app.models.transaction import Transaction, TransactionType
+    from datetime import timedelta
+
+    # Define promotion prices
+    promotion_prices = {
+        'basic': {'pred': 500, 'ton': 0.5, 'duration_days': 7, 'type': 'basic'},
+        'top_category': {'pred': 1000, 'ton': 1, 'duration_days': 3, 'type': 'basic'},
+        'pinned': {'pred': 2000, 'ton': 2, 'duration_days': 1, 'type': 'basic'},
+        'premium': {'pred': 5000, 'ton': 5, 'duration_days': 7, 'type': 'premium'}
+    }
+
+    # Validate promotion type
+    if request.promotion_type not in promotion_prices:
+        raise HTTPException(status_code=400, detail="Invalid promotion type")
+
+    if request.currency not in ['pred', 'ton']:
+        raise HTTPException(status_code=400, detail="Invalid currency")
+
+    # Get market
+    market_query = select(Market).where(Market.id == request.market_id)
+    market_result = await db.execute(market_query)
+    market = market_result.scalar_one_or_none()
+
+    if not market:
+        raise HTTPException(status_code=404, detail="Market not found")
+
+    # Check if market is open
+    if market.status != MarketStatus.OPEN:
+        raise HTTPException(status_code=400, detail="Can only promote open markets")
+
+    # Get user (market creator)
+    user_query = select(User).where(User.id == market.created_by)
+    user_result = await db.execute(user_query)
+    user = user_result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Check user rank (must be Gold+)
+    gold_plus_ranks = ['Gold', 'Diamond', 'Legend']
+    if user.rank not in gold_plus_ranks:
+        raise HTTPException(status_code=403, detail="Promotion is only available for Gold+ users")
+
+    # Get price
+    price = promotion_prices[request.promotion_type][request.currency]
+
+    # Check balance
+    if request.currency == 'pred':
+        if user.pred_balance < Decimal(str(price)):
+            raise HTTPException(status_code=400, detail="Insufficient PRED balance")
+
+        # Deduct from balance
+        old_balance = user.pred_balance
+        user.pred_balance -= Decimal(str(price))
+
+        # Create transaction
+        transaction = Transaction(
+            user_id=user.id,
+            type=TransactionType.PRED_SPENT,
+            amount_pred=-Decimal(str(price)),
+            amount_ton=Decimal('0'),
+            balance_before_pred=old_balance,
+            balance_after_pred=user.pred_balance,
+            balance_before_ton=user.ton_balance,
+            balance_after_ton=user.ton_balance,
+            description=f"Market promotion: {market.title} ({request.promotion_type})"
+        )
+    else:  # ton
+        if user.ton_balance < Decimal(str(price)):
+            raise HTTPException(status_code=400, detail="Insufficient TON balance")
+
+        # Deduct from balance
+        old_balance = user.ton_balance
+        user.ton_balance -= Decimal(str(price))
+
+        # Create transaction
+        transaction = Transaction(
+            user_id=user.id,
+            type=TransactionType.TON_SPENT,
+            amount_pred=Decimal('0'),
+            amount_ton=-Decimal(str(price)),
+            balance_before_pred=user.pred_balance,
+            balance_after_pred=user.pred_balance,
+            balance_before_ton=old_balance,
+            balance_after_ton=user.ton_balance,
+            description=f"Market promotion: {market.title} ({request.promotion_type})"
+        )
+
+    db.add(transaction)
+
+    # Update market promotion
+    promo_type = promotion_prices[request.promotion_type]['type']
+    market.is_promoted = promo_type
+    market.promoted_until = datetime.utcnow() + timedelta(
+        days=promotion_prices[request.promotion_type]['duration_days']
+    )
+
+    await db.commit()
+
+    return {
+        "success": True,
+        "message": f"Market promoted successfully with {request.promotion_type} plan",
+        "promotion_type": promo_type,
+        "expires_at": market.promoted_until.isoformat()
+    }
