@@ -531,10 +531,20 @@ async function loadUserMarkets() {
     }
 }
 
-function copyReferralLink() {
+// Make copyReferralLink globally accessible
+window.copyReferralLink = function() {
     const input = document.getElementById('referral-link');
-    window.copyToClipboard(input.value);
-}
+    if (input && window.copyToClipboard) {
+        window.copyToClipboard(input.value);
+    } else {
+        // Fallback to native clipboard API
+        if (input) {
+            input.select();
+            document.execCommand('copy');
+            alert('Ссылка скопирована!');
+        }
+    }
+};
 
 // Load achievements
 async function loadAchievements() {
@@ -610,11 +620,12 @@ async function loadAchievements() {
                     </div>
                 `;
             }).join('');
-        }
     } catch (error) {
         console.error('Failed to load achievements:', error);
         const container = document.getElementById('achievements-container');
-        container.innerHTML = '<div class="col-span-2 glass rounded-xl p-4 text-center text-red-400 text-sm">Ошибка загрузки достижений</div>';
+        if (container) {
+            container.innerHTML = '<div class="col-span-2 glass rounded-xl p-4 text-center text-red-400 text-sm">Ошибка загрузки достижений</div>';
+        }
     }
 }
 
