@@ -97,49 +97,10 @@
 <div class="glass rounded-2xl p-6 mb-6">
     <h2 class="text-xl font-bold mb-4">🎖 Прогресс Ранга</h2>
 
-    <div class="space-y-3">
-        <div class="glass rounded-xl p-4 opacity-50">
-            <div class="flex items-center justify-between mb-2">
-                <span class="font-bold">🥉 Бронза</span>
-                <span class="text-sm text-gray-400">0-100 прогнозов</span>
-            </div>
-            <div class="text-xs text-gray-500">Комиссия: 1% PRED, 5% TON</div>
-        </div>
-
-        <div class="glass rounded-xl p-4 opacity-50">
-            <div class="flex items-center justify-between mb-2">
-                <span class="font-bold">🥈 Серебро</span>
-                <span class="text-sm text-gray-400">100-500 прогнозов</span>
-            </div>
-            <div class="text-xs text-gray-500">Комиссия: 0.8% PRED, 4.5% TON</div>
-        </div>
-
-        <div class="glass rounded-xl p-4 border-2 border-yellow-400">
-            <div class="flex items-center justify-between mb-2">
-                <span class="font-bold text-yellow-400">🥇 Золото</span>
-                <span class="text-sm text-green-400">ТЕКУЩИЙ</span>
-            </div>
-            <div class="text-xs text-gray-400 mb-3">Комиссия: 0.6% PRED, 4% TON</div>
-            <div class="w-full bg-gray-800 rounded-full h-2">
-                <div class="gold-gradient h-2 rounded-full" style="width: 31%"></div>
-            </div>
-            <div class="text-xs text-gray-400 mt-1">156 / 500 прогнозов до Алмаза</div>
-        </div>
-
-        <div class="glass rounded-xl p-4">
-            <div class="flex items-center justify-between mb-2">
-                <span class="font-bold">💎 Алмаз</span>
-                <span class="text-sm text-gray-400">500-2000 прогнозов</span>
-            </div>
-            <div class="text-xs text-gray-500">Комиссия: 0.4% PRED, 3% TON</div>
-        </div>
-
-        <div class="glass rounded-xl p-4">
-            <div class="flex items-center justify-between mb-2">
-                <span class="font-bold">🌟 Легенда</span>
-                <span class="text-sm text-gray-400">2000+ прогнозов</span>
-            </div>
-            <div class="text-xs text-gray-500">Комиссия: 0.2% PRED, 2% TON</div>
+    <div id="rank-progress-container" class="space-y-3">
+        <!-- Ranks will be loaded dynamically -->
+        <div class="glass rounded-xl p-4 text-center">
+            <div class="text-gray-400 text-sm">Загрузка...</div>
         </div>
     </div>
 </div>
@@ -174,47 +135,13 @@
 <div class="glass rounded-2xl p-6 mb-6">
     <div class="flex items-center justify-between mb-4">
         <h2 class="text-xl font-bold">📜 Последние Прогнозы</h2>
-        <a href="#" class="text-yellow-400 text-sm">Все</a>
+        <a href="/markets" class="text-yellow-400 text-sm">Все</a>
     </div>
 
-    <div class="space-y-3">
-        <div class="glass rounded-xl p-4">
-            <div class="flex items-start justify-between mb-2">
-                <div class="flex-1">
-                    <div class="font-medium mb-1">Bitcoin > $100k?</div>
-                    <div class="text-xs text-gray-400">Прогноз ДА • 1,000 PRED</div>
-                </div>
-                <span class="green-gradient px-3 py-1 rounded-full text-xs font-bold text-white">
-                    ВЫИГРЫШ
-                </span>
-            </div>
-            <div class="text-xs text-gray-500">+1,850 PRED • 2ч назад</div>
-        </div>
-
-        <div class="glass rounded-xl p-4">
-            <div class="flex items-start justify-between mb-2">
-                <div class="flex-1">
-                    <div class="font-medium mb-1">Man City wins PL?</div>
-                    <div class="text-xs text-gray-400">Прогноз НЕТ • 500 PRED</div>
-                </div>
-                <span class="glass px-3 py-1 rounded-full text-xs font-bold text-yellow-400">
-                    ОЖИДАНИЕ
-                </span>
-            </div>
-            <div class="text-xs text-gray-500">Потенциал: +750 PRED • 5ч назад</div>
-        </div>
-
-        <div class="glass rounded-xl p-4">
-            <div class="flex items-start justify-between mb-2">
-                <div class="flex-1">
-                    <div class="font-medium mb-1">ETH ETF Approved?</div>
-                    <div class="text-xs text-gray-400">Прогноз ДА • 2,000 PRED</div>
-                </div>
-                <span class="red-gradient px-3 py-1 rounded-full text-xs font-bold text-white">
-                    ПРОИГРЫШ
-                </span>
-            </div>
-            <div class="text-xs text-gray-500">-2,000 PRED • 1д назад</div>
+    <div id="recent-bets-container" class="space-y-3">
+        <!-- Bets will be loaded dynamically -->
+        <div class="glass rounded-xl p-4 text-center">
+            <div class="text-gray-400 text-sm">Загрузка...</div>
         </div>
     </div>
 </div>
@@ -418,7 +345,7 @@ function updateRankProgress(currentRank, totalBets) {
     const nextRankData = ranks[currentRankIndex + 1];
 
     // Update all rank cards
-    const rankProgressSection = document.querySelector('.glass.rounded-2xl.p-6.mb-6:nth-of-type(3) .space-y-3');
+    const rankProgressSection = document.getElementById('rank-progress-container');
     if (!rankProgressSection) return;
 
     rankProgressSection.innerHTML = ranks.map((rank, index) => {
@@ -482,9 +409,14 @@ async function loadUserMarkets() {
         }
 
         // Render markets
-        if (userMarkets.size > 0) {
-            const recentBetsContainer = document.querySelector('.space-y-3');
+        const recentBetsContainer = document.getElementById('recent-bets-container');
 
+        if (!recentBetsContainer) {
+            console.error('Recent bets container not found');
+            return;
+        }
+
+        if (userMarkets.size > 0) {
             const statusColors = {
                 'WON': 'green-gradient',
                 'LOST': 'red-gradient',
@@ -525,9 +457,23 @@ async function loadUserMarkets() {
                     </div>
                 `;
             }).join('');
+        } else {
+            recentBetsContainer.innerHTML = `
+                <div class="glass rounded-xl p-6 text-center">
+                    <div class="text-4xl mb-2">📊</div>
+                    <div class="text-gray-400 text-sm">Нет активных прогнозов</div>
+                    <a href="/markets" class="mt-3 inline-block gold-gradient px-4 py-2 rounded-lg text-black text-sm font-bold">
+                        Сделать Прогноз
+                    </a>
+                </div>
+            `;
         }
     } catch (error) {
         console.error('Failed to load user markets:', error);
+        const recentBetsContainer = document.getElementById('recent-bets-container');
+        if (recentBetsContainer) {
+            recentBetsContainer.innerHTML = '<div class="glass rounded-xl p-4 text-center text-red-400 text-sm">Ошибка загрузки прогнозов</div>';
+        }
     }
 }
 
