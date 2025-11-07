@@ -1,7 +1,7 @@
 // API_URL is defined in base.html
 
 // Show that JS loaded
-console.log('APP.JS LOADED - Version 2025110702');
+console.log('APP.JS LOADED - Version 2025110703');
 
 // Global state
 let userBalance = {
