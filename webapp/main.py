@@ -399,7 +399,8 @@ async def api_profile():
         print(f"[/api/profile] Fetching profile for user_id: {user_id}")
         profile = await api_client.get_user_profile(int(user_id))
         print(f"[/api/profile] Profile loaded: {profile.get('id') if profile else None}")
-        print(f"[/api/profile] Profile data: balance={profile.get('balance')}, rank={profile.get('rank')}, total_bets={profile.get('total_bets')}")
+        print(f"[/api/profile] Profile data: pred_balance={profile.get('pred_balance')}, ton_balance={profile.get('ton_balance')}, rank={profile.get('rank')}, total_bets={profile.get('total_bets')}")
+        print(f"[/api/profile] Full profile response: {profile}")
         return jsonify(profile)
     except Exception as e:
         print(f"[/api/profile] Error: {e}")
