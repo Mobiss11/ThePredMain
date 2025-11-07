@@ -55,7 +55,7 @@ class MessageResponse(BaseModel):
 
 @router.post("/tickets")
 async def create_ticket(
-    user_id: int,
+    user_id: int = Form(...),
     subject: str = Form(...),
     message: str = Form(...),
     priority: str = Form("medium"),
@@ -200,7 +200,7 @@ async def get_ticket_messages(ticket_id: int, user_id: int, db: AsyncSession = D
 @router.post("/tickets/{ticket_id}/messages")
 async def send_message(
     ticket_id: int,
-    user_id: int,
+    user_id: int = Form(...),
     message: str = Form(...),
     attachment: Optional[UploadFile] = File(None),
     db: AsyncSession = Depends(get_db)
