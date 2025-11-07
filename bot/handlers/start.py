@@ -1,5 +1,5 @@
 from aiogram import Router
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, CommandObject
 from aiogram.types import Message, WebAppInfo, FSInputFile
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 import aiohttp
@@ -10,9 +10,15 @@ router = Router()
 
 
 @router.message(CommandStart())
-async def cmd_start(message: Message):
+async def cmd_start(message: Message, command: CommandObject = None):
     """Handle /start command - Show welcome message with photo"""
     user = message.from_user
+
+    # Extract referral code from /start ref_CODE
+    referral_code = None
+    if command and command.args and command.args.startswith('ref_'):
+        referral_code = command.args.replace('ref_', '')
+        print(f"[BOT] User {user.id} used referral code: {referral_code}")
 
     # Get user profile photos
     photo_url = None
@@ -33,7 +39,8 @@ async def cmd_start(message: Message):
                 "first_name": user.first_name,
                 "username": user.username,
                 "last_name": user.last_name,
-                "photo_url": photo_url
+                "photo_url": photo_url,
+                "referral_code": referral_code  # ← Pass referral code
             }
 
             async with session.post(
@@ -43,10 +50,13 @@ async def cmd_start(message: Message):
                 if resp.status == 200:
                     data = await resp.json()
                     pred_balance = data.get("pred_balance", 10000)
+                    print(f"[BOT] User {user.id} registered successfully with balance: {pred_balance}")
                 else:
                     pred_balance = 10000  # Default value if registration fails
-        except:
+                    print(f"[BOT] Registration failed for user {user.id}: {resp.status}")
+        except Exception as e:
             pred_balance = 10000  # Default value if API unavailable
+            print(f"[BOT] API unavailable for user {user.id}: {e}")
 
     # Welcome message
     welcome_text = f"""<b>🔮 Добро пожаловать в ThePred!</b>

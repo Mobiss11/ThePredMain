@@ -244,8 +244,8 @@ async function loadProfile() {
 
             // Update referral link
             const referralInput = document.getElementById('referral-link');
-            if (referralInput && profile.telegram_id) {
-                referralInput.value = `https://t.me/The_Pred_Bot?start=${profile.telegram_id}`;
+            if (referralInput && profile.referral_code) {
+                referralInput.value = `https://t.me/The_Pred_Bot?start=ref_${profile.referral_code}`;
             }
 
             // Update rank progress section

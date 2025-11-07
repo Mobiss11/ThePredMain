@@ -30,6 +30,7 @@ class SimpleTelegramAuth(BaseModel):
     username: str | None = None
     last_name: str | None = None
     photo_url: str | None = None
+    referral_code: str | None = None  # ← Added referral code
 
 
 class TokenResponse(BaseModel):
@@ -124,11 +125,18 @@ async def register_user(
     db: AsyncSession = Depends(get_db)
 ):
     """Simple user registration from bot - no auth required"""
+    from decimal import Decimal
+    import logging
+    logger = logging.getLogger(__name__)
+
     # Check if user exists
     result = await db.execute(
         select(User).where(User.telegram_id == auth_data.telegram_id)
     )
     user = result.scalar_one_or_none()
+
+    # Track if this is a new user
+    is_new_user = user is None
 
     # Create new user if doesn't exist
     if not user:
@@ -145,6 +153,47 @@ async def register_user(
         db.add(user)
         await db.commit()
         await db.refresh(user)
+
+        logger.info(f"New user registered: {user.telegram_id}, referral code from request: {auth_data.referral_code}")
+
+        # Process referral if provided (only for NEW users)
+        if auth_data.referral_code:
+            try:
+                # Find referrer by referral code
+                result = await db.execute(
+                    select(User).where(User.referral_code == auth_data.referral_code)
+                )
+                referrer = result.scalar_one_or_none()
+
+                if referrer and referrer.id != user.id:
+                    # Set referrer
+                    user.referrer_id = referrer.id
+
+                    # Give bonus to both users
+                    bonus = Decimal(settings.REFERRAL_BONUS_PRED)
+                    user.pred_balance += bonus
+                    referrer.pred_balance += bonus
+
+                    await db.commit()
+                    await db.refresh(user)
+                    await db.refresh(referrer)
+
+                    logger.info(f"Referral activated! Referrer: {referrer.telegram_id}, New user: {user.telegram_id}, Bonus: {bonus}")
+
+                    # Send notification to referrer
+                    try:
+                        from app.api.endpoints.users import send_referral_notification
+                        referral_name = user.username or user.first_name or f"User #{user.telegram_id}"
+                        await send_referral_notification(referrer.telegram_id, referral_name)
+                        logger.info(f"Referral notification sent to {referrer.telegram_id}")
+                    except Exception as e:
+                        logger.error(f"Failed to send referral notification: {e}")
+                else:
+                    logger.warning(f"Invalid referral code: {auth_data.referral_code} (referrer not found or self-referral)")
+            except Exception as e:
+                logger.error(f"Error processing referral: {e}")
+                # Don't fail registration if referral processing fails
+
     elif auth_data.photo_url and user.photo_url != auth_data.photo_url:
         # Update photo if changed
         user.photo_url = auth_data.photo_url
