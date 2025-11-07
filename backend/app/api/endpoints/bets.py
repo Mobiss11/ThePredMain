@@ -161,6 +161,24 @@ async def place_bet(
     # Update user stats
     user.total_bets += 1
 
+    # Auto-update rank based on total_bets
+    old_rank = user.rank
+    if user.total_bets >= 10000:
+        user.rank = 'Legend'
+    elif user.total_bets >= 2000:
+        user.rank = 'Diamond'
+    elif user.total_bets >= 500:
+        user.rank = 'Gold'
+    elif user.total_bets >= 100:
+        user.rank = 'Silver'
+    else:
+        user.rank = 'Bronze'
+
+    if user.rank != old_rank:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"User {user_id} rank updated from {old_rank} to {user.rank} (total_bets: {user.total_bets})")
+
     db.add(bet)
     await db.commit()
     await db.refresh(bet)

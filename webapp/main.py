@@ -360,21 +360,32 @@ async def api_market_detail(market_id):
 async def api_user_markets(user_id):
     """Get markets created by a specific user"""
     try:
+        import aiohttp
+
         status = request.args.get('status')
         url = f"{api_client.base_url}/markets/user/{user_id}"
         params = {}
         if status:
             params['status'] = status
 
+        print(f"[/api/markets/user/{user_id}] Fetching markets for user_id: {user_id}, status: {status}")
+        print(f"[/api/markets/user/{user_id}] URL: {url}, params: {params}")
+
         async with aiohttp.ClientSession() as session_http:
             async with session_http.get(url, params=params) as response:
+                print(f"[/api/markets/user/{user_id}] Response status: {response.status}")
                 if response.status == 200:
                     markets = await response.json()
+                    print(f"[/api/markets/user/{user_id}] Found {len(markets)} markets")
                     return jsonify(markets)
                 else:
                     error_text = await response.text()
+                    print(f"[/api/markets/user/{user_id}] Error: {error_text}")
                     return jsonify({"error": error_text}), response.status
     except Exception as e:
+        print(f"[/api/markets/user/{user_id}] Exception: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 

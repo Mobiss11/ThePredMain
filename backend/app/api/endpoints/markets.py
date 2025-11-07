@@ -209,6 +209,10 @@ async def get_user_markets(
     db: AsyncSession = Depends(get_db)
 ):
     """Get markets created by a specific user"""
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Getting markets for user_id: {user_id}, status: {status}")
+
     query = select(Market).where(
         Market.created_by == user_id
     )
@@ -227,6 +231,8 @@ async def get_user_markets(
 
     result = await db.execute(query)
     markets = result.scalars().all()
+
+    logger.info(f"Found {len(markets)} markets for user_id: {user_id}")
 
     return markets
 
