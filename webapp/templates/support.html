@@ -234,21 +234,26 @@ function renderTickets() {
 
         return `
             <div onclick="openTicket(${ticket.id})" class="glass rounded-xl p-4 cursor-pointer hover:bg-opacity-20 transition-all">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="font-bold text-lg">${ticket.subject}</h3>
+                <!-- Status and Priority at top -->
+                <div class="flex items-center space-x-2 mb-3">
+                    <span class="text-xs px-2 py-1 rounded-full bg-${statusColor}-500 bg-opacity-20 text-${statusColor}-400">
+                        ${statusNames[ticket.status]}
+                    </span>
                     <span class="text-xs px-2 py-1 rounded-full bg-${priorityColor}-500 bg-opacity-20 text-${priorityColor}-400">
                         ${priorityEmojis[ticket.priority]} ${ticket.priority.toUpperCase()}
                     </span>
                 </div>
 
+                <!-- Title -->
+                <h3 class="font-bold text-lg mb-2">${ticket.subject}</h3>
+
+                <!-- Date and admin replied -->
                 <div class="flex items-center space-x-3 text-sm text-gray-400 mb-2">
-                    <span class="px-2 py-1 rounded-full bg-${statusColor}-500 bg-opacity-20 text-${statusColor}-400">
-                        ${statusNames[ticket.status]}
-                    </span>
                     <span>${date}</span>
-                    ${ticket.admin_replied ? '<span class="text-green-400">✓ Админ ответил</span>' : ''}
+                    ${ticket.admin_replied ? '<span class="text-green-400">✓ Админ ответил</span>' : '<span class="text-orange-400">⚠ Ждёт ответа</span>'}
                 </div>
 
+                <!-- Last message -->
                 ${ticket.last_message ? `
                     <p class="text-sm text-gray-400 truncate">
                         ${ticket.last_message}
@@ -443,7 +448,7 @@ document.getElementById('btn-create-ticket').addEventListener('click', () => swi
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    loadTickets();
+    switchView('list'); // This will show list view and load tickets automatically
 });
 </script>
 
