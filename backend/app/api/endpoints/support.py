@@ -19,6 +19,10 @@ router = APIRouter()
 
 async def send_telegram_notification(telegram_id: int, ticket_id: int, subject: str):
     """Send Telegram notification to user about admin reply"""
+    logger.info(f"Attempting to send Telegram notification to user {telegram_id} for ticket {ticket_id}")
+    logger.info(f"BOT_TOKEN configured: {bool(settings.BOT_TOKEN)}")
+    logger.info(f"WEBAPP_URL: {settings.WEBAPP_URL}")
+
     if not settings.BOT_TOKEN:
         logger.warning("BOT_TOKEN not configured, skipping Telegram notification")
         return
@@ -463,12 +467,19 @@ async def admin_reply(
 
         # Send Telegram notification to user
         try:
+            logger.info(f"Preparing to send Telegram notification for ticket {ticket_id}")
             result = await db.execute(select(User).where(User.id == ticket.user_id))
             user = result.scalar_one_or_none()
+            logger.info(f"User found: {bool(user)}, user_id: {ticket.user_id}")
+            if user:
+                logger.info(f"User telegram_id: {user.telegram_id}")
             if user and user.telegram_id:
+                logger.info(f"Calling send_telegram_notification for telegram_id {user.telegram_id}")
                 await send_telegram_notification(user.telegram_id, ticket_id, ticket.subject)
+            else:
+                logger.warning(f"Cannot send notification - user: {bool(user)}, telegram_id: {user.telegram_id if user else None}")
         except Exception as e:
-            logger.error(f"Failed to send Telegram notification: {e}")
+            logger.error(f"Failed to send Telegram notification: {e}", exc_info=True)
             # Don't fail the request if notification fails
 
         return {
