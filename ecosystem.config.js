@@ -24,6 +24,8 @@ module.exports = {
         DEBUG: 'false',
         INITIAL_PRED_BALANCE: 10000,
         REFERRAL_BONUS_PRED: 1000,
+        BOT_TOKEN: '8067436515:AAGHg6_ojgsnBmREI1U9Sr_iibgXYGInml0',
+        WEBAPP_URL: 'https://thepred.tech',
         S3_ENDPOINT: 'http://localhost:9000',
         S3_ACCESS_KEY: 'admin',
         S3_SECRET_KEY: 'Ivanbunin110818',
