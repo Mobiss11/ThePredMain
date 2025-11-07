@@ -70,6 +70,12 @@ function renderMarketCard(market, isPromoted = false) {
         ? '<span class="bg-blue-600 px-3 py-1 rounded-full text-xs font-bold">👤 Вы участвуете</span>'
         : '';
 
+    // Creator badge
+    const isAdminCreated = !market.created_by || market.created_by === 0;
+    const creatorBadge = isAdminCreated
+        ? '<span class="bg-purple-600 bg-opacity-80 px-2 py-0.5 rounded-full text-xs font-medium">👑 ThePred</span>'
+        : '';
+
     // Card styling with active bet highlight
     let cardClass = isPromoted
         ? 'glass card-shine rounded-2xl p-5 mb-6 border-2 border-yellow-400 market-card'
@@ -111,6 +117,7 @@ function renderMarketCard(market, isPromoted = false) {
                 ${avatarHtml}
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center flex-wrap gap-2 mb-1">
+                        ${creatorBadge}
                         ${activeBetBadge}
                         ${promotedBadge}
                         <span class="glass px-2 py-0.5 rounded-full text-xs font-medium">${categoryIcon} ${market.category}</span>

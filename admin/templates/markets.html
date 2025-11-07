@@ -7,7 +7,10 @@
     <h1 class="text-3xl font-bold mb-6">Market Management</h1>
 
     <!-- Action Buttons -->
-    <div class="mb-6">
+    <div class="mb-6 flex space-x-3">
+        <button onclick="showCreateEventModal()" class="px-6 py-3 bg-green-600 hover:bg-green-700 rounded-lg font-medium">
+            ➕ Create Event
+        </button>
         <button onclick="generateTestMarkets()" class="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium">
             🎨 Generate Test Events (5)
         </button>
@@ -34,6 +37,7 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">ID</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Title</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Category</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Creator</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Status</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Moderation</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Actions</th>
@@ -45,6 +49,89 @@
                 </tr>
             </tbody>
         </table>
+    </div>
+</div>
+
+<!-- Create Event Modal -->
+<div id="create-event-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50" style="display: none;">
+    <div class="bg-dark-800 rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold">Create New Event</h2>
+            <button onclick="hideCreateEventModal()" class="text-gray-400 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <form id="create-event-form" class="space-y-5">
+            <!-- Event Photo -->
+            <div>
+                <label class="block text-sm font-medium mb-2">Event Photo (optional)</label>
+                <div class="bg-dark-700 rounded-xl p-4 border-2 border-dashed border-gray-600 text-center cursor-pointer hover:border-yellow-400 transition" onclick="document.getElementById('event-photo-admin').click()">
+                    <input type="file" id="event-photo-admin" class="hidden" accept="image/*" onchange="previewEventPhoto(event)">
+                    <div id="photo-preview" class="hidden mb-2">
+                        <img id="photo-preview-img" class="w-full h-48 object-cover rounded-lg">
+                    </div>
+                    <div id="photo-placeholder">
+                        <svg class="w-12 h-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <p class="text-gray-400 text-sm">Click to select photo</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Question -->
+            <div>
+                <label class="block text-sm font-medium mb-2">Event Question *</label>
+                <input type="text" id="event-question-admin" required
+                       placeholder="e.g., Will Bitcoin reach $100,000 by end of 2025?"
+                       class="w-full bg-dark-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                <p class="text-gray-500 text-xs mt-1">Formulate a question that can be answered with "Yes" or "No"</p>
+            </div>
+
+            <!-- Event Description -->
+            <div>
+                <label class="block text-sm font-medium mb-2">Description *</label>
+                <textarea id="event-description-admin" required rows="4"
+                          placeholder="Brief description of the event and criteria for determining the result..."
+                          class="w-full bg-dark-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 resize-none"></textarea>
+                <p class="text-gray-500 text-xs mt-1">Describe the event and how the result will be determined</p>
+            </div>
+
+            <!-- Category -->
+            <div>
+                <label class="block text-sm font-medium mb-2">Category *</label>
+                <select id="event-category-admin" required class="w-full bg-dark-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 appearance-none cursor-pointer">
+                    <option value="">Select category</option>
+                    <option value="Crypto">💰 Crypto</option>
+                    <option value="Sports">⚽ Sports</option>
+                    <option value="Politics">🏛️ Politics</option>
+                    <option value="Entertainment">🎬 Entertainment</option>
+                    <option value="Technology">💻 Technology</option>
+                    <option value="Finance">📈 Finance</option>
+                </select>
+            </div>
+
+            <!-- End Date -->
+            <div>
+                <label class="block text-sm font-medium mb-2">End Date *</label>
+                <input type="datetime-local" id="event-end-date-admin" required
+                       class="w-full bg-dark-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                <p class="text-gray-500 text-xs mt-1">When should the event be resolved</p>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex gap-3 pt-4">
+                <button type="button" onclick="hideCreateEventModal()" class="flex-1 bg-dark-700 rounded-xl py-3 font-bold hover:bg-opacity-80 transition">
+                    Cancel
+                </button>
+                <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 rounded-xl py-3 font-bold transition">
+                    Create Event
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -91,7 +178,13 @@ async function loadMarkets(tab = 'all') {
             const modStatus = market.moderation_status || 'PENDING';
             const status = market.status || 'OPEN';
 
-            console.log(`Market ${market.id}: status=${status}, moderation_status=${modStatus}`);
+            // Determine creator badge
+            const isAdminCreated = !market.created_by || market.created_by === 0;
+            const creatorBadge = isAdminCreated
+                ? '<span class="px-2 py-1 text-xs rounded bg-purple-600 text-white">👑 Admin</span>'
+                : `<span class="px-2 py-1 text-xs rounded bg-blue-600 text-white">👤 User #${market.created_by}</span>`;
+
+            console.log(`Market ${market.id}: status=${status}, moderation_status=${modStatus}, created_by=${market.created_by}`);
 
             return `
             <tr class="hover:bg-dark-700">
@@ -101,6 +194,7 @@ async function loadMarkets(tab = 'all') {
                     ${market.photo_url ? `<img src="${market.photo_url}" class="mt-2 w-16 h-16 object-cover rounded">` : ''}
                 </td>
                 <td class="px-6 py-4 text-sm">${market.category}</td>
+                <td class="px-6 py-4">${creatorBadge}</td>
                 <td class="px-6 py-4">
                     <span class="px-2 py-1 text-xs rounded ${getStatusColor(status)}">${status}</span>
                 </td>
@@ -269,5 +363,85 @@ async function generateTestMarkets() {
         alert('Failed to generate test markets. Check console for details.');
     }
 }
+
+// Show/hide create event modal
+function showCreateEventModal() {
+    document.getElementById('create-event-modal').style.display = 'flex';
+}
+
+function hideCreateEventModal() {
+    document.getElementById('create-event-modal').style.display = 'none';
+    document.getElementById('create-event-form').reset();
+    document.getElementById('photo-preview').classList.add('hidden');
+    document.getElementById('photo-placeholder').style.display = 'block';
+}
+
+// Preview event photo
+function previewEventPhoto(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('photo-preview-img').src = e.target.result;
+            document.getElementById('photo-preview').classList.remove('hidden');
+            document.getElementById('photo-placeholder').style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// Handle form submission
+document.addEventListener('DOMContentLoaded', () => {
+    const createEventForm = document.getElementById('create-event-form');
+    if (createEventForm) {
+        createEventForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData();
+
+            const photoFile = document.getElementById('event-photo-admin').files[0];
+            if (photoFile) {
+                formData.append('photo', photoFile);
+            }
+
+            const title = document.getElementById('event-question-admin').value;
+            const description = document.getElementById('event-description-admin').value;
+            const category = document.getElementById('event-category-admin').value;
+            const resolveDate = document.getElementById('event-end-date-admin').value;
+
+            formData.append('title', title);
+            formData.append('description', description);
+            formData.append('category', category);
+            formData.append('resolve_date', resolveDate);
+
+            try {
+                const response = await fetch(`${API_URL}/admin/markets/create`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert('✅ Event created successfully!');
+                    hideCreateEventModal();
+                    loadMarkets(currentTab);
+                } else {
+                    const errorText = await response.text();
+                    let errorMessage;
+                    try {
+                        const error = JSON.parse(errorText);
+                        errorMessage = error.error || error.detail || 'Failed to create event';
+                    } catch {
+                        errorMessage = errorText || 'Failed to create event';
+                    }
+                    alert('❌ Error: ' + errorMessage);
+                }
+            } catch (error) {
+                console.error('Create event error:', error);
+                alert('❌ Network error: ' + error.message);
+            }
+        });
+    }
+});
 </script>
 {% endblock %}

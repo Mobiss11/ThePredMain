@@ -2,7 +2,7 @@
 Admin Panel API Endpoints
 Requires admin authentication (to be implemented)
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Form, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc, case
 from app.core.database import get_db
@@ -1888,3 +1888,72 @@ async def delete_user(
         await db.rollback()
         logger.error(f"Error deleting user {user_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to delete user: {str(e)}")
+
+
+@router.post("/markets/create")
+async def create_admin_event(
+    title: str = Form(...),
+    description: str = Form(...),
+    category: str = Form(...),
+    resolve_date: str = Form(...),
+    photo: Optional[UploadFile] = File(None),
+    db: AsyncSession = Depends(get_db)
+):
+    """Create new admin event with optional photo upload"""
+    import logging
+    logger = logging.getLogger(__name__)
+
+    photo_url = None
+
+    # Upload photo to S3 if provided
+    if photo:
+        try:
+            from app.core.s3 import s3_client
+
+            # Read file content
+            content = await photo.read()
+
+            # Upload to S3
+            photo_url = await s3_client.upload_file(
+                file_content=content,
+                filename=photo.filename,
+                content_type=photo.content_type or "image/jpeg"
+            )
+            logger.info(f"Photo uploaded to S3: {photo_url}")
+        except Exception as e:
+            logger.error(f"Failed to upload photo: {e}")
+            raise HTTPException(status_code=500, detail=f"Failed to upload photo: {str(e)}")
+
+    # Parse resolve date
+    try:
+        resolve_dt = datetime.fromisoformat(resolve_date.replace('Z', '+00:00'))
+    except Exception as e:
+        logger.error(f"Invalid date format: {resolve_date}, error: {e}")
+        raise HTTPException(status_code=400, detail="Invalid date format")
+
+    # Create market with APPROVED status and no creator (admin event)
+    market = Market(
+        title=title,
+        description=description,
+        category=category,
+        photo_url=photo_url,
+        resolve_date=resolve_dt,
+        created_by=None,  # Admin event - no creator
+        moderation_status=ModerationStatus.APPROVED,  # Auto-approved
+        yes_odds=Decimal("50.00"),
+        no_odds=Decimal("50.00")
+    )
+
+    db.add(market)
+    await db.commit()
+    await db.refresh(market)
+
+    logger.info(f"Admin event created: {market.id} - {market.title}")
+
+    return {
+        "success": True,
+        "market_id": market.id,
+        "title": market.title,
+        "moderation_status": market.moderation_status,
+        "photo_url": photo_url
+    }
