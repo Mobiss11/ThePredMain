@@ -19,6 +19,13 @@ app.config['BOT_USERNAME'] = os.getenv('BOT_USERNAME', 'The_Pred_Bot')
 app.config['S3_PUBLIC_URL'] = os.getenv('S3_PUBLIC_URL', 'https://thepred.store')
 app.config['S3_BUCKET'] = os.getenv('S3_BUCKET', 'thepred-events')
 
+# Session configuration for Telegram WebApp
+# CRITICAL: These settings are required for sessions to work in Telegram WebApp
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Required for iframe/WebApp
+app.config['SESSION_COOKIE_SECURE'] = not app.config['DEV_MODE']  # True in production
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 hours
+
 # Log configuration on startup
 print("=" * 50)
 print("WEBAPP CONFIGURATION:")
@@ -196,12 +203,14 @@ async def auth_telegram():
             print(f"[/auth/telegram] Backend returned user: id={user.get('id')}, username={user.get('username')}")
 
             # Store user in session
+            session.permanent = True  # Make session persistent
             session['user_id'] = user['id']
             session['telegram_id'] = telegram_id
             session['username'] = username
             session['telegram_authed'] = True  # Mark that Telegram auth completed
 
             print(f"[/auth/telegram] Session created: user_id={user['id']}, telegram_id={telegram_id}")
+            print(f"[/auth/telegram] Session permanent: True, Session data: {dict(session)}")
             print("[/auth/telegram] ===== AUTH SUCCESS =====")
 
             return jsonify({"success": True, "user": user})
@@ -271,6 +280,8 @@ async def debug_clear_session():
 async def markets():
     """Markets list page"""
     user_id = session.get('user_id')
+    print(f"[/markets] Rendering markets page for user_id: {user_id}")
+    print(f"[/markets] Full session: {dict(session)}")
     return await render_template('index.html', user_id=user_id)
 
 
@@ -391,9 +402,12 @@ async def api_profile():
     try:
         user_id = session.get('user_id')
         print(f"[/api/profile] Session user_id: {user_id}, All session: {dict(session)}")
+        print(f"[/api/profile] Session permanent: {session.permanent}")
+        print(f"[/api/profile] Request headers: {dict(request.headers)}")
 
         if not user_id:
-            print("[/api/profile] No user_id in session!")
+            print("[/api/profile] ERROR: No user_id in session! User not authenticated.")
+            print(f"[/api/profile] Cookie header: {request.headers.get('Cookie')}")
             return jsonify({"error": "Not authenticated"}), 401
 
         print(f"[/api/profile] Fetching profile for user_id: {user_id}")
