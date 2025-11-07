@@ -15,7 +15,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "daily",
         "requirements": {"daily_bets": 3},
-        "icon": "🎯"
+        "icon": "daily_bet"
     },
     {
         "title": "Победа Дня",
@@ -24,7 +24,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "daily",
         "requirements": {"wins_count": 1},
-        "icon": "🏆"
+        "icon": "daily_win"
     },
     {
         "title": "Ежедневный Вход",
@@ -33,7 +33,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "daily",
         "requirements": {"bets_count": 0},
-        "icon": "📅"
+        "icon": "daily_login"
     },
 
     # WEEKLY MISSIONS
@@ -44,7 +44,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "weekly",
         "requirements": {"weekly_bets": 20},
-        "icon": "📊"
+        "icon": "weekly_marathon"
     },
     {
         "title": "Мастер Недели",
@@ -53,7 +53,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "weekly",
         "requirements": {"wins_count": 10},
-        "icon": "🌟"
+        "icon": "weekly_master"
     },
     {
         "title": "Огненная Серия",
@@ -62,7 +62,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "weekly",
         "requirements": {"win_streak": 5},
-        "icon": "🔥"
+        "icon": "fire_streak"
     },
 
     # ACHIEVEMENTS
@@ -73,7 +73,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"bets_count": 1},
-        "icon": "🎯"
+        "icon": "first_bet"
     },
     {
         "title": "Новичок",
@@ -82,7 +82,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"bets_count": 5},
-        "icon": "🌱"
+        "icon": "beginner"
     },
     {
         "title": "Первая Победа",
@@ -91,7 +91,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"wins_count": 1},
-        "icon": "🥇"
+        "icon": "first_win"
     },
     {
         "title": "Серия Побед",
@@ -100,7 +100,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"win_streak": 3},
-        "icon": "🔥"
+        "icon": "win_streak"
     },
     {
         "title": "Активный Трейдер",
@@ -109,7 +109,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"bets_count": 10},
-        "icon": "📈"
+        "icon": "active_trader"
     },
     {
         "title": "Ветеран",
@@ -118,7 +118,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"bets_count": 50},
-        "icon": "🎖️"
+        "icon": "veteran"
     },
     {
         "title": "Легенда",
@@ -127,7 +127,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"bets_count": 100},
-        "icon": "🏅"
+        "icon": "legend"
     },
     {
         "title": "Любитель Крипты",
@@ -136,7 +136,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"category_bets": {"category": "Crypto", "count": 3}},
-        "icon": "₿"
+        "icon": "crypto_lover"
     },
     {
         "title": "Спортивный Фанат",
@@ -145,7 +145,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"category_bets": {"category": "Sports", "count": 3}},
-        "icon": "⚽"
+        "icon": "sports_fan"
     },
     {
         "title": "Политический Эксперт",
@@ -154,7 +154,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"category_bets": {"category": "Politics", "count": 3}},
-        "icon": "🗳️"
+        "icon": "politics_expert"
     },
     {
         "title": "Пригласи Друга",
@@ -163,7 +163,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"referrals_count": 1},
-        "icon": "👥"
+        "icon": "referral"
     },
     {
         "title": "Коллекционер Побед",
@@ -172,7 +172,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"wins_count": 25},
-        "icon": "🎁"
+        "icon": "collector"
     },
     {
         "title": "Неудержимый",
@@ -181,7 +181,7 @@ DEFAULT_MISSIONS = [
         "reward_currency": "PRED",
         "type": "achievement",
         "requirements": {"win_streak": 10},
-        "icon": "🚀"
+        "icon": "unstoppable"
     }
 ]
 
@@ -194,17 +194,26 @@ async def init_default_missions():
             result = await db.execute(select(Mission))
             existing_missions = result.scalars().all()
 
-            if len(existing_missions) > 0:
+            # If we have less than 20 missions, recreate all
+            if len(existing_missions) >= 20:
                 print(f"✓ Missions already exist ({len(existing_missions)} missions found)")
                 return
 
+            # Delete old missions if any exist
+            if len(existing_missions) > 0:
+                print(f"⚠️ Found {len(existing_missions)} old missions, deleting...")
+                for mission in existing_missions:
+                    await db.delete(mission)
+                await db.commit()
+                print(f"✓ Deleted old missions")
+
             # Create default missions
-            print("Creating default missions...")
+            print(f"Creating {len(DEFAULT_MISSIONS)} default missions...")
             for mission_data in DEFAULT_MISSIONS:
                 mission = Mission(
                     title=mission_data["title"],
                     description=mission_data["description"],
-                    icon=mission_data.get("icon", "🎯"),
+                    icon=mission_data.get("icon", "first_bet"),
                     reward_amount=mission_data["reward_amount"],
                     reward_currency=mission_data["reward_currency"],
                     type=mission_data["type"],

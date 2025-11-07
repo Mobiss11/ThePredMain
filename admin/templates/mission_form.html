@@ -33,148 +33,184 @@
         <div>
             <label class="block text-sm font-medium text-gray-300 mb-3">Icon</label>
 
-            <!-- Default Icons (Emoji) -->
+            <!-- S3 SVG Icons -->
             <div class="mb-4">
-                <p class="text-sm text-gray-400 mb-3">Choose from default emoji icons:</p>
-                <div class="grid grid-cols-8 gap-3" id="default-icons">
-                    <!-- Daily/Achievement Icons -->
+                <p class="text-sm text-gray-400 mb-3">Choose from S3 icon library:</p>
+                <div class="grid grid-cols-5 gap-3" id="default-icons">
+                    <!-- Achievement Icons -->
                     <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="🎯" class="hidden icon-radio" {% if mission and mission.icon == '🎯' %}checked{% endif %}>
-                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <span class="text-4xl">🎯</span>
+                        <input type="radio" name="icon" value="first_bet" class="hidden icon-radio" {% if mission and mission.icon == 'first_bet' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center h-20">
+                            <img src="https://thepred.store/thepred-events/missions/first_bet.svg" alt="First Bet" class="w-12 h-12">
                         </div>
-                        <p class="text-xs text-center mt-1 text-gray-400">Target</p>
+                        <p class="text-xs text-center mt-1 text-gray-400">First Bet</p>
                     </label>
 
                     <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="🌱" class="hidden icon-radio" {% if mission and mission.icon == '🌱' %}checked{% endif %}>
-                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <span class="text-4xl">🌱</span>
+                        <input type="radio" name="icon" value="beginner" class="hidden icon-radio" {% if mission and mission.icon == 'beginner' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center h-20">
+                            <img src="https://thepred.store/thepred-events/missions/beginner.svg" alt="Beginner" class="w-12 h-12">
                         </div>
                         <p class="text-xs text-center mt-1 text-gray-400">Beginner</p>
                     </label>
 
                     <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="🥇" class="hidden icon-radio" {% if mission and mission.icon == '🥇' %}checked{% endif %}>
-                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <span class="text-4xl">🥇</span>
+                        <input type="radio" name="icon" value="first_win" class="hidden icon-radio" {% if mission and mission.icon == 'first_win' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center h-20">
+                            <img src="https://thepred.store/thepred-events/missions/first_win.svg" alt="First Win" class="w-12 h-12">
                         </div>
                         <p class="text-xs text-center mt-1 text-gray-400">First Win</p>
                     </label>
 
                     <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="🔥" class="hidden icon-radio" {% if mission and mission.icon == '🔥' %}checked{% endif %}>
-                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <span class="text-4xl">🔥</span>
+                        <input type="radio" name="icon" value="win_streak" class="hidden icon-radio" {% if mission and mission.icon == 'win_streak' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center h-20">
+                            <img src="https://thepred.store/thepred-events/missions/win_streak.svg" alt="Win Streak" class="w-12 h-12">
                         </div>
-                        <p class="text-xs text-center mt-1 text-gray-400">Streak</p>
+                        <p class="text-xs text-center mt-1 text-gray-400">Win Streak</p>
                     </label>
 
                     <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="📈" class="hidden icon-radio" {% if mission and mission.icon == '📈' %}checked{% endif %}>
-                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <span class="text-4xl">📈</span>
+                        <input type="radio" name="icon" value="active_trader" class="hidden icon-radio" {% if mission and mission.icon == 'active_trader' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center h-20">
+                            <img src="https://thepred.store/thepred-events/missions/active_trader.svg" alt="Active Trader" class="w-12 h-12">
                         </div>
-                        <p class="text-xs text-center mt-1 text-gray-400">Trader</p>
+                        <p class="text-xs text-center mt-1 text-gray-400">Active Trader</p>
                     </label>
 
                     <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="₿" class="hidden icon-radio" {% if mission and mission.icon == '₿' %}checked{% endif %}>
-                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <span class="text-4xl">₿</span>
+                        <input type="radio" name="icon" value="crypto_lover" class="hidden icon-radio" {% if mission and mission.icon == 'crypto_lover' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center h-20">
+                            <img src="https://thepred.store/thepred-events/missions/crypto_lover.svg" alt="Crypto Lover" class="w-12 h-12">
                         </div>
-                        <p class="text-xs text-center mt-1 text-gray-400">Crypto</p>
+                        <p class="text-xs text-center mt-1 text-gray-400">Crypto Lover</p>
                     </label>
 
                     <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="👥" class="hidden icon-radio" {% if mission and mission.icon == '👥' %}checked{% endif %}>
-                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <span class="text-4xl">👥</span>
+                        <input type="radio" name="icon" value="referral" class="hidden icon-radio" {% if mission and mission.icon == 'referral' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center h-20">
+                            <img src="https://thepred.store/thepred-events/missions/referral.svg" alt="Referral" class="w-12 h-12">
                         </div>
                         <p class="text-xs text-center mt-1 text-gray-400">Referral</p>
                     </label>
 
                     <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="💎" class="hidden icon-radio" {% if mission and mission.icon == '💎' %}checked{% endif %}>
-                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <span class="text-4xl">💎</span>
-                        </div>
-                        <p class="text-xs text-center mt-1 text-gray-400">Premium</p>
-                    </label>
-
-                    <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="🏆" class="hidden icon-radio" {% if mission and mission.icon == '🏆' %}checked{% endif %}>
-                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <span class="text-4xl">🏆</span>
-                        </div>
-                        <p class="text-xs text-center mt-1 text-gray-400">Victory</p>
-                    </label>
-
-                    <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="⚽" class="hidden icon-radio" {% if mission and mission.icon == '⚽' %}checked{% endif %}>
-                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <span class="text-4xl">⚽</span>
-                        </div>
-                        <p class="text-xs text-center mt-1 text-gray-400">Sports</p>
-                    </label>
-
-                    <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="🗳️" class="hidden icon-radio" {% if mission and mission.icon == '🗳️' %}checked{% endif %}>
-                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <span class="text-4xl">🗳️</span>
-                        </div>
-                        <p class="text-xs text-center mt-1 text-gray-400">Politics</p>
-                    </label>
-
-                    <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="🎖️" class="hidden icon-radio" {% if mission and mission.icon == '🎖️' %}checked{% endif %}>
-                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <span class="text-4xl">🎖️</span>
+                        <input type="radio" name="icon" value="veteran" class="hidden icon-radio" {% if mission and mission.icon == 'veteran' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center h-20">
+                            <img src="https://thepred.store/thepred-events/missions/veteran.svg" alt="Veteran" class="w-12 h-12">
                         </div>
                         <p class="text-xs text-center mt-1 text-gray-400">Veteran</p>
                     </label>
 
                     <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="🏅" class="hidden icon-radio" {% if mission and mission.icon == '🏅' %}checked{% endif %}>
-                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <span class="text-4xl">🏅</span>
+                        <input type="radio" name="icon" value="legend" class="hidden icon-radio" {% if mission and mission.icon == 'legend' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center h-20">
+                            <img src="https://thepred.store/thepred-events/missions/legend.svg" alt="Legend" class="w-12 h-12">
                         </div>
                         <p class="text-xs text-center mt-1 text-gray-400">Legend</p>
                     </label>
 
                     <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="🚀" class="hidden icon-radio" {% if mission and mission.icon == '🚀' %}checked{% endif %}>
-                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <span class="text-4xl">🚀</span>
+                        <input type="radio" name="icon" value="collector" class="hidden icon-radio" {% if mission and mission.icon == 'collector' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center h-20">
+                            <img src="https://thepred.store/thepred-events/missions/collector.svg" alt="Collector" class="w-12 h-12">
                         </div>
-                        <p class="text-xs text-center mt-1 text-gray-400">Rocket</p>
+                        <p class="text-xs text-center mt-1 text-gray-400">Collector</p>
                     </label>
 
                     <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="📊" class="hidden icon-radio" {% if mission and mission.icon == '📊' %}checked{% endif %}>
-                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <span class="text-4xl">📊</span>
+                        <input type="radio" name="icon" value="unstoppable" class="hidden icon-radio" {% if mission and mission.icon == 'unstoppable' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center h-20">
+                            <img src="https://thepred.store/thepred-events/missions/unstoppable.svg" alt="Unstoppable" class="w-12 h-12">
                         </div>
-                        <p class="text-xs text-center mt-1 text-gray-400">Stats</p>
+                        <p class="text-xs text-center mt-1 text-gray-400">Unstoppable</p>
+                    </label>
+
+                    <!-- Daily Icons -->
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="daily_bet" class="hidden icon-radio" {% if mission and mission.icon == 'daily_bet' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center h-20">
+                            <img src="https://thepred.store/thepred-events/missions/daily_bet.svg" alt="Daily Bet" class="w-12 h-12">
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">Daily Bet</p>
                     </label>
 
                     <label class="cursor-pointer">
-                        <input type="radio" name="icon" value="📢" class="hidden icon-radio" {% if mission and mission.icon == '📢' %}checked{% endif %}>
-                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center">
-                            <span class="text-4xl">📢</span>
+                        <input type="radio" name="icon" value="daily_win" class="hidden icon-radio" {% if mission and mission.icon == 'daily_win' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center h-20">
+                            <img src="https://thepred.store/thepred-events/missions/daily_win.svg" alt="Daily Win" class="w-12 h-12">
                         </div>
-                        <p class="text-xs text-center mt-1 text-gray-400">Subscribe</p>
+                        <p class="text-xs text-center mt-1 text-gray-400">Daily Win</p>
+                    </label>
+
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="daily_login" class="hidden icon-radio" {% if mission and mission.icon == 'daily_login' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center h-20">
+                            <img src="https://thepred.store/thepred-events/missions/daily_login.svg" alt="Daily Login" class="w-12 h-12">
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">Daily Login</p>
+                    </label>
+
+                    <!-- Weekly Icons -->
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="weekly_marathon" class="hidden icon-radio" {% if mission and mission.icon == 'weekly_marathon' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center h-20">
+                            <img src="https://thepred.store/thepred-events/missions/weekly_marathon.svg" alt="Weekly Marathon" class="w-12 h-12">
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">Weekly Marathon</p>
+                    </label>
+
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="weekly_master" class="hidden icon-radio" {% if mission and mission.icon == 'weekly_master' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center h-20">
+                            <img src="https://thepred.store/thepred-events/missions/weekly_master.svg" alt="Weekly Master" class="w-12 h-12">
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">Weekly Master</p>
+                    </label>
+
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="fire_streak" class="hidden icon-radio" {% if mission and mission.icon == 'fire_streak' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center h-20">
+                            <img src="https://thepred.store/thepred-events/missions/fire_streak.svg" alt="Fire Streak" class="w-12 h-12">
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">Fire Streak</p>
+                    </label>
+
+                    <!-- Category Icons -->
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="sports_fan" class="hidden icon-radio" {% if mission and mission.icon == 'sports_fan' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center h-20">
+                            <img src="https://thepred.store/thepred-events/missions/sports_fan.svg" alt="Sports Fan" class="w-12 h-12">
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">Sports Fan</p>
+                    </label>
+
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="politics_expert" class="hidden icon-radio" {% if mission and mission.icon == 'politics_expert' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center h-20">
+                            <img src="https://thepred.store/thepred-events/missions/politics_expert.svg" alt="Politics Expert" class="w-12 h-12">
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">Politics Expert</p>
+                    </label>
+
+                    <!-- Subscription Icon -->
+                    <label class="cursor-pointer">
+                        <input type="radio" name="icon" value="subscription" class="hidden icon-radio" {% if mission and mission.icon == 'subscription' %}checked{% endif %}>
+                        <div class="icon-option p-3 bg-dark-700 rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors flex items-center justify-center h-20">
+                            <img src="https://thepred.store/thepred-events/missions/subscription.svg" alt="Subscription" class="w-12 h-12">
+                        </div>
+                        <p class="text-xs text-center mt-1 text-gray-400">Subscription</p>
                     </label>
                 </div>
             </div>
 
             <!-- Custom Icon Upload -->
             <div class="mt-6 p-4 bg-dark-700 rounded-lg">
-                <p class="text-sm text-gray-400 mb-3">Or upload custom icon URL:</p>
-                <input type="text" id="custom-icon-url" placeholder="https://example.com/icon.png or emoji"
+                <p class="text-sm text-gray-400 mb-3">Or provide custom icon URL:</p>
+                <input type="text" id="custom-icon-url" placeholder="https://example.com/icon.svg or https://thepred.store/..."
                        class="w-full bg-dark-800 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
                        value="{{ mission.custom_icon_url if mission and mission.custom_icon_url else '' }}">
-                <p class="text-xs text-gray-400 mt-2">Enter a URL to an image or paste an emoji (e.g., 😎)</p>
+                <p class="text-xs text-gray-400 mt-2">Enter a URL to a custom image (SVG, PNG, etc.)</p>
             </div>
         </div>
 
@@ -419,9 +455,9 @@ toggleSubscriptionFields();
 document.getElementById('mission-form').addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    // Get icon value - priority: custom URL > selected emoji
+    // Get icon value - priority: custom URL > selected icon name
     const customIconUrl = document.getElementById('custom-icon-url').value.trim();
-    let icon = customIconUrl || document.querySelector('.icon-radio:checked')?.value || '🎯';
+    let icon = customIconUrl || document.querySelector('.icon-radio:checked')?.value || 'first_bet';
 
     // Build requirements object
     const reqType = document.getElementById('requirement_type').value;
