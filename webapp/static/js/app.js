@@ -47,6 +47,18 @@ async function loadUserProfile() {
                 console.error('[loadUserProfile] ❌ pred-balance element NOT FOUND!');
             }
 
+            // Update TON balance in header
+            const tonBalance = document.getElementById('ton-balance');
+            console.log('[loadUserProfile] ton-balance element:', tonBalance);
+            if (tonBalance) {
+                const formattedBalance = formatNumber(userProfile.ton_balance);
+                console.log('[loadUserProfile] Formatted ton_balance:', formattedBalance);
+                tonBalance.innerText = formattedBalance;
+                console.log('[loadUserProfile] ✅ Updated ton-balance to:', formattedBalance);
+            } else {
+                console.log('[loadUserProfile] ton-balance element not found');
+            }
+
             const predBalanceDisplay = document.getElementById('pred-balance-display');
             console.log('[loadUserProfile] pred-balance-display element:', predBalanceDisplay);
             if (predBalanceDisplay) {
@@ -280,6 +292,11 @@ function forceUpdateBalance() {
         const predBalance = document.getElementById('pred-balance');
         if (predBalance) {
             predBalance.innerText = formatNumber(window.userProfile.pred_balance);
+        }
+
+        const tonBalance = document.getElementById('ton-balance');
+        if (tonBalance) {
+            tonBalance.innerText = formatNumber(window.userProfile.ton_balance);
         }
 
         const predBalanceDisplay = document.getElementById('pred-balance-display');
