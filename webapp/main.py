@@ -103,11 +103,6 @@ async def index():
     """Main page - Auto-login from Telegram or redirect"""
     print(f"[/] DEV_MODE: {app.config['DEV_MODE']}, Session user_id: {session.get('user_id')}")
 
-    # Check if already authenticated
-    if session.get('user_id'):
-        print("[/] User authenticated, redirecting to markets")
-        return redirect(url_for('markets'))
-
     # Check if request is from Telegram WebApp (even in DEV_MODE)
     # Telegram WebApp passes tgWebAppData or tgWebAppStartParam in URL
     is_from_telegram = (
@@ -116,9 +111,19 @@ async def index():
         request.headers.get('Referer', '').find('telegram') != -1
     )
 
+    # If coming from Telegram, clear old session and re-authenticate
     if is_from_telegram:
+        # Clear any old session in production mode to force re-authentication
+        if not app.config['DEV_MODE'] and session.get('user_id'):
+            print(f"[/] Production mode: Clearing old session for user {session.get('user_id')}")
+            session.clear()
         print("[/] Request from Telegram WebApp, showing auth.html")
         return await render_template('auth.html', bot_username=app.config['BOT_USERNAME'])
+
+    # Check if already authenticated (not from Telegram)
+    if session.get('user_id'):
+        print("[/] User authenticated, redirecting to markets")
+        return redirect(url_for('markets'))
 
     # Dev mode - redirect to dev login (only for browser access)
     if app.config['DEV_MODE']:
