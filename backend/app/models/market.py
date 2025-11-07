@@ -54,7 +54,7 @@ class Market(Base):
     resolved_at = Column(DateTime(timezone=True), nullable=True)
 
     # Meta
-    created_by = Column(BigInteger, ForeignKey("users.id"), nullable=False)
+    created_by = Column(BigInteger, ForeignKey("users.id"), nullable=True)  # NULL for admin events
     views_count = Column(BigInteger, default=0, nullable=False)
     bets_count = Column(BigInteger, default=0, nullable=False)
 
