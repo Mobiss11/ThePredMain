@@ -11,7 +11,7 @@
 
 <!-- Tab Navigation -->
 <div class="glass rounded-2xl p-2 mb-6">
-    <div class="grid grid-cols-4 gap-2">
+    <div class="grid grid-cols-5 gap-2">
         <button id="tab-stats" class="tab-button gold-gradient rounded-lg py-3 font-bold text-black text-sm">
             📊 Stats
         </button>
@@ -20,6 +20,9 @@
         </button>
         <button id="tab-users" class="tab-button glass rounded-lg py-3 font-bold text-sm">
             👥 Users
+        </button>
+        <button id="tab-support" class="tab-button glass rounded-lg py-3 font-bold text-sm">
+            💬 Support
         </button>
         <button id="tab-create" class="tab-button glass rounded-lg py-3 font-bold text-sm">
             ✨ Create
@@ -69,6 +72,110 @@
         <h2 class="text-xl font-bold mb-4">User Management</h2>
         <div id="users-list" class="space-y-3">
             <!-- Users will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Support Tab -->
+<div id="content-support" class="tab-content hidden">
+    <!-- Filters -->
+    <div class="glass rounded-2xl p-4 mb-4">
+        <div class="grid grid-cols-3 gap-3">
+            <div>
+                <label class="block text-xs font-semibold mb-2 text-gray-400">Status</label>
+                <select id="support-status-filter" class="glass rounded-lg px-3 py-2 text-sm w-full">
+                    <option value="">All Statuses</option>
+                    <option value="open">Open</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="waiting_user">Waiting User</option>
+                    <option value="closed">Closed</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold mb-2 text-gray-400">Priority</label>
+                <select id="support-priority-filter" class="glass rounded-lg px-3 py-2 text-sm w-full">
+                    <option value="">All Priorities</option>
+                    <option value="low">🟢 Low</option>
+                    <option value="medium">🟡 Medium</option>
+                    <option value="high">🟠 High</option>
+                    <option value="urgent">🔴 Urgent</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button onclick="loadSupportTickets()" class="glass rounded-lg px-4 py-2 text-sm w-full font-semibold hover:bg-opacity-30 transition-all">
+                    🔄 Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tickets List -->
+    <div id="support-tickets-list" class="space-y-3">
+        <!-- Tickets will be loaded here -->
+    </div>
+</div>
+
+<!-- Ticket Detail Modal -->
+<div id="ticket-modal" class="fixed inset-0 bg-black bg-opacity-80 hidden flex items-center justify-center z-50 overflow-y-auto">
+    <div class="glass rounded-2xl p-6 max-w-2xl w-full mx-4 my-8">
+        <div class="flex justify-between items-start mb-4">
+            <h3 id="ticket-modal-title" class="text-xl font-bold"></h3>
+            <button onclick="closeTicketModal()" class="text-gray-400 hover:text-white text-2xl leading-none">&times;</button>
+        </div>
+
+        <!-- Ticket Info -->
+        <div id="ticket-modal-info" class="glass rounded-xl p-4 mb-4">
+            <!-- Ticket info will be loaded here -->
+        </div>
+
+        <!-- Messages -->
+        <div id="ticket-modal-messages" class="space-y-3 mb-4 max-h-96 overflow-y-auto">
+            <!-- Messages will be loaded here -->
+        </div>
+
+        <!-- Reply Form -->
+        <div id="ticket-reply-form-container">
+            <form id="ticket-reply-form" class="space-y-3">
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Admin Reply</label>
+                    <textarea name="message" required rows="4"
+                              class="w-full glass rounded-xl px-4 py-3 bg-gray-800 bg-opacity-50 border-0 focus:ring-2 focus:ring-yellow-500 resize-none text-sm"
+                              placeholder="Type your response..."></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Attachment (optional)</label>
+                    <input type="file" name="attachment" accept="image/*"
+                           class="w-full glass rounded-lg px-4 py-2 bg-gray-800 bg-opacity-50 border-0 text-sm file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-yellow-500 file:bg-opacity-20 file:text-yellow-400 hover:file:bg-opacity-30">
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="submit" id="reply-submit-btn" class="flex-1 gold-gradient rounded-lg py-3 font-bold text-black text-sm">
+                        Send Reply
+                    </button>
+                    <button type="button" onclick="closeTicketModal()" class="glass rounded-lg px-6 py-3 font-semibold text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+
+            <!-- Status Actions -->
+            <div class="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-gray-700">
+                <button onclick="updateTicketStatus('in_progress')" class="glass rounded-lg py-2 text-xs font-semibold hover:bg-purple-500 hover:bg-opacity-20">
+                    ⏳ In Progress
+                </button>
+                <button onclick="updateTicketStatus('waiting_user')" class="glass rounded-lg py-2 text-xs font-semibold hover:bg-yellow-500 hover:bg-opacity-20">
+                    ⏰ Waiting User
+                </button>
+                <button onclick="updateTicketStatus('closed')" class="glass rounded-lg py-2 text-xs font-semibold hover:bg-red-500 hover:bg-opacity-20">
+                    ✅ Close
+                </button>
+            </div>
+        </div>
+
+        <!-- Closed Message -->
+        <div id="ticket-closed-msg" class="hidden glass rounded-xl p-4 bg-red-500 bg-opacity-10 border border-red-500 text-center text-sm">
+            <p class="text-red-400">This ticket is closed.</p>
         </div>
     </div>
 </div>
@@ -156,7 +263,7 @@
 {% block extra_scripts %}
 <script>
     // Tab switching
-    const tabs = ['stats', 'markets', 'users', 'create'];
+    const tabs = ['stats', 'markets', 'users', 'support', 'create'];
     let currentTab = 'stats';
 
     tabs.forEach(tab => {
@@ -182,6 +289,7 @@
             if (tab === 'stats') loadStats();
             else if (tab === 'markets') loadMarkets();
             else if (tab === 'users') loadUsers();
+            else if (tab === 'support') loadSupportTickets();
         });
     });
 
@@ -631,6 +739,312 @@
     document.getElementById('user-modal').addEventListener('click', (e) => {
         if (e.target.id === 'user-modal') {
             closeUserModal();
+        }
+    });
+
+    // ============ Support Tab ============
+
+    let currentTicketId = null;
+    let allSupportTickets = [];
+
+    async function loadSupportTickets() {
+        try {
+            const status = document.getElementById('support-status-filter').value;
+            const priority = document.getElementById('support-priority-filter').value;
+
+            let url = '/api/admin/support/tickets?limit=100';
+            if (status) url += `&status=${status}`;
+            if (priority) url += `&priority=${priority}`;
+
+            const response = await fetch(url);
+            allSupportTickets = await response.json();
+
+            renderSupportTickets();
+        } catch (error) {
+            console.error('Error loading support tickets:', error);
+        }
+    }
+
+    function renderSupportTickets() {
+        const container = document.getElementById('support-tickets-list');
+
+        if (allSupportTickets.length === 0) {
+            container.innerHTML = `
+                <div class="glass rounded-xl p-8 text-center">
+                    <div class="text-4xl mb-3">📭</div>
+                    <p class="text-gray-400">No support tickets found</p>
+                </div>
+            `;
+            return;
+        }
+
+        const priorityColors = {
+            'low': 'green',
+            'medium': 'yellow',
+            'high': 'orange',
+            'urgent': 'red'
+        };
+
+        const priorityEmojis = {
+            'low': '🟢',
+            'medium': '🟡',
+            'high': '🟠',
+            'urgent': '🔴'
+        };
+
+        const statusNames = {
+            'open': 'Open',
+            'in_progress': 'In Progress',
+            'waiting_user': 'Waiting User',
+            'closed': 'Closed'
+        };
+
+        const statusColors = {
+            'open': 'blue',
+            'in_progress': 'purple',
+            'waiting_user': 'yellow',
+            'closed': 'gray'
+        };
+
+        container.innerHTML = allSupportTickets.map(ticket => {
+            const priorityColor = priorityColors[ticket.priority] || 'gray';
+            const statusColor = statusColors[ticket.status] || 'gray';
+            const createdDate = new Date(ticket.created_at).toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            return `
+                <div onclick="openTicketModal(${ticket.id})" class="glass rounded-xl p-4 cursor-pointer hover:bg-opacity-30 transition-all">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-1">
+                                <span class="font-bold text-sm">${ticket.subject}</span>
+                                <span class="text-xs px-2 py-0.5 rounded-full bg-${priorityColor}-500 bg-opacity-20 text-${priorityColor}-400">
+                                    ${priorityEmojis[ticket.priority]} ${ticket.priority.toUpperCase()}
+                                </span>
+                            </div>
+                            <div class="text-xs text-gray-400">
+                                User: <span class="text-white">${ticket.user_name}</span> (ID: ${ticket.user_id})
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs px-2 py-1 rounded-full bg-${statusColor}-500 bg-opacity-20 text-${statusColor}-400 mb-1">
+                                ${statusNames[ticket.status]}
+                            </div>
+                            <div class="text-xs text-gray-400">${createdDate}</div>
+                        </div>
+                    </div>
+
+                    ${ticket.last_message ? `
+                        <p class="text-xs text-gray-400 truncate mt-2">
+                            ${ticket.last_message}
+                        </p>
+                    ` : ''}
+
+                    <div class="flex items-center space-x-3 mt-2 text-xs text-gray-500">
+                        <span>💬 ${ticket.message_count} messages</span>
+                        ${ticket.admin_replied ? '<span class="text-green-400">✓ Replied</span>' : '<span class="text-orange-400">⚠ No reply</span>'}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function openTicketModal(ticketId) {
+        currentTicketId = ticketId;
+        const ticket = allSupportTickets.find(t => t.id === ticketId);
+
+        // Show modal
+        document.getElementById('ticket-modal').classList.remove('hidden');
+
+        // Set title
+        document.getElementById('ticket-modal-title').textContent = `Ticket #${ticketId}: ${ticket.subject}`;
+
+        // Set ticket info
+        const priorityEmojis = {
+            'low': '🟢',
+            'medium': '🟡',
+            'high': '🟠',
+            'urgent': '🔴'
+        };
+
+        const statusNames = {
+            'open': 'Open',
+            'in_progress': 'In Progress',
+            'waiting_user': 'Waiting User',
+            'closed': 'Closed'
+        };
+
+        document.getElementById('ticket-modal-info').innerHTML = `
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                    <span class="text-gray-400">User:</span>
+                    <span class="text-white font-semibold">${ticket.user_name}</span>
+                </div>
+                <div>
+                    <span class="text-gray-400">Priority:</span>
+                    <span>${priorityEmojis[ticket.priority]} ${ticket.priority.toUpperCase()}</span>
+                </div>
+                <div>
+                    <span class="text-gray-400">Status:</span>
+                    <span class="text-white">${statusNames[ticket.status]}</span>
+                </div>
+                <div>
+                    <span class="text-gray-400">Created:</span>
+                    <span class="text-white">${new Date(ticket.created_at).toLocaleString()}</span>
+                </div>
+            </div>
+        `;
+
+        // Load messages
+        await loadTicketMessages(ticketId);
+
+        // Show/hide reply form based on status
+        if (ticket.status === 'closed') {
+            document.getElementById('ticket-reply-form-container').classList.add('hidden');
+            document.getElementById('ticket-closed-msg').classList.remove('hidden');
+        } else {
+            document.getElementById('ticket-reply-form-container').classList.remove('hidden');
+            document.getElementById('ticket-closed-msg').classList.add('hidden');
+        }
+    }
+
+    async function loadTicketMessages(ticketId) {
+        try {
+            const ticket = allSupportTickets.find(t => t.id === ticketId);
+            const response = await fetch(`/api/support/tickets/${ticketId}/messages?user_id=${ticket.user_id}`);
+            const messages = await response.json();
+
+            const container = document.getElementById('ticket-modal-messages');
+            container.innerHTML = messages.map(msg => {
+                const date = new Date(msg.created_at).toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                if (msg.is_admin) {
+                    // Admin message
+                    return `
+                        <div class="glass rounded-xl p-3 border-l-4 border-yellow-500">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="text-yellow-400 font-semibold text-xs">👑 Admin</span>
+                                <span class="text-xs text-gray-400">${date}</span>
+                            </div>
+                            <p class="text-sm whitespace-pre-wrap">${msg.message}</p>
+                            ${msg.attachment_url ? `
+                                <img src="${msg.attachment_url}" class="mt-2 rounded-lg max-w-xs h-auto" />
+                            ` : ''}
+                        </div>
+                    `;
+                } else {
+                    // User message
+                    return `
+                        <div class="glass rounded-xl p-3 border-l-4 border-blue-500">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="text-blue-400 font-semibold text-xs">${msg.user_name || 'User'}</span>
+                                <span class="text-xs text-gray-400">${date}</span>
+                            </div>
+                            <p class="text-sm whitespace-pre-wrap">${msg.message}</p>
+                            ${msg.attachment_url ? `
+                                <img src="${msg.attachment_url}" class="mt-2 rounded-lg max-w-xs h-auto" />
+                            ` : ''}
+                        </div>
+                    `;
+                }
+            }).join('');
+        } catch (error) {
+            console.error('Error loading messages:', error);
+        }
+    }
+
+    function closeTicketModal() {
+        document.getElementById('ticket-modal').classList.add('hidden');
+        currentTicketId = null;
+        document.getElementById('ticket-reply-form').reset();
+    }
+
+    // Reply form submit
+    document.getElementById('ticket-reply-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const btn = document.getElementById('reply-submit-btn');
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+
+        try {
+            const formData = new FormData(e.target);
+
+            const response = await fetch(`/api/admin/support/tickets/${currentTicketId}/reply`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // Reset form
+                e.target.reset();
+
+                // Reload messages
+                await loadTicketMessages(currentTicketId);
+
+                // Reload tickets list
+                await loadSupportTickets();
+
+                alert('Reply sent successfully!');
+            } else {
+                alert('Error: ' + (result.error || 'Failed to send reply'));
+            }
+        } catch (error) {
+            console.error('Error sending reply:', error);
+            alert('Error sending reply');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Send Reply';
+        }
+    });
+
+    // Update ticket status
+    async function updateTicketStatus(status) {
+        if (!currentTicketId) return;
+
+        try {
+            const response = await fetch(`/api/admin/support/tickets/${currentTicketId}/status?status=${status}`, {
+                method: 'PUT'
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // Reload tickets
+                await loadSupportTickets();
+
+                // Close modal
+                closeTicketModal();
+
+                alert('Ticket status updated!');
+            } else {
+                alert('Error: ' + (result.error || 'Failed to update status'));
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
+            alert('Error updating status');
+        }
+    }
+
+    // Filter change listeners
+    document.getElementById('support-status-filter').addEventListener('change', loadSupportTickets);
+    document.getElementById('support-priority-filter').addEventListener('change', loadSupportTickets);
+
+    // Close ticket modal when clicking outside
+    document.getElementById('ticket-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'ticket-modal') {
+            closeTicketModal();
         }
     });
 

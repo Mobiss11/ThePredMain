@@ -42,6 +42,16 @@ class BackendAPIClient:
             response.raise_for_status()
             return await response.json()
 
+    async def _put(self, endpoint: str, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Make PUT request"""
+        if not self.session:
+            self.session = aiohttp.ClientSession()
+
+        url = f"{self.base_url}{endpoint}"
+        async with self.session.put(url, json=data) as response:
+            response.raise_for_status()
+            return await response.json()
+
     # ============ Markets ============
 
     async def get_markets(self, category: Optional[str] = None, limit: int = 20) -> List[Dict]:

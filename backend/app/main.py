@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.endpoints import auth, users, markets, bets, wallet, missions, leaderboard, admin
+from app.api.endpoints import auth, users, markets, bets, wallet, missions, leaderboard, admin, support
 from app.core.s3 import s3_client
 import sentry_sdk
 import logging
@@ -37,6 +37,7 @@ app.include_router(wallet.router, prefix="/wallet", tags=["wallet"])
 app.include_router(missions.router, prefix="/missions", tags=["missions"])
 app.include_router(leaderboard.router, prefix="/leaderboard", tags=["leaderboard"])
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
+app.include_router(support.router, prefix="/support", tags=["support"])
 
 
 @app.on_event("startup")

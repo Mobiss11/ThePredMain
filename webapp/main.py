@@ -279,6 +279,14 @@ async def create_event():
     return await render_template('create_event.html', user_id=user_id)
 
 
+@app.route('/support')
+@auth_required
+async def support():
+    """Support page"""
+    user_id = session.get('user_id')
+    return await render_template('support.html', user_id=user_id)
+
+
 # ============ API Routes ============
 
 @app.route('/api/markets')
@@ -642,6 +650,183 @@ async def api_create_event():
 
     except Exception as e:
         print(f"Error creating event: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+# ============ Support API Routes ============
+
+@app.route('/api/support/tickets', methods=['POST'])
+async def api_create_ticket():
+    """Create support ticket - proxy to backend"""
+    try:
+        form = await request.form
+        files = await request.files
+        user_id = session.get('user_id', 1)
+
+        # Prepare form data for backend
+        import aiohttp
+        data = aiohttp.FormData()
+        data.add_field('user_id', str(user_id))
+        data.add_field('subject', form.get('subject'))
+        data.add_field('message', form.get('message'))
+        data.add_field('priority', form.get('priority', 'medium'))
+
+        # Add attachment if exists
+        if 'attachment' in files and files['attachment'].filename:
+            attachment = files['attachment']
+            attachment_bytes = attachment.read()
+            data.add_field('attachment', attachment_bytes,
+                          filename=attachment.filename,
+                          content_type=attachment.content_type)
+
+        # Send to backend
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.post(
+                f"{app.config['API_URL']}/support/tickets",
+                data=data
+            ) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    return jsonify(result)
+                else:
+                    error_text = await response.text()
+                    return jsonify({"error": error_text}), response.status
+
+    except Exception as e:
+        print(f"Error creating ticket: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/support/tickets/<int:user_id>')
+async def api_get_tickets(user_id):
+    """Get user's tickets"""
+    try:
+        tickets = await api_client._get(f"/support/tickets/{user_id}")
+        return jsonify(tickets)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/support/tickets/<int:ticket_id>/messages')
+async def api_get_ticket_messages(ticket_id):
+    """Get ticket messages"""
+    try:
+        user_id = session.get('user_id', 1)
+        messages = await api_client._get(f"/support/tickets/{ticket_id}/messages?user_id={user_id}")
+        return jsonify(messages)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/support/tickets/<int:ticket_id>/messages', methods=['POST'])
+async def api_send_message(ticket_id):
+    """Send message in ticket - proxy to backend"""
+    try:
+        form = await request.form
+        files = await request.files
+        user_id = session.get('user_id', 1)
+
+        # Prepare form data
+        import aiohttp
+        data = aiohttp.FormData()
+        data.add_field('user_id', str(user_id))
+        data.add_field('message', form.get('message'))
+
+        # Add attachment if exists
+        if 'attachment' in files and files['attachment'].filename:
+            attachment = files['attachment']
+            attachment_bytes = attachment.read()
+            data.add_field('attachment', attachment_bytes,
+                          filename=attachment.filename,
+                          content_type=attachment.content_type)
+
+        # Send to backend
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.post(
+                f"{app.config['API_URL']}/support/tickets/{ticket_id}/messages",
+                data=data
+            ) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    return jsonify(result)
+                else:
+                    error_text = await response.text()
+                    return jsonify({"error": error_text}), response.status
+
+    except Exception as e:
+        print(f"Error sending message: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+# ============ Admin Support API Routes ============
+
+@app.route('/api/admin/support/tickets')
+async def api_admin_get_all_tickets():
+    """Get all support tickets for admin"""
+    try:
+        status = request.args.get('status')
+        priority = request.args.get('priority')
+        limit = request.args.get('limit', 50, type=int)
+        offset = request.args.get('offset', 0, type=int)
+
+        url = f"/support/admin/tickets?limit={limit}&offset={offset}"
+        if status:
+            url += f"&status={status}"
+        if priority:
+            url += f"&priority={priority}"
+
+        tickets = await api_client._get(url)
+        return jsonify(tickets)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/admin/support/tickets/<int:ticket_id>/reply', methods=['POST'])
+async def api_admin_reply_ticket(ticket_id):
+    """Admin reply to ticket - proxy to backend"""
+    try:
+        form = await request.form
+        files = await request.files
+
+        # Prepare form data
+        import aiohttp
+        data = aiohttp.FormData()
+        data.add_field('message', form.get('message'))
+
+        # Add attachment if exists
+        if 'attachment' in files and files['attachment'].filename:
+            attachment = files['attachment']
+            attachment_bytes = attachment.read()
+            data.add_field('attachment', attachment_bytes,
+                          filename=attachment.filename,
+                          content_type=attachment.content_type)
+
+        # Send to backend
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.post(
+                f"{app.config['API_URL']}/support/admin/tickets/{ticket_id}/reply",
+                data=data
+            ) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    return jsonify(result)
+                else:
+                    error_text = await response.text()
+                    return jsonify({"error": error_text}), response.status
+
+    except Exception as e:
+        print(f"Error replying to ticket: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/admin/support/tickets/<int:ticket_id>/status', methods=['PUT'])
+async def api_admin_update_ticket_status(ticket_id):
+    """Update ticket status"""
+    try:
+        status = request.args.get('status')
+        result = await api_client._put(f"/support/admin/tickets/{ticket_id}/status?status={status}", {})
+        return jsonify(result)
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 

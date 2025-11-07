@@ -1,0 +1,462 @@
+{% extends "base.html" %}
+
+{% block title %}Поддержка - ThePred{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="glass card-shine rounded-2xl p-6 mb-6">
+    <h1 class="text-2xl font-bold mb-2">💬 Поддержка</h1>
+    <p class="text-gray-400">Создайте тикет и мы поможем вам решить любой вопрос</p>
+</div>
+
+<!-- View Toggle Buttons -->
+<div class="flex space-x-3 mb-6">
+    <button id="btn-tickets-list" class="flex-1 glass rounded-xl py-3 font-semibold transition-all duration-200 bg-yellow-500 bg-opacity-20 border-2 border-yellow-500">
+        📋 Мои тикеты
+    </button>
+    <button id="btn-create-ticket" class="flex-1 glass rounded-xl py-3 font-semibold transition-all duration-200">
+        ➕ Новый тикет
+    </button>
+</div>
+
+<!-- Loading -->
+<div id="loading" class="text-center py-8">
+    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+    <p class="text-gray-400 mt-2">Загрузка...</p>
+</div>
+
+<!-- Tickets List View -->
+<div id="tickets-list-view" class="hidden">
+    <div id="tickets-container" class="space-y-4">
+        <!-- Tickets will be loaded here -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="tickets-empty" class="hidden text-center py-12">
+        <div class="text-6xl mb-4">📭</div>
+        <p class="text-gray-400 mb-6">У вас пока нет тикетов</p>
+        <button onclick="switchView('create')" class="glass rounded-xl px-6 py-3 font-semibold bg-yellow-500 bg-opacity-20 hover:bg-opacity-30 transition-all">
+            Создать первый тикет
+        </button>
+    </div>
+</div>
+
+<!-- Create Ticket View -->
+<div id="create-ticket-view" class="hidden">
+    <form id="create-ticket-form" class="space-y-4">
+        <!-- Priority -->
+        <div>
+            <label class="block text-sm font-medium mb-2">Приоритет</label>
+            <select name="priority" class="w-full glass rounded-xl px-4 py-3 bg-gray-800 bg-opacity-50 border-0 focus:ring-2 focus:ring-yellow-500">
+                <option value="low">🟢 Низкий</option>
+                <option value="medium" selected>🟡 Средний</option>
+                <option value="high">🟠 Высокий</option>
+                <option value="urgent">🔴 Срочный</option>
+            </select>
+        </div>
+
+        <!-- Subject -->
+        <div>
+            <label class="block text-sm font-medium mb-2">Тема</label>
+            <input type="text" name="subject" required maxlength="255"
+                   class="w-full glass rounded-xl px-4 py-3 bg-gray-800 bg-opacity-50 border-0 focus:ring-2 focus:ring-yellow-500"
+                   placeholder="Кратко опишите проблему">
+        </div>
+
+        <!-- Message -->
+        <div>
+            <label class="block text-sm font-medium mb-2">Сообщение</label>
+            <textarea name="message" required rows="6"
+                      class="w-full glass rounded-xl px-4 py-3 bg-gray-800 bg-opacity-50 border-0 focus:ring-2 focus:ring-yellow-500 resize-none"
+                      placeholder="Подробно опишите вашу проблему или вопрос"></textarea>
+        </div>
+
+        <!-- Photo Attachment -->
+        <div>
+            <label class="block text-sm font-medium mb-2">Прикрепить фото (необязательно)</label>
+            <input type="file" name="attachment" accept="image/*"
+                   class="w-full glass rounded-xl px-4 py-3 bg-gray-800 bg-opacity-50 border-0 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-500 file:bg-opacity-20 file:text-yellow-400 hover:file:bg-opacity-30">
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="submit-ticket-btn" class="w-full glass rounded-xl py-4 font-bold text-lg bg-yellow-500 bg-opacity-20 hover:bg-opacity-30 transition-all">
+            Отправить
+        </button>
+    </form>
+</div>
+
+<!-- Ticket Detail View -->
+<div id="ticket-detail-view" class="hidden">
+    <!-- Back Button -->
+    <button onclick="switchView('list')" class="glass rounded-xl px-4 py-2 mb-4 text-sm flex items-center space-x-2">
+        <span>←</span>
+        <span>Назад к тикетам</span>
+    </button>
+
+    <!-- Ticket Info -->
+    <div id="ticket-info" class="glass rounded-2xl p-6 mb-6">
+        <!-- Will be populated dynamically -->
+    </div>
+
+    <!-- Messages -->
+    <div id="messages-container" class="space-y-4 mb-6">
+        <!-- Messages will be loaded here -->
+    </div>
+
+    <!-- Reply Form -->
+    <div id="reply-form-container" class="hidden">
+        <form id="reply-form" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium mb-2">Ваш ответ</label>
+                <textarea name="message" required rows="4"
+                          class="w-full glass rounded-xl px-4 py-3 bg-gray-800 bg-opacity-50 border-0 focus:ring-2 focus:ring-yellow-500 resize-none"
+                          placeholder="Напишите ваше сообщение"></textarea>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-2">Прикрепить фото (необязательно)</label>
+                <input type="file" name="attachment" accept="image/*"
+                       class="w-full glass rounded-xl px-4 py-3 bg-gray-800 bg-opacity-50 border-0 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-500 file:bg-opacity-20 file:text-yellow-400 hover:file:bg-opacity-30">
+            </div>
+
+            <button type="submit" id="submit-reply-btn" class="w-full glass rounded-xl py-3 font-semibold bg-yellow-500 bg-opacity-20 hover:bg-opacity-30 transition-all">
+                Отправить
+            </button>
+        </form>
+
+        <!-- Rate Limit Warning -->
+        <div id="rate-limit-warning" class="hidden glass rounded-xl p-4 mt-4 bg-orange-500 bg-opacity-10 border border-orange-500">
+            <p class="text-sm text-orange-400"></p>
+        </div>
+    </div>
+
+    <!-- Ticket Closed Message -->
+    <div id="ticket-closed-message" class="hidden glass rounded-xl p-4 bg-red-500 bg-opacity-10 border border-red-500 text-center">
+        <p class="text-red-400">Этот тикет закрыт. Вы не можете отправлять новые сообщения.</p>
+    </div>
+</div>
+
+<script>
+const userId = {{ user_id }};
+let currentView = 'list';
+let currentTicketId = null;
+let tickets = [];
+
+// View Management
+function switchView(view) {
+    currentView = view;
+
+    // Update buttons
+    document.getElementById('btn-tickets-list').classList.toggle('bg-yellow-500', view === 'list');
+    document.getElementById('btn-tickets-list').classList.toggle('bg-opacity-20', view === 'list');
+    document.getElementById('btn-tickets-list').classList.toggle('border-2', view === 'list');
+    document.getElementById('btn-tickets-list').classList.toggle('border-yellow-500', view === 'list');
+
+    document.getElementById('btn-create-ticket').classList.toggle('bg-yellow-500', view === 'create');
+    document.getElementById('btn-create-ticket').classList.toggle('bg-opacity-20', view === 'create');
+    document.getElementById('btn-create-ticket').classList.toggle('border-2', view === 'create');
+    document.getElementById('btn-create-ticket').classList.toggle('border-yellow-500', view === 'create');
+
+    // Hide all views
+    document.getElementById('tickets-list-view').classList.add('hidden');
+    document.getElementById('create-ticket-view').classList.add('hidden');
+    document.getElementById('ticket-detail-view').classList.add('hidden');
+
+    // Show selected view
+    if (view === 'list') {
+        document.getElementById('tickets-list-view').classList.remove('hidden');
+        loadTickets();
+    } else if (view === 'create') {
+        document.getElementById('create-ticket-view').classList.remove('hidden');
+    } else if (view === 'detail') {
+        document.getElementById('ticket-detail-view').classList.remove('hidden');
+    }
+}
+
+// Load Tickets
+async function loadTickets() {
+    try {
+        const response = await fetch(`/api/support/tickets/${userId}`);
+        tickets = await response.json();
+
+        document.getElementById('loading').classList.add('hidden');
+
+        if (tickets.length === 0) {
+            document.getElementById('tickets-empty').classList.remove('hidden');
+            document.getElementById('tickets-container').classList.add('hidden');
+        } else {
+            document.getElementById('tickets-empty').classList.add('hidden');
+            document.getElementById('tickets-container').classList.remove('hidden');
+            renderTickets();
+        }
+    } catch (error) {
+        console.error('Error loading tickets:', error);
+        document.getElementById('loading').innerHTML = '<p class="text-red-400">Ошибка загрузки тикетов</p>';
+    }
+}
+
+// Render Tickets
+function renderTickets() {
+    const container = document.getElementById('tickets-container');
+
+    const priorityColors = {
+        'low': 'green',
+        'medium': 'yellow',
+        'high': 'orange',
+        'urgent': 'red'
+    };
+
+    const priorityEmojis = {
+        'low': '🟢',
+        'medium': '🟡',
+        'high': '🟠',
+        'urgent': '🔴'
+    };
+
+    const statusNames = {
+        'open': 'Открыт',
+        'in_progress': 'В работе',
+        'waiting_user': 'Ждёт ответа',
+        'closed': 'Закрыт'
+    };
+
+    const statusColors = {
+        'open': 'blue',
+        'in_progress': 'purple',
+        'waiting_user': 'yellow',
+        'closed': 'gray'
+    };
+
+    container.innerHTML = tickets.map(ticket => {
+        const priorityColor = priorityColors[ticket.priority] || 'gray';
+        const statusColor = statusColors[ticket.status] || 'gray';
+        const date = new Date(ticket.created_at).toLocaleString('ru-RU');
+
+        return `
+            <div onclick="openTicket(${ticket.id})" class="glass rounded-xl p-4 cursor-pointer hover:bg-opacity-20 transition-all">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="font-bold text-lg">${ticket.subject}</h3>
+                    <span class="text-xs px-2 py-1 rounded-full bg-${priorityColor}-500 bg-opacity-20 text-${priorityColor}-400">
+                        ${priorityEmojis[ticket.priority]} ${ticket.priority.toUpperCase()}
+                    </span>
+                </div>
+
+                <div class="flex items-center space-x-3 text-sm text-gray-400 mb-2">
+                    <span class="px-2 py-1 rounded-full bg-${statusColor}-500 bg-opacity-20 text-${statusColor}-400">
+                        ${statusNames[ticket.status]}
+                    </span>
+                    <span>${date}</span>
+                    ${ticket.admin_replied ? '<span class="text-green-400">✓ Админ ответил</span>' : ''}
+                </div>
+
+                ${ticket.last_message ? `
+                    <p class="text-sm text-gray-400 truncate">
+                        ${ticket.last_message}
+                    </p>
+                ` : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+// Open Ticket Detail
+async function openTicket(ticketId) {
+    currentTicketId = ticketId;
+    switchView('detail');
+
+    const ticket = tickets.find(t => t.id === ticketId);
+
+    // Render ticket info
+    const priorityEmojis = {
+        'low': '🟢',
+        'medium': '🟡',
+        'high': '🟠',
+        'urgent': '🔴'
+    };
+
+    const statusNames = {
+        'open': 'Открыт',
+        'in_progress': 'В работе',
+        'waiting_user': 'Ждёт вашего ответа',
+        'closed': 'Закрыт'
+    };
+
+    document.getElementById('ticket-info').innerHTML = `
+        <div class="flex justify-between items-start mb-3">
+            <h2 class="text-xl font-bold">${ticket.subject}</h2>
+            <span class="text-xs px-3 py-1 rounded-full bg-yellow-500 bg-opacity-20 text-yellow-400">
+                ${priorityEmojis[ticket.priority]} ${ticket.priority.toUpperCase()}
+            </span>
+        </div>
+        <div class="text-sm text-gray-400 space-y-1">
+            <p>Статус: <span class="text-white">${statusNames[ticket.status]}</span></p>
+            <p>Создан: ${new Date(ticket.created_at).toLocaleString('ru-RU')}</p>
+        </div>
+    `;
+
+    // Load messages
+    await loadMessages(ticketId);
+
+    // Show/hide reply form based on ticket status
+    if (ticket.status === 'closed') {
+        document.getElementById('reply-form-container').classList.add('hidden');
+        document.getElementById('ticket-closed-message').classList.remove('hidden');
+    } else {
+        document.getElementById('reply-form-container').classList.remove('hidden');
+        document.getElementById('ticket-closed-message').classList.add('hidden');
+    }
+}
+
+// Load Messages
+async function loadMessages(ticketId) {
+    try {
+        const response = await fetch(`/api/support/tickets/${ticketId}/messages`);
+        const messages = await response.json();
+
+        const container = document.getElementById('messages-container');
+        container.innerHTML = messages.map(msg => {
+            const date = new Date(msg.created_at).toLocaleString('ru-RU');
+
+            if (msg.is_admin) {
+                // Admin message
+                return `
+                    <div class="glass rounded-xl p-4 border-l-4 border-yellow-500">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <span class="text-yellow-400 font-semibold">👑 Поддержка</span>
+                            <span class="text-xs text-gray-400">${date}</span>
+                        </div>
+                        <p class="text-sm whitespace-pre-wrap">${msg.message}</p>
+                        ${msg.attachment_url ? `
+                            <img src="${msg.attachment_url}" class="mt-3 rounded-xl max-w-full h-auto" />
+                        ` : ''}
+                    </div>
+                `;
+            } else {
+                // User message
+                return `
+                    <div class="glass rounded-xl p-4 border-l-4 border-blue-500">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <span class="text-blue-400 font-semibold">${msg.user_name || 'Вы'}</span>
+                            <span class="text-xs text-gray-400">${date}</span>
+                        </div>
+                        <p class="text-sm whitespace-pre-wrap">${msg.message}</p>
+                        ${msg.attachment_url ? `
+                            <img src="${msg.attachment_url}" class="mt-3 rounded-xl max-w-full h-auto" />
+                        ` : ''}
+                    </div>
+                `;
+            }
+        }).join('');
+    } catch (error) {
+        console.error('Error loading messages:', error);
+    }
+}
+
+// Create Ticket
+document.getElementById('create-ticket-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const btn = document.getElementById('submit-ticket-btn');
+    btn.disabled = true;
+    btn.textContent = 'Отправка...';
+
+    try {
+        const formData = new FormData(e.target);
+
+        const response = await fetch('/api/support/tickets', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            // Reset form
+            e.target.reset();
+
+            // Switch to tickets list
+            switchView('list');
+
+            // Show success message
+            alert('Тикет успешно создан! Мы скоро ответим вам.');
+        } else {
+            alert('Ошибка: ' + (result.error || 'Не удалось создать тикет'));
+        }
+    } catch (error) {
+        console.error('Error creating ticket:', error);
+        alert('Произошла ошибка при создании тикета');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Отправить';
+    }
+});
+
+// Send Reply
+document.getElementById('reply-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const btn = document.getElementById('submit-reply-btn');
+    btn.disabled = true;
+    btn.textContent = 'Отправка...';
+
+    try {
+        const formData = new FormData(e.target);
+
+        const response = await fetch(`/api/support/tickets/${currentTicketId}/messages`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            // Reset form
+            e.target.reset();
+
+            // Reload messages
+            await loadMessages(currentTicketId);
+
+            // Hide rate limit warning
+            document.getElementById('rate-limit-warning').classList.add('hidden');
+        } else {
+            if (response.status === 429) {
+                // Show rate limit warning
+                const warning = document.getElementById('rate-limit-warning');
+                warning.querySelector('p').textContent = result.detail || 'Пожалуйста, подождите перед отправкой следующего сообщения';
+                warning.classList.remove('hidden');
+            } else {
+                alert('Ошибка: ' + (result.detail || result.error || 'Не удалось отправить сообщение'));
+            }
+        }
+    } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Произошла ошибка при отправке сообщения');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Отправить';
+    }
+});
+
+// Event Listeners
+document.getElementById('btn-tickets-list').addEventListener('click', () => switchView('list'));
+document.getElementById('btn-create-ticket').addEventListener('click', () => switchView('create'));
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    loadTickets();
+});
+</script>
+
+<style>
+/* Smooth transitions */
+* {
+    transition: all 0.2s ease;
+}
+
+/* File input custom styling */
+input[type="file"]::file-selector-button {
+    cursor: pointer;
+}
+</style>
+
+{% endblock %}
