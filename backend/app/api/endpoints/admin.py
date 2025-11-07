@@ -1827,7 +1827,7 @@ async def delete_user(
         from app.models.bet import Bet
         from app.models.transaction import Transaction
         from app.models.mission import UserMission
-        from app.models.support_ticket import SupportTicket
+        from app.models.support import SupportTicket
         from app.models.telegram_notification import TelegramNotification
         from sqlalchemy import delete, update
 
