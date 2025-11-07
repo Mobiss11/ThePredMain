@@ -1,5 +1,22 @@
 // API_URL is defined in base.html
 
+// Show that JS loaded - visual indicator
+console.log('APP.JS LOADED - Version 2025110702');
+
+// Add visual indicator in page
+setTimeout(() => {
+    const indicator = document.createElement('div');
+    indicator.id = 'js-loaded-indicator';
+    indicator.style.cssText = 'position:fixed;top:60px;left:10px;background:green;color:white;padding:4px 8px;border-radius:4px;font-size:10px;z-index:9999;';
+    indicator.textContent = 'JS ✓';
+    document.body.appendChild(indicator);
+
+    // Remove after 3 seconds
+    setTimeout(() => {
+        indicator.remove();
+    }, 3000);
+}, 500);
+
 // Global state
 let userBalance = {
     pred: 0,
@@ -64,6 +81,9 @@ async function loadUserProfile() {
                 console.log('[loadUserProfile] ton-balance-display element not found (this is OK if not on profile page)');
             }
 
+            // Show success indicator
+            showSuccessIndicator('Профиль загружен');
+
             // Update avatar in header
             const avatar = document.getElementById('user-avatar');
             const avatarPlaceholder = document.getElementById('user-avatar-placeholder');
@@ -96,19 +116,45 @@ async function loadUserProfile() {
             console.error('[loadUserProfile] ❌ Failed - Status:', response.status);
             console.error('[loadUserProfile] ❌ Response:', errorData);
 
+            // Show visual error
+            showErrorIndicator('Profile load failed: ' + response.status);
+
             if (response.status === 401) {
                 console.error('[loadUserProfile] ❌ Not authenticated! User needs to login');
-                // Don't show alert in production - let user see empty state
-            } else {
-                alert('Ошибка загрузки профиля: ' + errorData);
             }
         }
     } catch (error) {
         console.error('[loadUserProfile] ❌ Exception:', error);
         console.error('[loadUserProfile] ❌ Stack:', error.stack);
-        alert('Ошибка загрузки профиля: ' + error.message);
+
+        // Show visual error
+        showErrorIndicator('Profile exception: ' + error.message);
     }
     return null;
+}
+
+// Show error indicator in UI
+function showErrorIndicator(message) {
+    const indicator = document.createElement('div');
+    indicator.style.cssText = 'position:fixed;bottom:80px;left:10px;right:10px;background:red;color:white;padding:8px;border-radius:8px;font-size:12px;z-index:9999;';
+    indicator.textContent = '❌ ' + message;
+    document.body.appendChild(indicator);
+
+    setTimeout(() => {
+        indicator.remove();
+    }, 5000);
+}
+
+// Show success indicator in UI
+function showSuccessIndicator(message) {
+    const indicator = document.createElement('div');
+    indicator.style.cssText = 'position:fixed;top:60px;right:10px;background:#10B981;color:white;padding:6px 12px;border-radius:8px;font-size:11px;z-index:9999;';
+    indicator.textContent = '✅ ' + message;
+    document.body.appendChild(indicator);
+
+    setTimeout(() => {
+        indicator.remove();
+    }, 2000);
 }
 
 // Load user balance (backward compatibility)
