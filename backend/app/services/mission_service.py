@@ -123,9 +123,9 @@ class MissionService:
         # Referrals count
         elif "referrals_count" in requirements:
             target = requirements["referrals_count"]
-            # Count referred users
+            # Count referred users (users who have this user as referrer)
             result = await db.execute(
-                select(func.count(User.id)).where(User.referred_by == user.id)
+                select(func.count(User.id)).where(User.referrer_id == user.id)
             )
             progress = result.scalar() or 0
             completed = progress >= target
