@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="rocket" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#EF4444;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#F59E0B;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FBBF24;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <path d="M 100 30 L 85 80 L 70 80 L 70 110 L 85 110 L 100 170 L 115 110 L 130 110 L 130 80 L 115 80 Z" fill="url(#rocket)" stroke="#DC2626" stroke-width="3"/>
+  <circle cx="100" cy="70" r="15" fill="#FFF"/>
+  <path d="M 60 120 Q 50 130 55 145 L 75 125 Z" fill="#F59E0B"/>
+  <path d="M 140 120 Q 150 130 145 145 L 125 125 Z" fill="#F59E0B"/>
+  <circle cx="95" cy="130" r="3" fill="#FFF" opacity="0.8">
+    <animate attributeName="cy" values="130;150;130" dur="1s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="105" cy="140" r="3" fill="#FFF" opacity="0.8">
+    <animate attributeName="cy" values="140;160;140" dur="1s" repeatCount="indefinite"/>
+  </circle>
+</svg>

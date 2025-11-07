@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="star" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FBBF24;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <path d="M 100 20 L 115 70 L 170 70 L 125 105 L 145 160 L 100 125 L 55 160 L 75 105 L 30 70 L 85 70 Z" fill="url(#star)" stroke="#F59E0B" stroke-width="3"/>
+  <circle cx="100" cy="80" r="30" fill="none" stroke="#FBBF24" stroke-width="4" stroke-dasharray="5,5"/>
+  <text x="100" y="195" font-size="18" fill="#F59E0B" text-anchor="middle" font-weight="bold">MASTER</text>
+</svg>

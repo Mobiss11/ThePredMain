@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <radialGradient id="glow">
+      <stop offset="0%" style="stop-color:#FDE047;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FDE047;stop-opacity:0" />
+    </radialGradient>
+    <linearGradient id="crown" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FBBF24;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="80" fill="url(#glow)" opacity="0.5"/>
+  <path d="M 40 120 L 60 70 L 80 90 L 100 50 L 120 90 L 140 70 L 160 120 Z" fill="url(#crown)" stroke="#F59E0B" stroke-width="3"/>
+  <rect x="45" y="120" width="110" height="25" rx="5" fill="url(#crown)" stroke="#F59E0B" stroke-width="2"/>
+  <circle cx="100" cy="50" r="8" fill="#FDE047"/>
+  <circle cx="60" cy="70" r="6" fill="#FDE047"/>
+  <circle cx="140" cy="70" r="6" fill="#FDE047"/>
+  <text x="100" y="185" font-size="20" fill="#F59E0B" text-anchor="middle" font-weight="bold">LEGEND</text>
+</svg>

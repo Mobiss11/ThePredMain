@@ -16,13 +16,29 @@ from app.core.config import settings
 ICONS_DIR = Path(__file__).parent / 'webapp' / 'static' / 'icons' / 'missions'
 
 ICON_FILES = [
+    # Original 7
     'first_bet.svg',
     'beginner.svg',
     'first_win.svg',
     'win_streak.svg',
     'active_trader.svg',
     'crypto_lover.svg',
-    'referral.svg'
+    'referral.svg',
+
+    # New icons
+    'daily_bet.svg',
+    'daily_win.svg',
+    'daily_login.svg',
+    'weekly_marathon.svg',
+    'weekly_master.svg',
+    'fire_streak.svg',
+    'veteran.svg',
+    'legend.svg',
+    'sports_fan.svg',
+    'politics_expert.svg',
+    'collector.svg',
+    'unstoppable.svg',
+    'subscription.svg'
 ]
 
 
