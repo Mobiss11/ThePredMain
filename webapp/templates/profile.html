@@ -330,11 +330,68 @@ async function loadReferralStats(userId) {
 // Update rank progress section dynamically
 function updateRankProgress(currentRank, totalBets) {
     const ranks = [
-        { name: 'Bronze', icon: '🥉', min: 0, max: 100, text: 'Бронза' },
-        { name: 'Silver', icon: '🥈', min: 100, max: 500, text: 'Серебро' },
-        { name: 'Gold', icon: '🥇', min: 500, max: 2000, text: 'Золото' },
-        { name: 'Diamond', icon: '💎', min: 2000, max: 10000, text: 'Алмаз' },
-        { name: 'Legend', icon: '🌟', min: 10000, max: Infinity, text: 'Легенда' }
+        {
+            name: 'Bronze',
+            icon: '🥉',
+            min: 0,
+            max: 100,
+            text: 'Бронза',
+            benefits: [
+                'Комиссия: 1% PRED, 5% TON',
+                'Базовые функции платформы'
+            ]
+        },
+        {
+            name: 'Silver',
+            icon: '🥈',
+            min: 100,
+            max: 500,
+            text: 'Серебро',
+            benefits: [
+                'Комиссия: 0.8% PRED, 4.5% TON',
+                'Приоритетная поддержка'
+            ]
+        },
+        {
+            name: 'Gold',
+            icon: '🥇',
+            min: 500,
+            max: 2000,
+            text: 'Золото',
+            benefits: [
+                'Комиссия: 0.6% PRED, 4% TON',
+                '✨ Создание собственных событий',
+                'Расширенная аналитика'
+            ]
+        },
+        {
+            name: 'Diamond',
+            icon: '💎',
+            min: 2000,
+            max: 10000,
+            text: 'Алмаз',
+            benefits: [
+                'Комиссия: 0.4% PRED, 3% TON',
+                '✨ Создание событий',
+                '🚀 Продвижение событий в ленте',
+                'VIP поддержка 24/7'
+            ]
+        },
+        {
+            name: 'Legend',
+            icon: '🌟',
+            min: 10000,
+            max: Infinity,
+            text: 'Легенда',
+            benefits: [
+                'Комиссия: 0.2% PRED, 2% TON',
+                '✨ Создание событий',
+                '🚀 Продвижение в топ ленты',
+                '⭐ Приоритетные места',
+                '⏰ Длительное удержание в ленте',
+                '👑 Эксклюзивный бейдж'
+            ]
+        }
     ];
 
     // Find current rank index
@@ -353,27 +410,54 @@ function updateRankProgress(currentRank, totalBets) {
         const isPassed = index < currentRankIndex;
         const isNext = index === currentRankIndex + 1;
 
-        let cardClass = 'glass rounded-xl p-4';
-        if (isPassed) cardClass += ' opacity-50';
-        if (isCurrent) cardClass += ' border-2 border-yellow-400';
+        let cardClass = 'glass rounded-xl p-5';
+        if (isPassed) cardClass += ' opacity-50 border border-gray-700';
+        if (isCurrent) cardClass += ' border-2 border-yellow-400 shadow-lg shadow-yellow-400/20';
+        if (!isPassed && !isCurrent) cardClass += ' border border-gray-800';
 
         let content = `
-            <div class="flex items-center justify-between mb-2">
-                <span class="font-bold ${isCurrent ? 'text-yellow-400' : ''}">${rank.icon} ${rank.text}</span>
-                ${isCurrent ? '<span class="text-sm text-green-400">ТЕКУЩИЙ</span>' : ''}
-                ${isPassed ? '<span class="text-sm text-gray-500">✓ ПРОЙДЕН</span>' : ''}
-                ${!isCurrent && !isPassed ? `<span class="text-sm text-gray-400">${rank.min}${rank.max === Infinity ? '+' : `-${rank.max}`} прогнозов</span>` : ''}
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center space-x-2">
+                    <span class="text-2xl">${rank.icon}</span>
+                    <span class="font-bold text-lg ${isCurrent ? 'text-yellow-400' : ''}">${rank.text}</span>
+                </div>
+                <div>
+                    ${isCurrent ? '<span class="text-xs px-2 py-1 rounded-full bg-green-600 text-white font-bold">ТЕКУЩИЙ</span>' : ''}
+                    ${isPassed ? '<span class="text-xs px-2 py-1 rounded-full bg-gray-600 text-gray-300 font-bold">✓ ПРОЙДЕН</span>' : ''}
+                    ${!isCurrent && !isPassed ? `<span class="text-xs text-gray-400">${rank.min}${rank.max === Infinity ? '+' : `-${rank.max}`} прогнозов</span>` : ''}
+                </div>
             </div>
         `;
 
+        // Show benefits
+        content += `
+            <div class="space-y-1.5 mb-3">
+                ${rank.benefits.map(benefit => `
+                    <div class="flex items-start space-x-2">
+                        <span class="text-xs ${isCurrent ? 'text-green-400' : 'text-gray-400'} mt-0.5">•</span>
+                        <span class="text-xs ${isCurrent ? 'text-gray-200' : 'text-gray-400'}">${benefit}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        // Show progress bar for current rank
         if (isCurrent && nextRankData) {
             const progress = ((totalBets - rank.min) / (rank.max - rank.min)) * 100;
             const remaining = rank.max - totalBets;
             content += `
-                <div class="w-full bg-gray-800 rounded-full h-2 mb-2">
-                    <div class="gold-gradient h-2 rounded-full" style="width: ${Math.min(progress, 100)}%"></div>
+                <div class="mt-3 pt-3 border-t border-gray-700">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs text-gray-400">Прогресс</span>
+                        <span class="text-xs font-bold text-yellow-400">${totalBets} / ${rank.max}</span>
+                    </div>
+                    <div class="w-full bg-gray-800 rounded-full h-2.5 mb-2">
+                        <div class="gold-gradient h-2.5 rounded-full transition-all duration-500" style="width: ${Math.min(progress, 100)}%"></div>
+                    </div>
+                    <div class="text-xs text-gray-400 text-center">
+                        <span class="text-yellow-400 font-bold">${remaining}</span> прогнозов до ранга ${nextRankData.icon} ${nextRankData.text}
+                    </div>
                 </div>
-                <div class="text-xs text-gray-400">${totalBets} / ${rank.max} прогнозов (${remaining} до ${nextRankData.text})</div>
             `;
         }
 
