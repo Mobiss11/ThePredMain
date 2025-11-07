@@ -42,13 +42,6 @@
             </button>
         </div>
     </div>
-
-    <!-- Debug: Clear Session Button -->
-    <div class="mt-4">
-        <button onclick="clearSessionAndReauth()" class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition">
-            🔄 Сбросить Сессию (Debug)
-        </button>
-    </div>
 </div>
 
 <!-- Stats -->
@@ -176,6 +169,80 @@
         <div class="glass rounded-xl p-4 text-center">
             <div class="text-gray-400 text-sm">Загрузка...</div>
         </div>
+    </div>
+</div>
+
+<!-- AI Assistant - Coming Soon -->
+<div class="glass rounded-2xl p-6 mb-6 relative overflow-hidden" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(109, 40, 217, 0.15) 100%); border: 2px solid rgba(139, 92, 246, 0.3);">
+    <!-- Lock overlay -->
+    <div class="absolute inset-0 backdrop-blur-sm bg-black bg-opacity-40 flex items-center justify-center z-10">
+        <div class="text-center">
+            <div class="text-6xl mb-3">🔒</div>
+            <div class="text-xl font-bold text-purple-300 mb-1">Скоро будет доступно</div>
+            <div class="text-sm text-gray-400">Функция в разработке</div>
+        </div>
+    </div>
+
+    <!-- Content (blurred behind overlay) -->
+    <div class="flex items-start space-x-4 mb-6">
+        <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl" style="background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);">
+            🤖
+        </div>
+        <div class="flex-1">
+            <h2 class="text-2xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent">
+                Персональный AI Ассистент
+            </h2>
+            <p class="text-gray-300 text-sm">
+                Умный помощник для анализа событий и прогнозирования
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-3 mb-6">
+        <div class="glass rounded-xl p-4" style="border-left: 3px solid #8B5CF6;">
+            <div class="flex items-start space-x-3">
+                <div class="text-2xl">📊</div>
+                <div>
+                    <div class="font-semibold text-purple-300 mb-1">Анализ данных в реальном времени</div>
+                    <div class="text-xs text-gray-400">AI анализирует исторические данные и текущие тренды для точных предсказаний</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass rounded-xl p-4" style="border-left: 3px solid #8B5CF6;">
+            <div class="flex items-start space-x-3">
+                <div class="text-2xl">🎯</div>
+                <div>
+                    <div class="font-semibold text-purple-300 mb-1">Персональные рекомендации</div>
+                    <div class="text-xs text-gray-400">Получайте советы по ставкам на основе вашего стиля и истории прогнозов</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass rounded-xl p-4" style="border-left: 3px solid #8B5CF6;">
+            <div class="flex items-start space-x-3">
+                <div class="text-2xl">💡</div>
+                <div>
+                    <div class="font-semibold text-purple-300 mb-1">Умные инсайты</div>
+                    <div class="text-xs text-gray-400">Узнавайте о скрытых закономерностях и возможностях для выигрыша</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass rounded-xl p-4" style="border-left: 3px solid #8B5CF6;">
+            <div class="flex items-start space-x-3">
+                <div class="text-2xl">⚡️</div>
+                <div>
+                    <div class="font-semibold text-purple-300 mb-1">Мгновенные уведомления</div>
+                    <div class="text-xs text-gray-400">Получайте алерты о важных событиях и благоприятных моментах для ставок</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass rounded-xl p-4 text-center" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(109, 40, 217, 0.3) 100%);">
+        <div class="text-sm text-purple-300 font-semibold mb-1">🚀 Ожидается запуск</div>
+        <div class="text-xs text-gray-400">AI помощник станет доступен пользователям с рангом Золото и выше</div>
     </div>
 </div>
 {% endblock %}
