@@ -94,6 +94,45 @@
         </div>
     </div>
 </div>
+
+<!-- Delete User Confirmation Modal -->
+<div id="delete-user-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50" style="display: none;">
+    <div class="bg-dark-800 rounded-xl p-6 max-w-md w-full">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-red-400">⚠️ Подтверждение Удаления</h2>
+            <button onclick="closeDeleteModal()" class="text-gray-400 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="mb-6">
+            <p class="text-gray-300 mb-4">Вы уверены, что хотите удалить пользователя <strong id="delete-user-name"></strong>?</p>
+            <p class="text-red-400 text-sm mb-2"><strong>Это действие необратимо!</strong></p>
+            <p class="text-gray-400 text-sm">Будут удалены:</p>
+            <ul class="text-gray-400 text-sm list-disc list-inside mt-2">
+                <li>Все ставки пользователя</li>
+                <li>Все транзакции</li>
+                <li>Прогресс миссий</li>
+                <li>Тикеты поддержки</li>
+                <li>Уведомления</li>
+                <li>Связь с рефералами</li>
+            </ul>
+        </div>
+
+        <input type="hidden" id="delete-user-id">
+
+        <div class="flex gap-3">
+            <button onclick="closeDeleteModal()" class="flex-1 bg-dark-700 rounded-lg py-3 font-bold hover:bg-opacity-80 transition">
+                Отмена
+            </button>
+            <button onclick="deleteUser()" class="flex-1 bg-red-600 rounded-lg py-3 font-bold hover:bg-red-700 transition">
+                Удалить
+            </button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 {% block scripts %}
 <script>
@@ -136,8 +175,11 @@ async function loadUsers() {
                     <button onclick="editUser(${u.id})" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm mr-2">
                         Редактировать
                     </button>
-                    <button onclick="viewUser(${u.id})" class="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-sm">
+                    <button onclick="viewUser(${u.id})" class="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-sm mr-2">
                         Просмотр
+                    </button>
+                    <button onclick="confirmDeleteUser(${u.id}, '${u.username || u.first_name || 'User #' + u.id}')" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm">
+                        Удалить
                     </button>
                 </td>
             </tr>
@@ -253,6 +295,52 @@ async function viewUser(id) {
 
 function closeViewModal() {
     document.getElementById('view-user-modal').style.display = 'none';
+}
+
+// Delete user functions
+function confirmDeleteUser(id, name) {
+    document.getElementById('delete-user-id').value = id;
+    document.getElementById('delete-user-name').textContent = name;
+    document.getElementById('delete-user-modal').style.display = 'flex';
+}
+
+function closeDeleteModal() {
+    document.getElementById('delete-user-modal').style.display = 'none';
+}
+
+async function deleteUser() {
+    const userId = document.getElementById('delete-user-id').value;
+    const userName = document.getElementById('delete-user-name').textContent;
+
+    if (!userId) return;
+
+    try {
+        console.log('Deleting user:', userId);
+
+        const response = await fetch(`${API_URL}/admin/users/${userId}`, {
+            method: 'DELETE'
+        });
+
+        console.log('Delete response status:', response.status);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Delete error:', errorText);
+            throw new Error('Failed to delete user: ' + errorText);
+        }
+
+        const result = await response.json();
+        console.log('Delete result:', result);
+
+        showToast(`User ${userName} deleted successfully`, 'success');
+        closeDeleteModal();
+
+        // Reload users list
+        loadUsers();
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        showToast('Failed to delete user: ' + error.message, 'error');
+    }
 }
 
 // Handle edit form submission

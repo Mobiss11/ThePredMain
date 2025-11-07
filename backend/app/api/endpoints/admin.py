@@ -1791,3 +1791,100 @@ async def get_missions_stats(db: AsyncSession = Depends(get_db)):
         "total_completions": total_completions,
         "total_claims": total_claims
     }
+
+
+# ============ User Deletion ============
+
+@router.delete("/users/{user_id}")
+async def delete_user(
+    user_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Delete a user with CASCADE deletion of all related records
+
+    Steps:
+    1. Delete all user's bets
+    2. Delete all user's transactions
+    3. Delete all user's missions
+    4. Delete all user's support tickets
+    5. Delete all user's telegram notifications
+    6. Clear referrer_id for users who were referred by this user
+    7. Delete the user
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+
+    # Get user
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    try:
+        # Import necessary models
+        from app.models.bet import Bet
+        from app.models.transaction import Transaction
+        from app.models.mission import UserMission
+        from app.models.support_ticket import SupportTicket
+        from app.models.telegram_notification import TelegramNotification
+        from sqlalchemy import delete, update
+
+        # 1. Delete all user's bets
+        bets_result = await db.execute(delete(Bet).where(Bet.user_id == user_id))
+        deleted_bets = bets_result.rowcount
+        logger.info(f"Deleted {deleted_bets} bets for user {user_id}")
+
+        # 2. Delete all user's transactions
+        transactions_result = await db.execute(delete(Transaction).where(Transaction.user_id == user_id))
+        deleted_transactions = transactions_result.rowcount
+        logger.info(f"Deleted {deleted_transactions} transactions for user {user_id}")
+
+        # 3. Delete all user's missions
+        missions_result = await db.execute(delete(UserMission).where(UserMission.user_id == user_id))
+        deleted_missions = missions_result.rowcount
+        logger.info(f"Deleted {deleted_missions} user missions for user {user_id}")
+
+        # 4. Delete all user's support tickets
+        tickets_result = await db.execute(delete(SupportTicket).where(SupportTicket.user_id == user_id))
+        deleted_tickets = tickets_result.rowcount
+        logger.info(f"Deleted {deleted_tickets} support tickets for user {user_id}")
+
+        # 5. Delete all user's telegram notifications
+        notifications_result = await db.execute(delete(TelegramNotification).where(TelegramNotification.user_id == user_id))
+        deleted_notifications = notifications_result.rowcount
+        logger.info(f"Deleted {deleted_notifications} telegram notifications for user {user_id}")
+
+        # 6. Clear referrer_id for users who were referred by this user
+        referrals_result = await db.execute(
+            update(User)
+            .where(User.referrer_id == user_id)
+            .values(referrer_id=None)
+        )
+        cleared_referrals = referrals_result.rowcount
+        logger.info(f"Cleared referrer_id for {cleared_referrals} users")
+
+        # 7. Delete the user
+        await db.delete(user)
+        await db.commit()
+
+        logger.info(f"Successfully deleted user {user_id} (telegram_id: {user.telegram_id})")
+
+        return {
+            "success": True,
+            "message": f"User {user_id} deleted successfully",
+            "deleted_records": {
+                "bets": deleted_bets,
+                "transactions": deleted_transactions,
+                "missions": deleted_missions,
+                "support_tickets": deleted_tickets,
+                "telegram_notifications": deleted_notifications,
+                "cleared_referrals": cleared_referrals
+            }
+        }
+
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Error deleting user {user_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to delete user: {str(e)}")
