@@ -245,6 +245,27 @@ async def logout():
     return redirect(url_for('index'))
 
 
+@app.route('/debug/session')
+async def debug_session():
+    """Debug: Show current session"""
+    return jsonify({
+        "session": dict(session),
+        "dev_mode": app.config['DEV_MODE']
+    })
+
+
+@app.route('/debug/clear-session')
+async def debug_clear_session():
+    """Debug: Force clear session"""
+    old_session = dict(session)
+    session.clear()
+    return jsonify({
+        "success": True,
+        "message": "Session cleared. Please refresh and re-authenticate.",
+        "old_session": old_session
+    })
+
+
 @app.route('/markets')
 @auth_required
 async def markets():
@@ -378,9 +399,12 @@ async def api_profile():
         print(f"[/api/profile] Fetching profile for user_id: {user_id}")
         profile = await api_client.get_user_profile(int(user_id))
         print(f"[/api/profile] Profile loaded: {profile.get('id') if profile else None}")
+        print(f"[/api/profile] Profile data: balance={profile.get('balance')}, rank={profile.get('rank')}, total_bets={profile.get('total_bets')}")
         return jsonify(profile)
     except Exception as e:
         print(f"[/api/profile] Error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 
