@@ -248,6 +248,26 @@ async def api_admin_user_activity(user_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/admin/users/<int:user_id>', methods=['DELETE'])
+@login_required
+async def api_admin_delete_user(user_id):
+    """Proxy user deletion request to backend"""
+    try:
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.delete(
+                f"{app.config['API_URL']}/admin/users/{user_id}"
+            ) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    return jsonify(result)
+                else:
+                    error_text = await response.text()
+                    return jsonify({"error": error_text}), response.status
+    except Exception as e:
+        print(f"Error deleting user: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/admin/markets/pending', methods=['GET'])
 @login_required
 async def api_admin_pending_markets():
