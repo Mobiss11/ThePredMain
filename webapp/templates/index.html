@@ -231,9 +231,11 @@ function initializeCreateEventButton() {
         // Show locked button for non-Gold users
         container.innerHTML = `
             <div class="relative">
-                <button disabled class="w-full glass rounded-xl px-6 py-3.5 font-bold text-base text-gray-500 cursor-not-allowed flex items-center justify-center space-x-2 opacity-60">
-                    <span>🔒</span>
-                    <span>Создать Событие</span>
+                <button disabled class="w-full glass rounded-xl px-6 py-4 font-bold text-base text-gray-500 cursor-not-allowed flex flex-col items-center justify-center opacity-60">
+                    <div class="flex items-center space-x-2 mb-1">
+                        <span>🔒</span>
+                        <span>Создать Событие</span>
+                    </div>
                     <span class="text-xs text-gray-400">(доступно с Gold ранга)</span>
                 </button>
             </div>
