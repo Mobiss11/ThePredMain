@@ -9,28 +9,55 @@
     <p class="text-gray-400">Выполняй задания и зарабатывай награды!</p>
 </div>
 
-<!-- Tabs -->
-<div class="flex space-x-2 mb-6 overflow-x-auto">
-    <button onclick="switchTab('daily')" id="tab-daily" class="tab-button px-6 py-2 rounded-lg bg-yellow-600 text-black font-bold whitespace-nowrap">
-        📅 Ежедневные
-    </button>
-    <button onclick="switchTab('weekly')" id="tab-weekly" class="tab-button px-6 py-2 rounded-lg glass font-bold whitespace-nowrap">
-        📊 Недельные
-    </button>
-    <button onclick="switchTab('achievement')" id="tab-achievement" class="tab-button px-6 py-2 rounded-lg glass font-bold whitespace-nowrap">
-        🏆 Достижения
-    </button>
-</div>
-
 <!-- Loading -->
 <div id="loading" class="text-center py-8">
     <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
     <p class="text-gray-400 mt-2">Загрузка миссий...</p>
 </div>
 
-<!-- Missions Container -->
-<div id="missions-container" class="space-y-4 hidden">
-    <!-- Missions will be loaded here -->
+<!-- Missions Sections -->
+<div id="missions-sections" class="space-y-8 hidden">
+    <!-- Daily Missions Section -->
+    <div id="daily-section" class="hidden">
+        <div class="flex items-center mb-4">
+            <span class="text-3xl mr-3">📅</span>
+            <div>
+                <h2 class="text-xl font-bold">Ежедневные Задания</h2>
+                <p class="text-gray-400 text-sm">Обновляются каждый день в 00:00 UTC</p>
+            </div>
+        </div>
+        <div id="daily-missions" class="space-y-4">
+            <!-- Daily missions will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Weekly Missions Section -->
+    <div id="weekly-section" class="hidden">
+        <div class="flex items-center mb-4">
+            <span class="text-3xl mr-3">📊</span>
+            <div>
+                <h2 class="text-xl font-bold">Недельные Задания</h2>
+                <p class="text-gray-400 text-sm">Обновляются каждый понедельник в 00:00 UTC</p>
+            </div>
+        </div>
+        <div id="weekly-missions" class="space-y-4">
+            <!-- Weekly missions will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Achievements Section -->
+    <div id="achievement-section" class="hidden">
+        <div class="flex items-center mb-4">
+            <span class="text-3xl mr-3">🏆</span>
+            <div>
+                <h2 class="text-xl font-bold">Достижения</h2>
+                <p class="text-gray-400 text-sm">Постоянные достижения за игровой прогресс</p>
+            </div>
+        </div>
+        <div id="achievement-missions" class="space-y-4">
+            <!-- Achievement missions will be loaded here -->
+        </div>
+    </div>
 </div>
 
 <!-- Empty State -->
@@ -44,25 +71,9 @@
 
 {% block extra_scripts %}
 <script>
-let currentTab = 'daily';
 let allMissions = [];
 const userId = {{ user_id }};
-
-// Switch tab
-function switchTab(tab) {
-    currentTab = tab;
-
-    // Update tab styles
-    document.querySelectorAll('.tab-button').forEach(btn => {
-        btn.classList.remove('bg-yellow-600', 'text-black');
-        btn.classList.add('glass');
-    });
-    document.getElementById(`tab-${tab}`).classList.remove('glass');
-    document.getElementById(`tab-${tab}`).classList.add('bg-yellow-600', 'text-black');
-
-    // Filter and render missions
-    renderMissions();
-}
+const S3_BASE_URL = 'https://thepred.store/thepred-events/missions';
 
 // Load missions
 async function loadMissions() {
@@ -87,22 +98,47 @@ async function loadMissions() {
     }
 }
 
-// Render missions
+// Render missions by sections
 function renderMissions() {
-    const filtered = allMissions.filter(m => m.type === currentTab);
-    const container = document.getElementById('missions-container');
+    const dailyMissions = allMissions.filter(m => m.type === 'daily');
+    const weeklyMissions = allMissions.filter(m => m.type === 'weekly');
+    const achievementMissions = allMissions.filter(m => m.type === 'achievement');
+
+    const sectionsContainer = document.getElementById('missions-sections');
     const emptyState = document.getElementById('empty-state');
 
-    if (filtered.length === 0) {
-        container.classList.add('hidden');
+    if (allMissions.length === 0) {
+        sectionsContainer.classList.add('hidden');
         emptyState.classList.remove('hidden');
         return;
     }
 
-    container.classList.remove('hidden');
+    sectionsContainer.classList.remove('hidden');
     emptyState.classList.add('hidden');
 
-    container.innerHTML = filtered.map(mission => renderMissionCard(mission)).join('');
+    // Render daily missions
+    if (dailyMissions.length > 0) {
+        document.getElementById('daily-section').classList.remove('hidden');
+        document.getElementById('daily-missions').innerHTML = dailyMissions.map(m => renderMissionCard(m)).join('');
+    } else {
+        document.getElementById('daily-section').classList.add('hidden');
+    }
+
+    // Render weekly missions
+    if (weeklyMissions.length > 0) {
+        document.getElementById('weekly-section').classList.remove('hidden');
+        document.getElementById('weekly-missions').innerHTML = weeklyMissions.map(m => renderMissionCard(m)).join('');
+    } else {
+        document.getElementById('weekly-section').classList.add('hidden');
+    }
+
+    // Render achievement missions
+    if (achievementMissions.length > 0) {
+        document.getElementById('achievement-section').classList.remove('hidden');
+        document.getElementById('achievement-missions').innerHTML = achievementMissions.map(m => renderMissionCard(m)).join('');
+    } else {
+        document.getElementById('achievement-section').classList.add('hidden');
+    }
 }
 
 // Render single mission card
@@ -113,10 +149,26 @@ function renderMissionCard(mission) {
     const completed = mission.completed;
     const claimed = mission.claimed;
 
-    // Get icon
-    const icon = mission.custom_icon_url
-        ? `<img src="${mission.custom_icon_url}" class="w-8 h-8 object-contain" />`
-        : `<span class="text-2xl">${mission.icon || '🎯'}</span>`;
+    // Get icon - check if it's custom URL, S3 icon name, or emoji
+    let icon;
+    if (mission.custom_icon_url) {
+        // Custom URL provided
+        icon = `<img src="${mission.custom_icon_url}" class="w-12 h-12 object-contain" alt="icon" />`;
+    } else if (mission.icon) {
+        // Check if it's an emoji (single character or contains emoji unicode)
+        const isEmoji = /(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u.test(mission.icon) || mission.icon.length <= 2;
+        if (isEmoji) {
+            // It's an emoji
+            icon = `<span class="text-3xl">${mission.icon}</span>`;
+        } else {
+            // It's an S3 icon name
+            const iconUrl = `${S3_BASE_URL}/${mission.icon}.svg`;
+            icon = `<img src="${iconUrl}" class="w-12 h-12 object-contain" alt="${mission.icon}" />`;
+        }
+    } else {
+        // Default icon
+        icon = `<span class="text-3xl">🎯</span>`;
+    }
 
     // Get currency emoji
     const currencyEmoji = mission.reward_currency === 'TON' ? '💎' : '💰';
@@ -201,7 +253,11 @@ function getRequirementText(requirements) {
 async function claimReward(missionId) {
     try {
         const response = await fetch(`/api/missions/claim/${userId}/${missionId}`, {
-            method: 'POST'
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
         });
 
         if (!response.ok) {
@@ -237,7 +293,11 @@ async function openChannel(channelUrl, missionId) {
     setTimeout(async () => {
         try {
             const response = await fetch(`/api/missions/check-subscription/${userId}/${missionId}`, {
-                method: 'POST'
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
             });
 
             if (response.ok) {
