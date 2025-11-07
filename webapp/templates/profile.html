@@ -42,6 +42,13 @@
             </button>
         </div>
     </div>
+
+    <!-- Debug: Clear Session Button -->
+    <div class="mt-4">
+        <button onclick="clearSessionAndReauth()" class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition">
+            🔄 Сбросить Сессию (Debug)
+        </button>
+    </div>
 </div>
 
 <!-- Stats -->
@@ -680,6 +687,23 @@ async function loadAchievements() {
         const container = document.getElementById('achievements-container');
         if (container) {
             container.innerHTML = '<div class="col-span-2 glass rounded-xl p-4 text-center text-red-400 text-sm">Ошибка загрузки достижений</div>';
+        }
+    }
+}
+
+// Clear session and re-authenticate
+async function clearSessionAndReauth() {
+    if (confirm('Сбросить сессию и заново авторизоваться?')) {
+        try {
+            const response = await fetch('/debug/clear-session');
+            const result = await response.json();
+            if (result.success) {
+                alert('Сессия очищена! Сейчас произойдет перезагрузка для повторной авторизации.');
+                // Redirect to home to trigger re-authentication
+                window.location.href = '/';
+            }
+        } catch (error) {
+            alert('Ошибка: ' + error.message);
         }
     }
 }
