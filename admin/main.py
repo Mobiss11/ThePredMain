@@ -97,6 +97,12 @@ async def leaderboard():
     return await render_template('leaderboard.html')
 
 
+@app.route('/support')
+@login_required
+async def support():
+    return await render_template('support.html')
+
+
 @app.route('/broadcast')
 @login_required
 async def broadcast():
@@ -563,6 +569,97 @@ async def api_admin_queue_stats():
                 return jsonify(result)
     except Exception as e:
         print(f"Error fetching queue stats: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+# ============ Support API Routes ============
+
+@app.route('/api/admin/support/tickets', methods=['GET'])
+@login_required
+async def api_admin_support_tickets():
+    """Proxy support tickets request to backend"""
+    try:
+        status = request.args.get('status', '')
+        priority = request.args.get('priority', '')
+        limit = request.args.get('limit', 100)
+        offset = request.args.get('offset', 0)
+
+        url = f"{app.config['API_URL']}/support/admin/tickets?limit={limit}&offset={offset}"
+        if status:
+            url += f"&status={status}"
+        if priority:
+            url += f"&priority={priority}"
+
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.get(url) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching support tickets: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/admin/support/tickets/<int:ticket_id>/reply', methods=['POST'])
+@login_required
+async def api_admin_support_reply(ticket_id):
+    """Proxy support reply request to backend"""
+    try:
+        form = await request.form
+        files = await request.files
+
+        data = aiohttp.FormData()
+        data.add_field('message', form.get('message'))
+
+        if 'attachment' in files and files['attachment'].filename:
+            attachment = files['attachment']
+            attachment_bytes = attachment.read()
+            data.add_field('attachment', attachment_bytes,
+                          filename=attachment.filename,
+                          content_type=attachment.content_type)
+
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.post(
+                f"{app.config['API_URL']}/support/admin/tickets/{ticket_id}/reply",
+                data=data
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error sending reply: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/admin/support/tickets/<int:ticket_id>/status', methods=['PUT'])
+@login_required
+async def api_admin_support_status(ticket_id):
+    """Proxy support status update request to backend"""
+    try:
+        status = request.args.get('status')
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.put(
+                f"{app.config['API_URL']}/support/admin/tickets/{ticket_id}/status?status={status}"
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error updating ticket status: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/support/tickets/<int:ticket_id>/messages', methods=['GET'])
+@login_required
+async def api_support_messages(ticket_id):
+    """Proxy support messages request to backend"""
+    try:
+        user_id = request.args.get('user_id')
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.get(
+                f"{app.config['API_URL']}/support/tickets/{ticket_id}/messages?user_id={user_id}"
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching messages: {e}")
         return jsonify({"error": str(e)}), 500
 
 
