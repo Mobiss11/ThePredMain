@@ -12,36 +12,56 @@ window.userProfile = null;
 // Load user profile
 async function loadUserProfile() {
     try {
-        console.log('Loading user profile from:', `${API_URL}/profile`);
+        console.log('[loadUserProfile] Starting...');
+        console.log('[loadUserProfile] API_URL:', API_URL);
+        console.log('[loadUserProfile] Fetching from:', `${API_URL}/profile`);
+
         const response = await fetch(`${API_URL}/profile`);
-        console.log('Profile response status:', response.status);
+        console.log('[loadUserProfile] Response status:', response.status);
+        console.log('[loadUserProfile] Response ok:', response.ok);
 
         if (response.ok) {
             userProfile = await response.json();
             window.userProfile = userProfile;
-            console.log('User profile loaded successfully:', userProfile);
+            console.log('[loadUserProfile] ✅ Profile loaded successfully:', userProfile);
+            console.log('[loadUserProfile] pred_balance:', userProfile.pred_balance, 'type:', typeof userProfile.pred_balance);
+            console.log('[loadUserProfile] ton_balance:', userProfile.ton_balance, 'type:', typeof userProfile.ton_balance);
 
             // Update balance
             userBalance.pred = userProfile.pred_balance;
             userBalance.ton = userProfile.ton_balance;
+            console.log('[loadUserProfile] userBalance updated:', userBalance);
 
             // Update balance displays
             const predBalance = document.getElementById('pred-balance');
+            console.log('[loadUserProfile] pred-balance element:', predBalance);
             if (predBalance) {
-                console.log('Updating pred-balance to:', userProfile.pred_balance);
-                predBalance.innerText = formatNumber(userProfile.pred_balance);
+                const formattedBalance = formatNumber(userProfile.pred_balance);
+                console.log('[loadUserProfile] Formatted pred_balance:', formattedBalance);
+                predBalance.innerText = formattedBalance;
+                console.log('[loadUserProfile] ✅ Updated pred-balance to:', formattedBalance);
+            } else {
+                console.error('[loadUserProfile] ❌ pred-balance element NOT FOUND!');
             }
 
             const predBalanceDisplay = document.getElementById('pred-balance-display');
+            console.log('[loadUserProfile] pred-balance-display element:', predBalanceDisplay);
             if (predBalanceDisplay) {
-                console.log('Updating pred-balance-display to:', userProfile.pred_balance);
-                predBalanceDisplay.innerText = formatNumber(userProfile.pred_balance);
+                const formattedBalance = formatNumber(userProfile.pred_balance);
+                console.log('[loadUserProfile] ✅ Updated pred-balance-display to:', formattedBalance);
+                predBalanceDisplay.innerText = formattedBalance;
+            } else {
+                console.log('[loadUserProfile] pred-balance-display element not found (this is OK if not on profile page)');
             }
 
             const tonBalanceDisplay = document.getElementById('ton-balance-display');
+            console.log('[loadUserProfile] ton-balance-display element:', tonBalanceDisplay);
             if (tonBalanceDisplay) {
-                console.log('Updating ton-balance-display to:', userProfile.ton_balance);
-                tonBalanceDisplay.innerText = formatNumber(userProfile.ton_balance);
+                const formattedBalance = formatNumber(userProfile.ton_balance);
+                console.log('[loadUserProfile] ✅ Updated ton-balance-display to:', formattedBalance);
+                tonBalanceDisplay.innerText = formattedBalance;
+            } else {
+                console.log('[loadUserProfile] ton-balance-display element not found (this is OK if not on profile page)');
             }
 
             // Update avatar in header
@@ -73,18 +93,19 @@ async function loadUserProfile() {
             return userProfile;
         } else {
             const errorData = await response.text();
-            console.error('Failed to load profile - Status:', response.status);
-            console.error('Failed to load profile - Response:', errorData);
+            console.error('[loadUserProfile] ❌ Failed - Status:', response.status);
+            console.error('[loadUserProfile] ❌ Response:', errorData);
 
             if (response.status === 401) {
-                console.error('Not authenticated! User needs to login through Telegram or dev_login');
+                console.error('[loadUserProfile] ❌ Not authenticated! User needs to login');
                 // Don't show alert in production - let user see empty state
             } else {
                 alert('Ошибка загрузки профиля: ' + errorData);
             }
         }
     } catch (error) {
-        console.error('Failed to load profile (exception):', error);
+        console.error('[loadUserProfile] ❌ Exception:', error);
+        console.error('[loadUserProfile] ❌ Stack:', error.stack);
         alert('Ошибка загрузки профиля: ' + error.message);
     }
     return null;
@@ -164,24 +185,33 @@ async function placeBet(marketId, position, amount) {
 
 // Load user's active bets
 let userActiveBets = [];
+window.userActiveBets = [];  // Initialize immediately
 async function loadUserActiveBets() {
     try {
         // Wait for user profile to be loaded
         if (!userProfile || !userProfile.id) {
-            console.log('User profile not loaded yet, skipping active bets load');
+            console.log('[loadUserActiveBets] User profile not loaded yet, setting empty array');
+            userActiveBets = [];
+            window.userActiveBets = [];
             return [];
         }
 
+        console.log('[loadUserActiveBets] Fetching active bets for user:', userProfile.id);
         const response = await fetch(`${API_URL}/bets/active/${userProfile.id}`);
         if (response.ok) {
             userActiveBets = await response.json();
             window.userActiveBets = userActiveBets;
-            console.log('Loaded active bets:', userActiveBets);
+            console.log('[loadUserActiveBets] ✅ Loaded active bets:', userActiveBets);
             return userActiveBets;
         }
+        console.log('[loadUserActiveBets] Response not OK, returning empty array');
+        userActiveBets = [];
+        window.userActiveBets = [];
         return [];
     } catch (error) {
-        console.error('Failed to load active bets:', error);
+        console.error('[loadUserActiveBets] ❌ Exception:', error);
+        userActiveBets = [];
+        window.userActiveBets = [];
         return [];
     }
 }
@@ -233,11 +263,45 @@ function copyToClipboard(text) {
     });
 }
 
+// Force update balance in DOM
+function forceUpdateBalance() {
+    if (window.userProfile) {
+        const predBalance = document.getElementById('pred-balance');
+        if (predBalance) {
+            predBalance.innerText = formatNumber(window.userProfile.pred_balance);
+        }
+
+        const predBalanceDisplay = document.getElementById('pred-balance-display');
+        if (predBalanceDisplay) {
+            predBalanceDisplay.innerText = formatNumber(window.userProfile.pred_balance);
+        }
+
+        const tonBalanceDisplay = document.getElementById('ton-balance-display');
+        if (tonBalanceDisplay) {
+            tonBalanceDisplay.innerText = formatNumber(window.userProfile.ton_balance);
+        }
+    }
+}
+
 // Add button click handlers
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('[DOMContentLoaded] ===== APP.JS INITIALIZED =====');
+    console.log('[DOMContentLoaded] API_URL:', API_URL);
+    console.log('[DOMContentLoaded] Document ready, loading user data...');
+
     // Load initial data (profile first, then bets)
+    console.log('[DOMContentLoaded] Loading user balance...');
     await loadUserBalance();
+    console.log('[DOMContentLoaded] Loading active bets...');
     await loadUserActiveBets();
+
+    // Force update balance after small delay to ensure DOM is ready
+    setTimeout(() => {
+        forceUpdateBalance();
+    }, 100);
+
+    // Also try updating immediately
+    forceUpdateBalance();
 
     // Add haptic feedback to all buttons
     document.querySelectorAll('button, a').forEach(element => {
@@ -250,6 +314,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setInterval(async () => {
         await loadUserBalance();
         await loadUserActiveBets();
+        forceUpdateBalance();
     }, 30000);
 });
 

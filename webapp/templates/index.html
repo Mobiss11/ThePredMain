@@ -168,12 +168,24 @@ function showBetModal(marketId, position) {
 // Load and render markets
 async function loadAndRenderMarkets() {
     try {
+        console.log('[loadAndRenderMarkets] Starting...');
+
+        // Check if window.loadMarkets exists
+        if (typeof window.loadMarkets !== 'function') {
+            console.error('[loadAndRenderMarkets] ❌ window.loadMarkets is not a function!');
+            document.getElementById('markets-list').innerHTML = '<div class="text-center text-red-400 py-8">Ошибка загрузки. Обновите страницу.</div>';
+            return;
+        }
+
         const markets = await window.loadMarkets();
+        console.log('[loadAndRenderMarkets] Markets loaded:', markets ? markets.length : 0);
 
         if (markets && markets.length > 0) {
             // Find promoted market
             const promotedMarket = markets.find(m => m.is_promoted === 'premium');
             const regularMarkets = markets.filter(m => m.is_promoted !== 'premium');
+
+            console.log('[loadAndRenderMarkets] Promoted:', promotedMarket ? 1 : 0, 'Regular:', regularMarkets.length);
 
             // Render promoted market
             if (promotedMarket) {
@@ -183,9 +195,15 @@ async function loadAndRenderMarkets() {
             // Render regular markets
             const marketsList = document.getElementById('markets-list');
             marketsList.innerHTML = regularMarkets.map(m => renderMarketCard(m)).join('');
+            console.log('[loadAndRenderMarkets] ✅ Markets rendered');
+        } else {
+            console.log('[loadAndRenderMarkets] No markets found, showing empty state');
+            document.getElementById('markets-list').innerHTML = '<div class="text-center text-gray-400 py-8">Нет доступных событий</div>';
         }
     } catch (error) {
-        console.error('Failed to load and render markets:', error);
+        console.error('[loadAndRenderMarkets] ❌ Exception:', error);
+        console.error('[loadAndRenderMarkets] ❌ Stack:', error.stack);
+        document.getElementById('markets-list').innerHTML = '<div class="text-center text-red-400 py-8">Ошибка загрузки: ' + error.message + '</div>';
     }
 }
 
@@ -194,10 +212,14 @@ window.reloadMarkets = loadAndRenderMarkets;
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', async () => {
-    // Wait for user profile and active bets to load first
+    console.log('[Markets Page] Initializing...');
+
+    // Wait for user profile and active bets to load first (max 3 seconds)
+    console.log('[Markets Page] Waiting for userProfile and userActiveBets...');
     await new Promise(resolve => {
         const checkInterval = setInterval(() => {
             if (window.userProfile && window.userActiveBets !== undefined) {
+                console.log('[Markets Page] ✅ userProfile and userActiveBets loaded');
                 clearInterval(checkInterval);
                 resolve();
             }
@@ -205,13 +227,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Timeout after 3 seconds
         setTimeout(() => {
+            console.log('[Markets Page] Timeout - proceeding anyway');
             clearInterval(checkInterval);
             resolve();
         }, 3000);
     });
 
     // Now load and render markets
+    console.log('[Markets Page] Loading and rendering markets...');
     await loadAndRenderMarkets();
+    console.log('[Markets Page] ✅ Markets loaded');
 
     // Category filter
     const categoryFilter = document.getElementById('category-filter');
