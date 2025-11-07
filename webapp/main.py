@@ -111,14 +111,22 @@ async def index():
         request.headers.get('Referer', '').find('telegram') != -1
     )
 
-    # If coming from Telegram, clear old session and re-authenticate
+    # If coming from Telegram, check if already authenticated or need to auth
     if is_from_telegram:
-        # Clear any old session in production mode to force re-authentication
-        if not app.config['DEV_MODE'] and session.get('user_id'):
-            print(f"[/] Production mode: Clearing old session for user {session.get('user_id')}")
-            session.clear()
-        print("[/] Request from Telegram WebApp, showing auth.html")
-        return await render_template('auth.html', bot_username=app.config['BOT_USERNAME'])
+        # If already authenticated via Telegram, don't clear session
+        if session.get('telegram_authed'):
+            print(f"[/] Already authenticated via Telegram: user_id={session.get('user_id')}")
+            # Continue to check authentication below
+        else:
+            # Not authenticated yet - clear any old session and show auth page
+            if not app.config['DEV_MODE']:
+                if session:
+                    print(f"[/] Production mode: Clearing old session data: {dict(session)}")
+                    session.clear()
+                else:
+                    print("[/] Production mode: No existing session")
+            print("[/] Request from Telegram WebApp, showing auth.html")
+            return await render_template('auth.html', bot_username=app.config['BOT_USERNAME'])
 
     # Check if already authenticated (not from Telegram)
     if session.get('user_id'):
@@ -191,6 +199,7 @@ async def auth_telegram():
             session['user_id'] = user['id']
             session['telegram_id'] = telegram_id
             session['username'] = username
+            session['telegram_authed'] = True  # Mark that Telegram auth completed
 
             print(f"[/auth/telegram] Session created: user_id={user['id']}, telegram_id={telegram_id}")
             print("[/auth/telegram] ===== AUTH SUCCESS =====")
@@ -218,10 +227,10 @@ async def dev_login():
 
     if request.method == 'POST':
         form = await request.form
-        user_id = form.get('user_id', '1')
+        user_id = int(form.get('user_id', '1'))  # Convert to int
         session['user_id'] = user_id
         session['username'] = form.get('username', 'DevUser')
-        session['telegram_id'] = form.get('telegram_id', '123456')
+        session['telegram_id'] = int(form.get('telegram_id', '123456'))  # Convert to int
         print(f"[/dev/login] User logged in: {user_id}, redirecting to markets")
         return redirect(url_for('markets'))
 
