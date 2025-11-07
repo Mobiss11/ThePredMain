@@ -9,10 +9,58 @@ from pydantic import BaseModel
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 import logging
+import aiohttp
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+async def send_telegram_notification(telegram_id: int, ticket_id: int, subject: str):
+    """Send Telegram notification to user about admin reply"""
+    if not settings.BOT_TOKEN:
+        logger.warning("BOT_TOKEN not configured, skipping Telegram notification")
+        return
+
+    try:
+        message = f"""
+💬 <b>Новый ответ в тикете поддержки</b>
+
+Администратор ответил на ваш тикет <b>#{ticket_id}</b>
+
+📝 Тема: <b>{subject}</b>
+
+Откройте приложение для просмотра ответа 👇
+"""
+
+        keyboard = {
+            "inline_keyboard": [[
+                {
+                    "text": "📱 Открыть тикет",
+                    "url": f"{settings.WEBAPP_URL}?startapp=support_ticket_{ticket_id}"
+                }
+            ]]
+        }
+
+        url = f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendMessage"
+        data = {
+            "chat_id": telegram_id,
+            "text": message,
+            "parse_mode": "HTML",
+            "reply_markup": keyboard
+        }
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=data) as response:
+                if response.status == 200:
+                    logger.info(f"Telegram notification sent to user {telegram_id} for ticket {ticket_id}")
+                else:
+                    error_text = await response.text()
+                    logger.error(f"Failed to send Telegram notification: {response.status} - {error_text}")
+
+    except Exception as e:
+        logger.error(f"Error sending Telegram notification: {e}")
 
 
 class CreateTicketRequest(BaseModel):
@@ -413,7 +461,15 @@ async def admin_reply(
 
         await db.commit()
 
-        # TODO: Send Telegram notification to user
+        # Send Telegram notification to user
+        try:
+            result = await db.execute(select(User).where(User.id == ticket.user_id))
+            user = result.scalar_one_or_none()
+            if user and user.telegram_id:
+                await send_telegram_notification(user.telegram_id, ticket_id, ticket.subject)
+        except Exception as e:
+            logger.error(f"Failed to send Telegram notification: {e}")
+            # Don't fail the request if notification fails
 
         return {
             "success": True,

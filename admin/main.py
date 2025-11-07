@@ -103,6 +103,12 @@ async def support():
     return await render_template('support.html')
 
 
+@app.route('/support/ticket/<int:ticket_id>')
+@login_required
+async def support_ticket_detail(ticket_id):
+    return await render_template('ticket_detail.html', ticket_id=ticket_id)
+
+
 @app.route('/broadcast')
 @login_required
 async def broadcast():

@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+{% block title %}Ticket #{{ ticket_id }} - ThePred Admin{% endblock %}
+{% block content %}
+<div class="max-w-5xl">
+    <!-- Header -->
+    <div class="flex items-center mb-6">
+        <a href="/support" class="text-gray-400 hover:text-white transition mr-4">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+        </a>
+        <h1 class="text-3xl font-bold">Ticket #{{ ticket_id }}</h1>
+    </div>
+
+    <!-- Ticket Info Card -->
+    <div id="ticket-info" class="bg-dark-800 rounded-xl p-6 border border-gray-700 mb-6">
+        <div class="animate-pulse">
+            <div class="h-6 bg-gray-700 rounded w-3/4 mb-4"></div>
+            <div class="h-4 bg-gray-700 rounded w-1/2"></div>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="bg-dark-800 rounded-xl p-6 border border-gray-700 mb-6">
+        <h2 class="text-xl font-bold mb-4">Messages</h2>
+        <div id="messages-container" class="space-y-4 mb-6">
+            <div class="animate-pulse space-y-4">
+                <div class="h-20 bg-gray-700 rounded"></div>
+                <div class="h-20 bg-gray-700 rounded"></div>
+            </div>
+        </div>
+
+        <!-- Reply Form -->
+        <div id="reply-section">
+            <div class="border-t border-gray-700 pt-6">
+                <h3 class="text-lg font-bold mb-4">Reply to User</h3>
+                <form id="reply-form" onsubmit="sendReply(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Your Message</label>
+                        <textarea name="message" required rows="5" class="w-full bg-dark-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 resize-none" placeholder="Type your response to the user..."></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Attachment (optional)</label>
+                        <input type="file" name="attachment" accept="image/*" class="w-full bg-dark-700 border border-gray-600 rounded-lg px-4 py-2 text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700">
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button type="submit" id="submit-btn" class="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold py-3 rounded-lg hover:opacity-90 transition">
+                            Send Reply
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Status Actions -->
+                <div class="mt-6 pt-6 border-t border-gray-700">
+                    <h3 class="text-sm font-medium text-gray-400 mb-3">Quick Actions</h3>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button onclick="updateStatus('in_progress')" class="bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg text-sm transition">
+                            ⏳ In Progress
+                        </button>
+                        <button onclick="updateStatus('waiting_user')" class="bg-yellow-600 hover:bg-yellow-700 text-white py-2 rounded-lg text-sm transition">
+                            ⏰ Waiting User
+                        </button>
+                        <button onclick="updateStatus('closed')" class="bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg text-sm transition">
+                            ✅ Close Ticket
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Closed Message -->
+        <div id="closed-message" class="hidden border-t border-gray-700 pt-6">
+            <div class="bg-red-900 bg-opacity-20 border border-red-600 rounded-lg p-4 text-center">
+                <p class="text-red-400">This ticket is closed. Reopen it to send messages.</p>
+                <button onclick="updateStatus('open')" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm transition">
+                    Reopen Ticket
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const ticketId = {{ ticket_id }};
+let ticketData = null;
+
+async function loadTicket() {
+    try {
+        // Load ticket from list
+        const response = await fetch('/api/admin/support/tickets?limit=1000');
+        const tickets = await response.json();
+        ticketData = tickets.find(t => t.id === ticketId);
+
+        if (!ticketData) {
+            alert('Ticket not found');
+            window.location.href = '/support';
+            return;
+        }
+
+        renderTicketInfo();
+        await loadMessages();
+    } catch (error) {
+        console.error('Error loading ticket:', error);
+        alert('Error loading ticket');
+    }
+}
+
+function renderTicketInfo() {
+    const priorityEmojis = {
+        'low': '🟢',
+        'medium': '🟡',
+        'high': '🟠',
+        'urgent': '🔴'
+    };
+
+    const statusNames = {
+        'open': 'Open',
+        'in_progress': 'In Progress',
+        'waiting_user': 'Waiting User',
+        'closed': 'Closed'
+    };
+
+    const statusColors = {
+        'open': 'blue',
+        'in_progress': 'purple',
+        'waiting_user': 'yellow',
+        'closed': 'gray'
+    };
+
+    const priorityColors = {
+        'low': 'green',
+        'medium': 'yellow',
+        'high': 'orange',
+        'urgent': 'red'
+    };
+
+    const statusColor = statusColors[ticketData.status];
+    const priorityColor = priorityColors[ticketData.priority];
+
+    document.getElementById('ticket-info').innerHTML = `
+        <div class="space-y-4">
+            <!-- Status and Priority Badges -->
+            <div class="flex items-center gap-3">
+                <span class="px-3 py-1 rounded-full text-sm bg-${statusColor}-600 bg-opacity-20 text-${statusColor}-400 border border-${statusColor}-600">
+                    ${statusNames[ticketData.status]}
+                </span>
+                <span class="px-3 py-1 rounded-full text-sm bg-${priorityColor}-600 bg-opacity-20 text-${priorityColor}-400 border border-${priorityColor}-600">
+                    ${priorityEmojis[ticketData.priority]} ${ticketData.priority.toUpperCase()}
+                </span>
+            </div>
+
+            <!-- Subject -->
+            <h2 class="text-2xl font-bold">${ticketData.subject}</h2>
+
+            <!-- Meta Info -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                    <span class="text-gray-400">User:</span>
+                    <span class="text-white font-semibold ml-2">${ticketData.user_name}</span>
+                </div>
+                <div>
+                    <span class="text-gray-400">User ID:</span>
+                    <span class="text-white font-semibold ml-2">#${ticketData.user_id}</span>
+                </div>
+                <div>
+                    <span class="text-gray-400">Created:</span>
+                    <span class="text-white font-semibold ml-2">${new Date(ticketData.created_at).toLocaleString()}</span>
+                </div>
+                <div>
+                    <span class="text-gray-400">Messages:</span>
+                    <span class="text-white font-semibold ml-2">${ticketData.message_count}</span>
+                </div>
+            </div>
+
+            ${ticketData.admin_replied ?
+                '<div class="text-sm text-green-400">✓ Admin has replied to this ticket</div>' :
+                '<div class="text-sm text-orange-400">⚠ Waiting for admin response</div>'}
+        </div>
+    `;
+
+    // Show/hide reply section based on status
+    if (ticketData.status === 'closed') {
+        document.getElementById('reply-section').classList.add('hidden');
+        document.getElementById('closed-message').classList.remove('hidden');
+    } else {
+        document.getElementById('reply-section').classList.remove('hidden');
+        document.getElementById('closed-message').classList.add('hidden');
+    }
+}
+
+async function loadMessages() {
+    try {
+        const response = await fetch(`/api/support/tickets/${ticketId}/messages?user_id=${ticketData.user_id}`);
+        const messages = await response.json();
+
+        const container = document.getElementById('messages-container');
+
+        if (messages.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-gray-400">
+                    <p>No messages yet</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = messages.map(msg => {
+            const date = new Date(msg.created_at).toLocaleString();
+
+            if (msg.is_admin) {
+                return `
+                    <div class="bg-yellow-600 bg-opacity-10 border-l-4 border-yellow-500 rounded-lg p-4">
+                        <div class="flex items-center gap-2 mb-2 text-xs">
+                            <span class="text-yellow-400 font-semibold">👑 Admin</span>
+                            <span class="text-gray-400">${date}</span>
+                        </div>
+                        <p class="text-sm whitespace-pre-wrap">${msg.message}</p>
+                        ${msg.attachment_url ? `
+                            <img src="${msg.attachment_url}" class="mt-3 rounded-lg max-w-md cursor-pointer" onclick="window.open('${msg.attachment_url}', '_blank')">
+                        ` : ''}
+                    </div>
+                `;
+            } else {
+                return `
+                    <div class="bg-blue-600 bg-opacity-10 border-l-4 border-blue-500 rounded-lg p-4">
+                        <div class="flex items-center gap-2 mb-2 text-xs">
+                            <span class="text-blue-400 font-semibold">${msg.user_name || 'User'}</span>
+                            <span class="text-gray-400">${date}</span>
+                        </div>
+                        <p class="text-sm whitespace-pre-wrap">${msg.message}</p>
+                        ${msg.attachment_url ? `
+                            <img src="${msg.attachment_url}" class="mt-3 rounded-lg max-w-md cursor-pointer" onclick="window.open('${msg.attachment_url}', '_blank')">
+                        ` : ''}
+                    </div>
+                `;
+            }
+        }).join('');
+
+        // Scroll to bottom
+        container.scrollTop = container.scrollHeight;
+    } catch (error) {
+        console.error('Error loading messages:', error);
+    }
+}
+
+async function sendReply(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const formData = new FormData(form);
+    const submitBtn = document.getElementById('submit-btn');
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending...';
+
+    try {
+        const response = await fetch(`/api/admin/support/tickets/${ticketId}/reply`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            form.reset();
+            await loadMessages();
+            await loadTicket(); // Reload ticket info
+
+            // Show success message
+            const successDiv = document.createElement('div');
+            successDiv.className = 'bg-green-600 bg-opacity-20 border border-green-600 rounded-lg p-3 text-green-400 text-sm mb-4';
+            successDiv.textContent = '✓ Reply sent successfully! User will receive a Telegram notification.';
+            form.insertBefore(successDiv, form.firstChild);
+
+            setTimeout(() => successDiv.remove(), 5000);
+        } else {
+            alert('Error: ' + (result.error || 'Failed to send reply'));
+        }
+    } catch (error) {
+        console.error('Error sending reply:', error);
+        alert('Error sending reply');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Send Reply';
+    }
+}
+
+async function updateStatus(status) {
+    const statusNames = {
+        'open': 'Open',
+        'in_progress': 'In Progress',
+        'waiting_user': 'Waiting User',
+        'closed': 'Closed'
+    };
+
+    if (!confirm(`Change ticket status to "${statusNames[status]}"?`)) return;
+
+    try {
+        const response = await fetch(`/api/admin/support/tickets/${ticketId}/status?status=${status}`, {
+            method: 'PUT'
+        });
+
+        if (response.ok) {
+            await loadTicket();
+            alert('Status updated successfully!');
+        } else {
+            alert('Error updating status');
+        }
+    } catch (error) {
+        console.error('Error updating status:', error);
+        alert('Error updating status');
+    }
+}
+
+// Load ticket on page load
+document.addEventListener('DOMContentLoaded', loadTicket);
+</script>
+{% endblock %}

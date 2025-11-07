@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     S3_BUCKET: str = "thepred-events"
     S3_PUBLIC_URL: str = "https://thepred.store"
 
+    # Telegram Bot
+    BOT_TOKEN: Optional[str] = None
+    WEBAPP_URL: str = "https://thepred.store"
+
     @property
     def database_url(self) -> str:
         password = quote_plus(self.POSTGRES_PASSWORD)
