@@ -160,11 +160,11 @@
 
     <div class="grid grid-cols-2 gap-4">
         <div class="glass rounded-xl p-4 text-center">
-            <div class="text-2xl font-bold mb-1">12</div>
+            <div class="text-2xl font-bold mb-1" id="referral-count">...</div>
             <div class="text-gray-400 text-xs">Рефералов</div>
         </div>
         <div class="glass rounded-xl p-4 text-center">
-            <div class="text-2xl font-bold text-yellow-400 mb-1">1,200</div>
+            <div class="text-2xl font-bold text-yellow-400 mb-1" id="referral-earned">...</div>
             <div class="text-gray-400 text-xs">PRED Заработано</div>
         </div>
     </div>
@@ -290,6 +290,9 @@ async function loadProfile() {
 
             // Update rank progress section
             updateRankProgress(profile.rank, profile.total_bets || 0);
+
+            // Load referral stats
+            loadReferralStats(profile.id);
         }
     } catch (error) {
         console.error('Failed to load profile:', error);
@@ -366,6 +369,34 @@ async function loadUserRank() {
         }
     } catch (error) {
         console.error('Failed to load user rank:', error);
+    }
+}
+
+// Load referral stats
+async function loadReferralStats(userId) {
+    try {
+        const response = await fetch(`/api/users/${userId}/referrals`);
+        if (response.ok) {
+            const data = await response.json();
+
+            // Update referral count
+            const referralCount = document.getElementById('referral-count');
+            if (referralCount) {
+                referralCount.innerText = data.referral_count || 0;
+            }
+
+            // Update referral earned (100 PRED per referral)
+            const referralEarned = document.getElementById('referral-earned');
+            if (referralEarned) {
+                const earned = (data.referral_count || 0) * 100;
+                referralEarned.innerText = window.formatNumber(earned);
+            }
+        }
+    } catch (error) {
+        console.error('Failed to load referral stats:', error);
+        // Set defaults on error
+        document.getElementById('referral-count').innerText = '0';
+        document.getElementById('referral-earned').innerText = '0';
     }
 }
 
@@ -507,46 +538,59 @@ function copyReferralLink() {
 
 // Load achievements
 async function loadAchievements() {
+    const S3_BASE_URL = 'https://thepred.store/thepred-events/missions';
+    const userId = {{ user_id }};
+
     try {
-        const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-        if (!userId) {
-            console.error('No user ID found');
+        const response = await fetch(`/api/missions/${userId}`);
+        if (!response.ok) {
+            throw new Error('Failed to load achievements');
+        }
+
+        const missions = await response.json();
+
+        // Filter only achievements
+        const achievements = missions.filter(m => m.type === 'achievement');
+
+        const container = document.getElementById('achievements-container');
+
+        if (achievements.length === 0) {
+            container.innerHTML = '<div class="col-span-2 glass rounded-xl p-4 text-center text-gray-400 text-sm">Пока нет достижений</div>';
             return;
         }
 
-        const response = await fetch(`/api/missions/${userId}`);
-        if (response.ok) {
-            const missions = await response.json();
+        container.innerHTML = achievements.slice(0, 6).map(achievement => {
+            const isCompleted = achievement.completed;
+            const progress = achievement.progress || 0;
+            const target = achievement.target || 1;
+            const percentage = Math.min((progress / target) * 100, 100);
 
-            // Filter only achievements
-            const achievements = missions.filter(m => m.type === 'achievement');
-
-            const container = document.getElementById('achievements-container');
-
-            if (achievements.length === 0) {
-                container.innerHTML = '<div class="col-span-2 glass rounded-xl p-4 text-center text-gray-400 text-sm">Пока нет достижений</div>';
-                return;
+            // Get icon - check if it's custom URL, S3 icon name, or emoji
+            let iconHtml;
+            if (achievement.custom_icon_url) {
+                // Custom URL provided
+                iconHtml = `<img src="${achievement.custom_icon_url}" class="w-12 h-12 mx-auto mb-2 object-contain" alt="icon" />`;
+            } else if (achievement.icon) {
+                // Check if it's an emoji (single character or contains emoji unicode)
+                const isEmoji = /(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u.test(achievement.icon) || achievement.icon.length <= 2;
+                if (isEmoji) {
+                    // It's an emoji
+                    iconHtml = `<span class="text-4xl">${achievement.icon}</span>`;
+                } else {
+                    // It's an S3 icon name
+                    const iconUrl = `${S3_BASE_URL}/${achievement.icon}.svg`;
+                    iconHtml = `<img src="${iconUrl}" class="w-12 h-12 mx-auto mb-2 object-contain" alt="${achievement.icon}" />`;
+                }
+            } else {
+                // Default icon
+                iconHtml = `<span class="text-4xl">🎯</span>`;
             }
 
-            container.innerHTML = achievements.map(achievement => {
-                const isCompleted = achievement.completed;
-                const progress = achievement.progress || 0;
-                const target = achievement.target || 1;
-                const percentage = Math.min((progress / target) * 100, 100);
-
-                // Display icon (emoji or URL)
-                let iconHtml = '🎯';
-                if (achievement.custom_icon_url) {
-                    iconHtml = `<img src="${achievement.custom_icon_url}" alt="icon" class="w-12 h-12 mx-auto mb-2 rounded">`;
-                } else if (achievement.icon) {
-                    iconHtml = `<span class="text-4xl">${achievement.icon}</span>`;
-                }
-
-                return `
-                    <div class="glass rounded-xl p-4 text-center relative ${isCompleted ? 'border-2 border-green-500' : ''}">
-                        <div class="mb-2">
-                            ${typeof iconHtml === 'string' && iconHtml.startsWith('<') ? iconHtml : `<span class="text-4xl">${iconHtml}</span>`}
-                        </div>
+            return `
+                <div class="glass rounded-xl p-4 text-center relative ${isCompleted ? 'border-2 border-green-500' : ''}">
+                    <div class="mb-2">
+                        ${iconHtml}
+                    </div>
                         ${isCompleted ? '<div class="absolute top-2 right-2 text-green-500 text-xl">✓</div>' : ''}
                         <div class="font-bold text-sm mb-1">${achievement.title}</div>
                         <div class="text-xs text-gray-400 mb-2">${achievement.description}</div>

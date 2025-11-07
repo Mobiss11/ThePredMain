@@ -590,6 +590,16 @@ async def api_admin_user_activity(user_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/users/<int:user_id>/referrals')
+async def api_user_referrals(user_id):
+    """Get user's referral statistics"""
+    try:
+        stats = await api_client._get(f"/users/{user_id}/referrals")
+        return jsonify(stats)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/api/markets/create-event', methods=['POST'])
 async def api_create_event():
     """Create user event - proxy to backend"""
