@@ -24,6 +24,7 @@ class NotificationType(str, enum.Enum):
     BET_WON = "BET_WON"  # Ставка выиграла
     BET_LOST = "BET_LOST"  # Ставка проиграла
     MISSION_COMPLETED = "MISSION_COMPLETED"  # Миссия выполнена
+    BROADCAST = "BROADCAST"  # Массовая рассылка от админа
     SYSTEM = "SYSTEM"  # Системное уведомление
 
 
