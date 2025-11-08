@@ -343,7 +343,7 @@ docker-compose -f docker-compose.prod.yml run --rm certbot certonly \
 - **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Полное руководство по production деплою
 - **[SSL_SETUP.md](./SSL_SETUP.md)** - Настройка SSL сертификатов
 - **[CLAUDE.md](./CLAUDE.md)** - Подробная техническая документация
-- **[PREDICTION_MECHANICS.md](./PREDICTION_MECHANICS.md)** - Механика предсказаний
+- **[PREDICTION_MECHANICS.md](документация/PREDICTION_MECHANICS.md)** - Механика предсказаний
 
 ## 🧪 Тестирование
 

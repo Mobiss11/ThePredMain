@@ -21,7 +21,7 @@ s3_client = boto3.client(
 )
 
 # Icons to upload
-icons_dir = Path('webapp/static/icons')
+icons_dir = Path('../webapp/static/icons')
 ai_icons = [
     'ai-data-analysis.svg',
     'ai-recommendations.svg',
