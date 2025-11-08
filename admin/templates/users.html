@@ -418,17 +418,38 @@ function renderPagination(total, currentPage) {
     paginationButtons.innerHTML = buttonsHtml;
 }
 
-// Apply filters
+// Search with debounce (independent from filters)
+let searchTimeout;
+function handleSearch() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        const search = document.getElementById('user-search').value.trim();
+
+        // Update only search in filters
+        if (search) {
+            currentFilters.search = search;
+        } else {
+            delete currentFilters.search;
+        }
+
+        console.log('Search updated:', currentFilters);
+        loadUsers(1); // Reset to page 1 when searching
+    }, 500); // 500ms debounce
+}
+
+// Apply filters (ban, date, sort)
 function applyFilters() {
-    const search = document.getElementById('user-search').value.trim();
     const isBanned = document.getElementById('filter-banned').value;
     const dateFrom = document.getElementById('filter-date-from').value;
     const dateTo = document.getElementById('filter-date-to').value;
     const sortBy = document.getElementById('sort-by').value;
 
+    // Keep search if it exists
+    const currentSearch = currentFilters.search;
     currentFilters = {};
+    if (currentSearch) currentFilters.search = currentSearch;
 
-    if (search) currentFilters.search = search;
+    // Apply other filters
     if (isBanned !== '') currentFilters.is_banned = isBanned;
     if (dateFrom) currentFilters.date_from = dateFrom + 'T00:00:00Z';
     if (dateTo) currentFilters.date_to = dateTo + 'T23:59:59Z';
@@ -438,13 +459,18 @@ function applyFilters() {
     loadUsers(1); // Reset to page 1 when applying filters
 }
 
-// Listen for Enter key on search input
+// Setup search listeners
 document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('user-search');
     if (searchInput) {
+        // Search on input (with debounce)
+        searchInput.addEventListener('input', handleSearch);
+
+        // Also search on Enter
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                applyFilters();
+                clearTimeout(searchTimeout);
+                handleSearch();
             }
         });
     }
