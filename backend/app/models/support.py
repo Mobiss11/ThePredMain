@@ -34,7 +34,7 @@ class SupportTicket(Base):
     admin_replied = Column(Boolean, default=False)  # Track if admin has replied
 
     # Relationships
-    user = relationship("User", back_populates="support_tickets")
+    user = relationship("User")  # Removed back_populates until support tickets are fully implemented
     messages = relationship("SupportMessage", back_populates="ticket", cascade="all, delete-orphan", order_by="SupportMessage.created_at")
 
 
