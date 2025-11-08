@@ -268,6 +268,39 @@ async def api_admin_delete_user(user_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/admin/users/<int:user_id>/ban', methods=['PUT'])
+@login_required
+async def api_admin_ban_user(user_id):
+    """Proxy user ban request to backend"""
+    try:
+        reason = request.args.get('reason', 'Violation of terms')
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.put(
+                f"{app.config['API_URL']}/admin/users/{user_id}/ban?reason={reason}"
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error banning user: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/admin/users/<int:user_id>/unban', methods=['PUT'])
+@login_required
+async def api_admin_unban_user(user_id):
+    """Proxy user unban request to backend"""
+    try:
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.put(
+                f"{app.config['API_URL']}/admin/users/{user_id}/unban"
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error unbanning user: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/admin/markets/pending', methods=['GET'])
 @login_required
 async def api_admin_pending_markets():

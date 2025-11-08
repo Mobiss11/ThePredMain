@@ -1890,6 +1890,84 @@ async def delete_user(
         raise HTTPException(status_code=500, detail=f"Failed to delete user: {str(e)}")
 
 
+@router.put("/users/{user_id}/ban")
+async def ban_user(
+    user_id: int,
+    reason: str = Query(..., description="Ban reason"),
+    db: AsyncSession = Depends(get_db)
+):
+    """Ban a user"""
+    import logging
+    logger = logging.getLogger(__name__)
+
+    try:
+        # Get user
+        user_result = await db.execute(select(User).where(User.id == user_id))
+        user = user_result.scalar_one_or_none()
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Ban user
+        user.is_banned = True
+        user.ban_reason = reason
+        user.banned_at = datetime.utcnow()
+
+        await db.commit()
+
+        logger.info(f"User {user_id} banned. Reason: {reason}")
+
+        return {
+            "success": True,
+            "message": f"User {user_id} has been banned",
+            "user_id": user_id,
+            "is_banned": True,
+            "ban_reason": reason
+        }
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Error banning user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to ban user: {str(e)}")
+
+
+@router.put("/users/{user_id}/unban")
+async def unban_user(
+    user_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """Unban a user"""
+    import logging
+    logger = logging.getLogger(__name__)
+
+    try:
+        # Get user
+        user_result = await db.execute(select(User).where(User.id == user_id))
+        user = user_result.scalar_one_or_none()
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Unban user
+        user.is_banned = False
+        user.ban_reason = None
+        user.banned_at = None
+
+        await db.commit()
+
+        logger.info(f"User {user_id} unbanned")
+
+        return {
+            "success": True,
+            "message": f"User {user_id} has been unbanned",
+            "user_id": user_id,
+            "is_banned": False
+        }
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Error unbanning user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to unban user: {str(e)}")
+
+
 @router.post("/markets/create")
 async def create_admin_event(
     title: str = Form(...),

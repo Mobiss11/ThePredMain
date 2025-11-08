@@ -25,6 +25,8 @@ class UserProfile(BaseModel):
     referral_code: str | None
     best_streak: int = 0
     global_rank: int | None = None
+    is_banned: bool = False
+    ban_reason: str | None = None
 
     class Config:
         from_attributes = True

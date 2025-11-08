@@ -111,6 +111,39 @@
     </div>
 </div>
 
+<!-- Ban User Modal -->
+<div id="ban-user-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50" style="display: none;">
+    <div class="bg-dark-800 rounded-xl p-6 max-w-md w-full">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-orange-400">🚫 Ban User</h2>
+            <button onclick="closeBanModal()" class="text-gray-400 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="mb-6">
+            <p class="text-gray-300 mb-4">Ban user <strong id="ban-user-name"></strong>?</p>
+            <input type="hidden" id="ban-user-id">
+
+            <label class="block text-sm font-medium mb-2">Ban Reason</label>
+            <textarea id="ban-reason" rows="3"
+                      placeholder="Enter reason for ban..."
+                      class="w-full bg-dark-700 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none"></textarea>
+        </div>
+
+        <div class="flex gap-3">
+            <button onclick="closeBanModal()" class="flex-1 bg-gray-600 hover:bg-gray-700 rounded-lg py-2 font-medium transition">
+                Cancel
+            </button>
+            <button onclick="banUser()" class="flex-1 bg-orange-600 hover:bg-orange-700 rounded-lg py-2 font-medium transition">
+                Ban User
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Delete User Confirmation Modal -->
 <div id="delete-user-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50" style="display: none;">
     <div class="bg-dark-800 rounded-xl p-6 max-w-md w-full">
@@ -204,7 +237,10 @@ function renderUsers(users) {
                 <td class="px-6 py-4">${avatarHtml}</td>
                 <td class="px-6 py-4">#${u.id}</td>
                 <td class="px-6 py-4">
-                    <div>${displayName}</div>
+                    <div class="flex items-center gap-2">
+                        <span>${displayName}</span>
+                        ${u.is_banned ? '<span class="px-2 py-0.5 bg-red-600 rounded text-xs">🚫 BANNED</span>' : ''}
+                    </div>
                     <div class="text-xs text-gray-500">TG: ${u.telegram_id}</div>
                 </td>
                 <td class="px-6 py-4">${formatNumber(u.pred_balance)}</td>
@@ -213,15 +249,21 @@ function renderUsers(users) {
                 <td class="px-6 py-4"><span class="px-2 py-1 bg-yellow-600 rounded text-xs">${u.rank}</span></td>
                 <td class="px-6 py-4 text-sm text-gray-400">${formatDate(u.created_at)}</td>
                 <td class="px-6 py-4">
-                    <button onclick="editUser(${u.id})" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm mr-2">
-                        Редактировать
-                    </button>
-                    <button onclick="viewUser(${u.id})" class="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-sm mr-2">
-                        Просмотр
-                    </button>
-                    <button onclick="confirmDeleteUser(${u.id}, '${displayName.replace(/'/g, "\\'")}')" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm">
-                        Удалить
-                    </button>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="editUser(${u.id})" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
+                            Редактировать
+                        </button>
+                        <button onclick="viewUser(${u.id})" class="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-sm">
+                            Просмотр
+                        </button>
+                        ${u.is_banned
+                            ? `<button onclick="unbanUser(${u.id})" class="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-sm">Разбанить</button>`
+                            : `<button onclick="showBanModal(${u.id}, '${displayName.replace(/'/g, "\\'")}')" class="px-3 py-1 bg-orange-600 hover:bg-orange-700 rounded text-sm">Забанить</button>`
+                        }
+                        <button onclick="confirmDeleteUser(${u.id}, '${displayName.replace(/'/g, "\\'")}')" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm">
+                            Удалить
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
@@ -399,6 +441,65 @@ async function deleteUser() {
     } catch (error) {
         console.error('Error deleting user:', error);
         showToast('Failed to delete user: ' + error.message, 'error');
+    }
+}
+
+// Ban/Unban functions
+function showBanModal(id, name) {
+    document.getElementById('ban-user-id').value = id;
+    document.getElementById('ban-user-name').textContent = name;
+    document.getElementById('ban-user-modal').style.display = 'flex';
+}
+
+function closeBanModal() {
+    document.getElementById('ban-user-modal').style.display = 'none';
+    document.getElementById('ban-reason').value = '';
+}
+
+async function banUser() {
+    const userId = document.getElementById('ban-user-id').value;
+    const userName = document.getElementById('ban-user-name').textContent;
+    const reason = document.getElementById('ban-reason').value || 'Violation of terms';
+
+    if (!userId) return;
+
+    try {
+        const response = await fetch(`${API_URL}/admin/users/${userId}/ban?reason=${encodeURIComponent(reason)}`, {
+            method: 'PUT'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to ban user');
+        }
+
+        const result = await response.json();
+        showToast(`User ${userName} banned successfully`, 'success');
+        closeBanModal();
+        loadUsers();
+    } catch (error) {
+        console.error('Error banning user:', error);
+        showToast('Failed to ban user: ' + error.message, 'error');
+    }
+}
+
+async function unbanUser(userId) {
+    if (!confirm('Are you sure you want to unban this user?')) return;
+
+    try {
+        const response = await fetch(`${API_URL}/admin/users/${userId}/unban`, {
+            method: 'PUT'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to unban user');
+        }
+
+        const result = await response.json();
+        showToast('User unbanned successfully', 'success');
+        loadUsers();
+    } catch (error) {
+        console.error('Error unbanning user:', error);
+        showToast('Failed to unban user: ' + error.message, 'error');
     }
 }
 

@@ -30,6 +30,13 @@ async function loadUserProfile() {
             console.log('[loadUserProfile] pred_balance:', userProfile.pred_balance, 'type:', typeof userProfile.pred_balance);
             console.log('[loadUserProfile] ton_balance:', userProfile.ton_balance, 'type:', typeof userProfile.ton_balance);
 
+            // Check if user is banned
+            if (userProfile.is_banned) {
+                console.log('[loadUserProfile] ⚠️ User is banned. Redirecting to /banned');
+                window.location.href = '/banned';
+                return null;
+            }
+
             // Update balance
             userBalance.pred = userProfile.pred_balance;
             userBalance.ton = userProfile.ton_balance;

@@ -333,6 +333,13 @@ async def support():
     return await render_template('support.html', user_id=user_id)
 
 
+@app.route('/banned')
+async def banned():
+    """Banned user page - no auth required"""
+    user_id = session.get('user_id')
+    return await render_template('banned.html', user_id=user_id)
+
+
 # ============ API Routes ============
 
 @app.route('/api/markets')

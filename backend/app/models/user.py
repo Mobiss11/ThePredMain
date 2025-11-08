@@ -1,4 +1,4 @@
-from sqlalchemy import Column, BigInteger, String, DECIMAL, DateTime, ForeignKey
+from sqlalchemy import Column, BigInteger, String, DECIMAL, DateTime, ForeignKey, Boolean, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
@@ -28,6 +28,11 @@ class User(Base):
     # Referral
     referrer_id = Column(BigInteger, ForeignKey("users.id"), nullable=True)
     referral_code = Column(String(50), unique=True, nullable=True)
+
+    # Ban system
+    is_banned = Column(Boolean, default=False, nullable=False)
+    ban_reason = Column(Text, nullable=True)
+    banned_at = Column(DateTime(timezone=True), nullable=True)
 
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
