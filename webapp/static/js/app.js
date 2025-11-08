@@ -30,8 +30,9 @@ async function loadUserProfile() {
             console.log('[loadUserProfile] pred_balance:', userProfile.pred_balance, 'type:', typeof userProfile.pred_balance);
             console.log('[loadUserProfile] ton_balance:', userProfile.ton_balance, 'type:', typeof userProfile.ton_balance);
 
-            // Check if user is banned (but not if already on /banned page)
-            if (userProfile.is_banned && window.location.pathname !== '/banned') {
+            // Check if user is banned (but allow access to /banned and /support pages)
+            const allowedPagesForBanned = ['/banned', '/support'];
+            if (userProfile.is_banned && !allowedPagesForBanned.includes(window.location.pathname)) {
                 console.log('[loadUserProfile] ⚠️ User is banned. Redirecting to /banned');
                 window.location.href = '/banned';
                 return null;

@@ -60,6 +60,9 @@ class UserManagementItem(BaseModel):
     total_bets: int
     total_wins: int
     rank: str
+    is_banned: bool = False
+    ban_reason: Optional[str] = None
+    photo_url: Optional[str] = None
     created_at: datetime
 
     class Config:

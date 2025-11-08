@@ -326,9 +326,8 @@ async def create_event():
 
 
 @app.route('/support')
-@auth_required
 async def support():
-    """Support page"""
+    """Support page - accessible for banned users"""
     user_id = session.get('user_id')
     return await render_template('support.html', user_id=user_id)
 
