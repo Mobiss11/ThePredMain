@@ -1041,61 +1041,134 @@ class BroadcastRequest(BaseModel):
 
 @router.post("/broadcast")
 async def broadcast_message(
-    broadcast_data: BroadcastRequest,
+    message: str = Form(...),
+    target: str = Form("all"),
+    parse_mode: str = Form("HTML"),
+    telegram_id: Optional[int] = Form(None),
+    image: Optional[UploadFile] = File(None),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Broadcast a message to users via Telegram bot
-    This endpoint stores the message and returns user list
-    The actual sending should be done by the bot
+    Broadcast a message to users via Telegram bot queue
+
+    Supports:
+    - Text only (max 4096 chars)
+    - Text with image (max 1000 chars)
+    - HTML or Markdown formatting
+    - All users or specific user
+
+    Messages are added to queue and sent with rate limiting (30 msg/sec)
     """
-    from aiohttp import ClientSession
+    import logging
+    logger = logging.getLogger(__name__)
 
-    # Get BOT_TOKEN from environment
-    import os
-    bot_token = os.getenv("BOT_TOKEN")
+    from app.services.telegram_queue_service import TelegramQueueService
+    from app.models.telegram_notification import NotificationType
 
-    if not bot_token:
-        raise HTTPException(status_code=500, detail="BOT_TOKEN not configured")
+    # Validate message length
+    max_length = 1000 if image else 4096
+    if len(message) > max_length:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Message too long! Max {max_length} characters {'with image' if image else ''}"
+        )
 
-    if broadcast_data.target == "all":
+    # Upload image to S3 if provided
+    photo_url = None
+    if image:
+        try:
+            import boto3
+            import os
+            from app.core.config import settings
+
+            # Read image data
+            image_data = await image.read()
+
+            # Generate unique filename
+            from datetime import datetime
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"broadcast/{timestamp}_{image.filename}"
+
+            # Upload to S3
+            s3_client = boto3.client(
+                's3',
+                endpoint_url=settings.S3_ENDPOINT_URL,
+                aws_access_key_id=settings.S3_ACCESS_KEY_ID,
+                aws_secret_access_key=settings.S3_SECRET_ACCESS_KEY,
+                region_name=settings.S3_REGION
+            )
+
+            s3_client.put_object(
+                Bucket=settings.S3_BUCKET,
+                Key=filename,
+                Body=image_data,
+                ContentType=image.content_type,
+                ACL='public-read'
+            )
+
+            photo_url = f"{settings.S3_PUBLIC_URL}/{settings.S3_BUCKET}/{filename}"
+            logger.info(f"[Broadcast] Uploaded image to S3: {photo_url}")
+
+        except Exception as e:
+            logger.error(f"[Broadcast] Failed to upload image: {e}")
+            raise HTTPException(status_code=500, detail="Failed to upload image")
+
+    # Get recipients
+    if target == "all":
         # Get all users
-        query = select(User.telegram_id)
+        query = select(User.telegram_id, User.id)
         result = await db.execute(query)
-        telegram_ids = [row[0] for row in result.all()]
+        recipients = [(row[0], row[1]) for row in result.all()]
     else:
-        if not broadcast_data.telegram_id:
+        if not telegram_id:
             raise HTTPException(status_code=400, detail="telegram_id required for specific user")
-        telegram_ids = [broadcast_data.telegram_id]
 
-    # Send messages via Telegram API
-    sent_count = 0
-    failed_count = 0
+        # Get specific user
+        query = select(User.telegram_id, User.id).where(User.telegram_id == telegram_id)
+        result = await db.execute(query)
+        user_row = result.first()
 
-    async with ClientSession() as session:
-        for telegram_id in telegram_ids:
-            try:
-                url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-                payload = {
-                    "chat_id": telegram_id,
-                    "text": broadcast_data.message,
-                    "parse_mode": broadcast_data.parse_mode
-                }
+        if not user_row:
+            raise HTTPException(status_code=404, detail="User not found")
 
-                async with session.post(url, json=payload) as response:
-                    if response.status == 200:
-                        sent_count += 1
-                    else:
-                        failed_count += 1
-            except Exception as e:
-                failed_count += 1
-                print(f"Failed to send to {telegram_id}: {e}")
+        recipients = [(user_row[0], user_row[1])]
+
+    # Add messages to queue
+    queued_count = 0
+
+    for telegram_id, user_id in recipients:
+        try:
+            # Prepare metadata
+            metadata = {
+                "broadcast": True,
+                "photo_url": photo_url
+            }
+
+            # Add to queue
+            await TelegramQueueService.add_notification(
+                db=db,
+                telegram_id=telegram_id,
+                message_text=message,
+                notification_type=NotificationType.BROADCAST,
+                user_id=user_id,
+                parse_mode=parse_mode,
+                metadata=metadata
+            )
+
+            queued_count += 1
+
+        except Exception as e:
+            logger.error(f"[Broadcast] Failed to queue message for {telegram_id}: {e}")
+            continue
+
+    logger.info(f"[Broadcast] Queued {queued_count} messages out of {len(recipients)} recipients")
 
     return {
-        "total_recipients": len(telegram_ids),
-        "sent": sent_count,
-        "failed": failed_count,
-        "message": f"Broadcast sent to {sent_count} users"
+        "total_recipients": len(recipients),
+        "queued": queued_count,
+        "failed": len(recipients) - queued_count,
+        "message": f"Broadcast queued for {queued_count} users",
+        "photo_url": photo_url
     }
 
 

@@ -3,8 +3,8 @@
 {% block title %}Broadcast - ThePred Admin{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl">
-    <h1 class="text-3xl font-bold mb-8">Broadcast Message</h1>
+<div class="max-w-5xl">
+    <h1 class="text-3xl font-bold mb-8">📢 Broadcast Message</h1>
 
     <div class="bg-dark-800 rounded-lg p-8">
         <form id="broadcast-form" class="space-y-6">
@@ -24,6 +24,35 @@
                 <input type="number" id="telegram-id" placeholder="Telegram ID" class="mt-2 w-full bg-dark-700 border border-gray-700 rounded px-4 py-2 hidden">
             </div>
 
+            <!-- Image Upload -->
+            <div>
+                <label class="block text-sm font-medium mb-3">Image (Optional):</label>
+                <div class="space-y-3">
+                    <input type="file" id="image-upload" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+                    <button type="button" onclick="document.getElementById('image-upload').click()"
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        Upload Image
+                    </button>
+
+                    <!-- Image Preview -->
+                    <div id="image-preview-container" class="hidden">
+                        <div class="relative inline-block">
+                            <img id="image-preview" src="" alt="Preview" class="max-w-md max-h-64 rounded-lg border border-gray-700">
+                            <button type="button" onclick="removeImage()"
+                                    class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 rounded-full p-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="text-sm text-gray-400 mt-2">⚠️ With image: max 1000 characters</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Parse Mode -->
             <div>
                 <label class="block text-sm font-medium mb-3">Format:</label>
@@ -36,40 +65,157 @@
             <!-- Editor Toolbar -->
             <div>
                 <label class="block text-sm font-medium mb-3">Message:</label>
-                <div class="flex space-x-2 mb-3 bg-dark-700 p-2 rounded">
-                    <button type="button" onclick="insertTag('<b>', '</b>')" class="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-sm font-bold">B</button>
-                    <button type="button" onclick="insertTag('<i>', '</i>')" class="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-sm italic">I</button>
-                    <button type="button" onclick="insertTag('<code>', '</code>')" class="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-sm font-mono">Code</button>
-                    <button type="button" onclick="insertTag('<a href=\\\"\\\">', '</a>')" class="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-sm">Link</button>
-                    <button type="button" onclick="insertTag('\\n• ', '')" class="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-sm">• List</button>
+
+                <!-- Formatting Toolbar -->
+                <div class="flex flex-wrap gap-2 mb-3 bg-dark-700 p-3 rounded-lg">
+                    <!-- Text formatting -->
+                    <button type="button" onclick="insertTag('<b>', '</b>')" class="px-3 py-2 bg-gray-600 hover:bg-gray-700 rounded text-sm font-bold" title="Bold">
+                        <strong>B</strong>
+                    </button>
+                    <button type="button" onclick="insertTag('<i>', '</i>')" class="px-3 py-2 bg-gray-600 hover:bg-gray-700 rounded text-sm italic" title="Italic">
+                        <em>I</em>
+                    </button>
+                    <button type="button" onclick="insertTag('<u>', '</u>')" class="px-3 py-2 bg-gray-600 hover:bg-gray-700 rounded text-sm underline" title="Underline">
+                        <u>U</u>
+                    </button>
+                    <button type="button" onclick="insertTag('<s>', '</s>')" class="px-3 py-2 bg-gray-600 hover:bg-gray-700 rounded text-sm line-through" title="Strikethrough">
+                        <s>S</s>
+                    </button>
+                    <button type="button" onclick="insertTag('<code>', '</code>')" class="px-3 py-2 bg-gray-600 hover:bg-gray-700 rounded text-sm font-mono" title="Code">
+                        Code
+                    </button>
+
+                    <div class="w-px bg-gray-600"></div>
+
+                    <!-- Links and lists -->
+                    <button type="button" onclick="insertLink()" class="px-3 py-2 bg-gray-600 hover:bg-gray-700 rounded text-sm" title="Link">
+                        🔗 Link
+                    </button>
+                    <button type="button" onclick="insertTag('\\n• ', '')" class="px-3 py-2 bg-gray-600 hover:bg-gray-700 rounded text-sm" title="Bullet">
+                        • List
+                    </button>
+                    <button type="button" onclick="insertTag('\\n', '')" class="px-3 py-2 bg-gray-600 hover:bg-gray-700 rounded text-sm" title="New Line">
+                        ↵
+                    </button>
+
+                    <div class="w-px bg-gray-600"></div>
+
+                    <!-- Emoji picker button -->
+                    <button type="button" onclick="toggleEmojiPicker()" class="px-3 py-2 bg-yellow-600 hover:bg-yellow-700 rounded text-sm" title="Emoji">
+                        😊 Emoji
+                    </button>
                 </div>
-                <textarea id="message" rows="10" class="w-full bg-dark-700 border border-gray-700 rounded px-4 py-3 font-mono text-sm" placeholder="Enter your message here..." oninput="updatePreview()"></textarea>
+
+                <!-- Emoji Picker -->
+                <div id="emoji-picker" class="hidden bg-dark-700 border border-gray-600 rounded-lg p-4 mb-3 max-h-64 overflow-y-auto">
+                    <div class="grid grid-cols-8 gap-2">
+                        <button type="button" onclick="insertEmoji('😊')" class="text-2xl hover:bg-dark-600 rounded p-1">😊</button>
+                        <button type="button" onclick="insertEmoji('😂')" class="text-2xl hover:bg-dark-600 rounded p-1">😂</button>
+                        <button type="button" onclick="insertEmoji('❤️')" class="text-2xl hover:bg-dark-600 rounded p-1">❤️</button>
+                        <button type="button" onclick="insertEmoji('🔥')" class="text-2xl hover:bg-dark-600 rounded p-1">🔥</button>
+                        <button type="button" onclick="insertEmoji('⭐')" class="text-2xl hover:bg-dark-600 rounded p-1">⭐</button>
+                        <button type="button" onclick="insertEmoji('💎')" class="text-2xl hover:bg-dark-600 rounded p-1">💎</button>
+                        <button type="button" onclick="insertEmoji('🎯')" class="text-2xl hover:bg-dark-600 rounded p-1">🎯</button>
+                        <button type="button" onclick="insertEmoji('🎉')" class="text-2xl hover:bg-dark-600 rounded p-1">🎉</button>
+                        <button type="button" onclick="insertEmoji('💰')" class="text-2xl hover:bg-dark-600 rounded p-1">💰</button>
+                        <button type="button" onclick="insertEmoji('💵')" class="text-2xl hover:bg-dark-600 rounded p-1">💵</button>
+                        <button type="button" onclick="insertEmoji('📈')" class="text-2xl hover:bg-dark-600 rounded p-1">📈</button>
+                        <button type="button" onclick="insertEmoji('📉')" class="text-2xl hover:bg-dark-600 rounded p-1">📉</button>
+                        <button type="button" onclick="insertEmoji('🚀')" class="text-2xl hover:bg-dark-600 rounded p-1">🚀</button>
+                        <button type="button" onclick="insertEmoji('💪')" class="text-2xl hover:bg-dark-600 rounded p-1">💪</button>
+                        <button type="button" onclick="insertEmoji('👍')" class="text-2xl hover:bg-dark-600 rounded p-1">👍</button>
+                        <button type="button" onclick="insertEmoji('👎')" class="text-2xl hover:bg-dark-600 rounded p-1">👎</button>
+                        <button type="button" onclick="insertEmoji('✅')" class="text-2xl hover:bg-dark-600 rounded p-1">✅</button>
+                        <button type="button" onclick="insertEmoji('❌')" class="text-2xl hover:bg-dark-600 rounded p-1">❌</button>
+                        <button type="button" onclick="insertEmoji('⚠️')" class="text-2xl hover:bg-dark-600 rounded p-1">⚠️</button>
+                        <button type="button" onclick="insertEmoji('🎁')" class="text-2xl hover:bg-dark-600 rounded p-1">🎁</button>
+                        <button type="button" onclick="insertEmoji('🏆')" class="text-2xl hover:bg-dark-600 rounded p-1">🏆</button>
+                        <button type="button" onclick="insertEmoji('🥇')" class="text-2xl hover:bg-dark-600 rounded p-1">🥇</button>
+                        <button type="button" onclick="insertEmoji('🥈')" class="text-2xl hover:bg-dark-600 rounded p-1">🥈</button>
+                        <button type="button" onclick="insertEmoji('🥉')" class="text-2xl hover:bg-dark-600 rounded p-1">🥉</button>
+                        <button type="button" onclick="insertEmoji('⚡')" class="text-2xl hover:bg-dark-600 rounded p-1">⚡</button>
+                        <button type="button" onclick="insertEmoji('💫')" class="text-2xl hover:bg-dark-600 rounded p-1">💫</button>
+                        <button type="button" onclick="insertEmoji('🌟')" class="text-2xl hover:bg-dark-600 rounded p-1">🌟</button>
+                        <button type="button" onclick="insertEmoji('🎊')" class="text-2xl hover:bg-dark-600 rounded p-1">🎊</button>
+                        <button type="button" onclick="insertEmoji('🎈')" class="text-2xl hover:bg-dark-600 rounded p-1">🎈</button>
+                        <button type="button" onclick="insertEmoji('🔔')" class="text-2xl hover:bg-dark-600 rounded p-1">🔔</button>
+                        <button type="button" onclick="insertEmoji('📢')" class="text-2xl hover:bg-dark-600 rounded p-1">📢</button>
+                        <button type="button" onclick="insertEmoji('📣')" class="text-2xl hover:bg-dark-600 rounded p-1">📣</button>
+                    </div>
+                </div>
+
+                <!-- Textarea -->
+                <textarea id="message" rows="12"
+                          class="w-full bg-dark-700 border border-gray-700 rounded px-4 py-3 font-mono text-sm resize-y"
+                          placeholder="Enter your message here..."
+                          oninput="updatePreview(); updateCharCounter()"></textarea>
+
+                <!-- Character Counter -->
+                <div class="flex justify-between items-center mt-2">
+                    <span id="char-counter" class="text-sm text-gray-400">
+                        0 / 4096 characters
+                    </span>
+                    <span id="char-warning" class="text-sm text-red-400 hidden">
+                        ⚠️ Character limit exceeded!
+                    </span>
+                </div>
             </div>
 
             <!-- Preview -->
             <div>
                 <label class="block text-sm font-medium mb-3">Preview:</label>
-                <div id="preview" class="bg-dark-700 border border-gray-700 rounded px-4 py-3 min-h-[100px] text-gray-400">
-                    Preview will appear here...
+                <div class="bg-dark-700 border border-gray-700 rounded-lg p-6">
+                    <!-- Image preview in message -->
+                    <div id="preview-image-container" class="hidden mb-4">
+                        <img id="preview-image" src="" alt="Message image" class="max-w-sm rounded-lg">
+                    </div>
+
+                    <!-- Text preview -->
+                    <div id="preview" class="min-h-[100px] text-gray-300">
+                        <span class="text-gray-500 italic">Preview will appear here...</span>
+                    </div>
                 </div>
             </div>
 
             <!-- Submit Button -->
-            <div class="flex justify-end">
-                <button type="submit" class="gradient-gold text-black font-bold px-8 py-3 rounded-lg hover:opacity-90 transition">
+            <div class="flex justify-between items-center">
+                <div class="text-sm text-gray-400">
+                    <p>💡 <strong>Tip:</strong> Messages are queued and sent with rate limiting to comply with Telegram's limits (30 messages/sec)</p>
+                </div>
+                <button type="submit" class="gradient-gold text-black font-bold px-8 py-3 rounded-lg hover:opacity-90 transition flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                    </svg>
                     Send Broadcast
                 </button>
             </div>
         </form>
 
         <!-- Stats -->
-        <div id="stats" class="mt-8 p-4 bg-dark-700 rounded hidden">
-            <h3 class="font-bold mb-2">Last Broadcast Result:</h3>
-            <div class="text-sm space-y-1">
-                <p>Total Recipients: <span id="total-recipients" class="font-bold">0</span></p>
-                <p>Sent: <span id="sent-count" class="font-bold text-green-400">0</span></p>
-                <p>Failed: <span id="failed-count" class="font-bold text-red-400">0</span></p>
+        <div id="stats" class="mt-8 p-6 bg-dark-700 rounded-lg hidden">
+            <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Broadcast Queued Successfully!
+            </h3>
+            <div class="grid grid-cols-3 gap-4 text-sm">
+                <div class="bg-dark-800 p-4 rounded">
+                    <p class="text-gray-400 mb-1">Total Recipients</p>
+                    <p id="total-recipients" class="text-2xl font-bold">0</p>
+                </div>
+                <div class="bg-dark-800 p-4 rounded">
+                    <p class="text-gray-400 mb-1">Messages Queued</p>
+                    <p id="queued-count" class="text-2xl font-bold text-blue-400">0</p>
+                </div>
+                <div class="bg-dark-800 p-4 rounded">
+                    <p class="text-gray-400 mb-1">Estimated Time</p>
+                    <p id="estimated-time" class="text-2xl font-bold text-yellow-400">~0s</p>
+                </div>
             </div>
+            <p class="text-sm text-gray-400 mt-4">
+                ℹ️ Messages are being sent in the background. Check the Telegram bot logs for delivery status.
+            </p>
         </div>
     </div>
 </div>
@@ -78,10 +224,36 @@
 
 {% block scripts %}
 <script>
+let uploadedImageFile = null;
+let uploadedImageUrl = null;
+
 function toggleUserInput() {
     const target = document.querySelector('input[name="target"]:checked').value;
     const telegramIdInput = document.getElementById('telegram-id');
     telegramIdInput.classList.toggle('hidden', target === 'all');
+}
+
+function toggleEmojiPicker() {
+    const picker = document.getElementById('emoji-picker');
+    picker.classList.toggle('hidden');
+}
+
+function insertEmoji(emoji) {
+    const textarea = document.getElementById('message');
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+
+    textarea.value = text.substring(0, start) + emoji + text.substring(end);
+    textarea.focus();
+    textarea.selectionStart = start + emoji.length;
+    textarea.selectionEnd = start + emoji.length;
+
+    updatePreview();
+    updateCharCounter();
+
+    // Close emoji picker after selection
+    // toggleEmojiPicker();
 }
 
 function insertTag(openTag, closeTag) {
@@ -95,7 +267,80 @@ function insertTag(openTag, closeTag) {
     textarea.focus();
     textarea.selectionStart = start + openTag.length;
     textarea.selectionEnd = end + openTag.length;
+
     updatePreview();
+    updateCharCounter();
+}
+
+function insertLink() {
+    const url = prompt('Enter URL:', 'https://');
+    if (!url) return;
+
+    const text = prompt('Link text:', 'Click here');
+    if (!text) return;
+
+    insertTag(`<a href="${url}">`, '</a>');
+}
+
+function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Check file size (max 10MB for Telegram)
+    if (file.size > 10 * 1024 * 1024) {
+        showToast('Image too large! Max size: 10MB', 'error');
+        return;
+    }
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+        showToast('Please upload an image file', 'error');
+        return;
+    }
+
+    uploadedImageFile = file;
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        uploadedImageUrl = e.target.result;
+        document.getElementById('image-preview').src = e.target.result;
+        document.getElementById('preview-image').src = e.target.result;
+        document.getElementById('image-preview-container').classList.remove('hidden');
+        document.getElementById('preview-image-container').classList.remove('hidden');
+        updateCharCounter();
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeImage() {
+    uploadedImageFile = null;
+    uploadedImageUrl = null;
+    document.getElementById('image-upload').value = '';
+    document.getElementById('image-preview-container').classList.add('hidden');
+    document.getElementById('preview-image-container').classList.add('hidden');
+    updateCharCounter();
+}
+
+function updateCharCounter() {
+    const message = document.getElementById('message').value;
+    const charCount = message.length;
+    const maxChars = uploadedImageFile ? 1000 : 4096;
+
+    const counter = document.getElementById('char-counter');
+    const warning = document.getElementById('char-warning');
+
+    counter.textContent = `${charCount} / ${maxChars} characters`;
+
+    if (charCount > maxChars) {
+        counter.classList.add('text-red-400');
+        counter.classList.remove('text-gray-400');
+        warning.classList.remove('hidden');
+    } else {
+        counter.classList.remove('text-red-400');
+        counter.classList.add('text-gray-400');
+        warning.classList.add('hidden');
+    }
 }
 
 function updatePreview() {
@@ -103,19 +348,23 @@ function updatePreview() {
     const preview = document.getElementById('preview');
 
     if (!message) {
-        preview.innerHTML = '<span class="text-gray-400">Preview will appear here...</span>';
+        preview.innerHTML = '<span class="text-gray-500 italic">Preview will appear here...</span>';
         return;
     }
 
     // Simple HTML rendering for preview
-    preview.innerHTML = message
+    let html = message
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/&lt;b&gt;(.*?)&lt;\/b&gt;/g, '<b>$1</b>')
         .replace(/&lt;i&gt;(.*?)&lt;\/i&gt;/g, '<i>$1</i>')
+        .replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/g, '<u>$1</u>')
+        .replace(/&lt;s&gt;(.*?)&lt;\/s&gt;/g, '<s>$1</s>')
         .replace(/&lt;code&gt;(.*?)&lt;\/code&gt;/g, '<code class="bg-dark-900 px-1 rounded">$1</code>')
         .replace(/&lt;a href="(.*?)"&gt;(.*?)&lt;\/a&gt;/g, '<a href="$1" class="text-blue-400 underline">$2</a>')
         .replace(/\n/g, '<br>');
+
+    preview.innerHTML = html;
 }
 
 document.getElementById('broadcast-form').addEventListener('submit', async (e) => {
@@ -124,17 +373,23 @@ document.getElementById('broadcast-form').addEventListener('submit', async (e) =
     const target = document.querySelector('input[name="target"]:checked').value;
     const message = document.getElementById('message').value;
     const parseMode = document.getElementById('parse-mode').value;
+    const maxChars = uploadedImageFile ? 1000 : 4096;
 
+    // Validation
     if (!message.trim()) {
         showToast('Please enter a message', 'error');
         return;
     }
 
-    const payload = {
-        message,
-        target,
-        parse_mode: parseMode
-    };
+    if (message.length > maxChars) {
+        showToast(`Message too long! Max ${maxChars} characters ${uploadedImageFile ? 'with image' : ''}`, 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('message', message);
+    formData.append('target', target);
+    formData.append('parse_mode', parseMode);
 
     if (target === 'specific') {
         const telegramId = document.getElementById('telegram-id').value;
@@ -142,34 +397,47 @@ document.getElementById('broadcast-form').addEventListener('submit', async (e) =
             showToast('Please enter Telegram ID', 'error');
             return;
         }
-        payload.telegram_id = parseInt(telegramId);
+        formData.append('telegram_id', telegramId);
     }
 
-    if (!confirm(`Send this message to ${target === 'all' ? 'ALL USERS' : 'user ' + payload.telegram_id}?`)) {
+    if (uploadedImageFile) {
+        formData.append('image', uploadedImageFile);
+    }
+
+    if (!confirm(`Send this message to ${target === 'all' ? 'ALL USERS' : 'user ' + formData.get('telegram_id')}?`)) {
         return;
     }
 
     try {
+        showToast('Queuing broadcast...', 'info');
+
         const response = await fetch(`${API_URL}/admin/broadcast`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: formData
         });
 
         const result = await response.json();
 
         if (response.ok) {
-            showToast(result.message);
+            showToast('Broadcast queued successfully!', 'success');
 
             // Show stats
-            document.getElementById('total-recipients').textContent = result.total_recipients;
-            document.getElementById('sent-count').textContent = result.sent;
-            document.getElementById('failed-count').textContent = result.failed;
+            document.getElementById('total-recipients').textContent = result.total_recipients || 0;
+            document.getElementById('queued-count').textContent = result.queued || result.total_recipients || 0;
+
+            // Estimate time (30 messages per second Telegram limit)
+            const estimatedSeconds = Math.ceil((result.total_recipients || 0) / 30);
+            document.getElementById('estimated-time').textContent = estimatedSeconds < 60
+                ? `~${estimatedSeconds}s`
+                : `~${Math.ceil(estimatedSeconds / 60)}m`;
+
             document.getElementById('stats').classList.remove('hidden');
 
             // Clear form
             document.getElementById('message').value = '';
+            removeImage();
             updatePreview();
+            updateCharCounter();
         } else {
             showToast(result.detail || 'Failed to send broadcast', 'error');
         }
@@ -178,5 +446,8 @@ document.getElementById('broadcast-form').addEventListener('submit', async (e) =
         showToast('Network error. Please try again.', 'error');
     }
 });
+
+// Initialize
+updateCharCounter();
 </script>
 {% endblock %}

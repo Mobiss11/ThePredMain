@@ -424,6 +424,50 @@ async def api_admin_cancel_market(market_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/admin/broadcast', methods=['POST'])
+@login_required
+async def api_admin_broadcast():
+    """Proxy broadcast request to backend with FormData"""
+    try:
+        form = await request.form
+        files = await request.files
+
+        # Build FormData
+        data = aiohttp.FormData()
+        data.add_field('message', form.get('message'))
+        data.add_field('target', form.get('target', 'all'))
+        data.add_field('parse_mode', form.get('parse_mode', 'HTML'))
+
+        if form.get('telegram_id'):
+            data.add_field('telegram_id', form.get('telegram_id'))
+
+        # Add image if provided
+        if 'image' in files and files['image'].filename:
+            image = files['image']
+            image_bytes = image.read()
+            data.add_field(
+                'image',
+                image_bytes,
+                filename=image.filename,
+                content_type=image.content_type
+            )
+
+        print(f"[admin/broadcast proxy] Forwarding broadcast: target={form.get('target')}, has_image={'image' in files}")
+
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.post(
+                f"{app.config['API_URL']}/admin/broadcast",
+                data=data
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error sending broadcast: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/admin/markets/generate-test', methods=['POST'])
 @login_required
 async def api_admin_generate_test_markets():
