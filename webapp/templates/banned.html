@@ -54,27 +54,31 @@
 
 {% block extra_scripts %}
 <script>
-// Load ban reason
+// Load ban reason and check if still banned
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('[banned.html] Page loaded');
 
-    // Get user profile to show ban reason
-    if (window.userProfile && window.userProfile.ban_reason) {
-        document.getElementById('ban-reason').textContent = window.userProfile.ban_reason;
-    } else {
-        // Try to load profile if not loaded yet
-        try {
-            const response = await fetch(`${API_URL}/profile`);
-            if (response.ok) {
-                const profile = await response.json();
-                document.getElementById('ban-reason').textContent = profile.ban_reason || 'Нарушение правил сервиса';
-            } else {
-                document.getElementById('ban-reason').textContent = 'Нарушение правил сервиса';
+    // Try to load profile to check if still banned
+    try {
+        const response = await fetch(`${API_URL}/profile`);
+        if (response.ok) {
+            const profile = await response.json();
+
+            // If user is no longer banned, redirect to home
+            if (!profile.is_banned) {
+                console.log('[banned.html] User is no longer banned, redirecting to home');
+                window.location.href = '/';
+                return;
             }
-        } catch (error) {
-            console.error('Failed to load ban reason:', error);
+
+            // Show ban reason
+            document.getElementById('ban-reason').textContent = profile.ban_reason || 'Нарушение правил сервиса';
+        } else {
             document.getElementById('ban-reason').textContent = 'Нарушение правил сервиса';
         }
+    } catch (error) {
+        console.error('Failed to load ban reason:', error);
+        document.getElementById('ban-reason').textContent = 'Нарушение правил сервиса';
     }
 });
 

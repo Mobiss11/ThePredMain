@@ -1,7 +1,7 @@
 // API_URL is defined in base.html
 
 // Show that JS loaded
-console.log('APP.JS LOADED - Version 2025110703');
+console.log('APP.JS LOADED - Version 2025110704');
 
 // Global state
 let userBalance = {
@@ -30,8 +30,8 @@ async function loadUserProfile() {
             console.log('[loadUserProfile] pred_balance:', userProfile.pred_balance, 'type:', typeof userProfile.pred_balance);
             console.log('[loadUserProfile] ton_balance:', userProfile.ton_balance, 'type:', typeof userProfile.ton_balance);
 
-            // Check if user is banned
-            if (userProfile.is_banned) {
+            // Check if user is banned (but not if already on /banned page)
+            if (userProfile.is_banned && window.location.pathname !== '/banned') {
                 console.log('[loadUserProfile] ⚠️ User is banned. Redirecting to /banned');
                 window.location.href = '/banned';
                 return null;
@@ -345,12 +345,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    // Refresh balance and active bets every 30 seconds
-    setInterval(async () => {
-        await loadUserBalance();
-        await loadUserActiveBets();
-        forceUpdateBalance();
-    }, 30000);
+    // Refresh balance and active bets every 30 seconds (not on banned page)
+    if (window.location.pathname !== '/banned') {
+        setInterval(async () => {
+            await loadUserBalance();
+            await loadUserActiveBets();
+            forceUpdateBalance();
+        }, 30000);
+    }
 });
 
 // Export functions
