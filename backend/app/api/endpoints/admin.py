@@ -4,7 +4,7 @@ Requires admin authentication (to be implemented)
 """
 from fastapi import APIRouter, Depends, HTTPException, Query, Form, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc, case
+from sqlalchemy import select, func, desc, case, String, or_, and_
 from app.core.database import get_db
 from app.models.user import User
 from app.models.market import Market, MarketStatus, MarketOutcome, ModerationStatus
@@ -459,8 +459,9 @@ async def get_all_users(
     Sorting:
     - sort_by: pred_balance_asc, pred_balance_desc, ton_balance_asc, ton_balance_desc, created_at_desc (default)
     """
-    from sqlalchemy import or_, and_
-    from datetime import datetime
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"[GET /admin/users] Params: limit={limit}, offset={offset}, search={search}, is_banned={is_banned}, date_from={date_from}, date_to={date_to}, sort_by={sort_by}")
 
     # Base query
     query = select(User)
@@ -523,16 +524,18 @@ async def get_all_users(
     users = result.scalars().all()
 
     # Get referral counts for all users
-    user_ids = [user.id for user in users]
-    referral_counts_query = select(
-        User.referrer_id,
-        func.count(User.id).label('count')
-    ).where(
-        User.referrer_id.in_(user_ids)
-    ).group_by(User.referrer_id)
+    referral_counts_dict = {}
+    if users:
+        user_ids = [user.id for user in users]
+        referral_counts_query = select(
+            User.referrer_id,
+            func.count(User.id).label('count')
+        ).where(
+            User.referrer_id.in_(user_ids)
+        ).group_by(User.referrer_id)
 
-    referral_counts_result = await db.execute(referral_counts_query)
-    referral_counts_dict = {row[0]: row[1] for row in referral_counts_result.all()}
+        referral_counts_result = await db.execute(referral_counts_query)
+        referral_counts_dict = {row[0]: row[1] for row in referral_counts_result.all()}
 
     # Build response items
     user_items = []
