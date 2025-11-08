@@ -39,4 +39,4 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     # Relationships
-    support_tickets = relationship("SupportTicket", back_populates="user")
+    # support_tickets = relationship("SupportTicket", back_populates="user")  # TODO: Create SupportTicket model
