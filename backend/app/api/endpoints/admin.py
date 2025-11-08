@@ -1092,10 +1092,9 @@ async def broadcast_message(
             # Upload to S3
             s3_client = boto3.client(
                 's3',
-                endpoint_url=settings.S3_ENDPOINT_URL,
-                aws_access_key_id=settings.S3_ACCESS_KEY_ID,
-                aws_secret_access_key=settings.S3_SECRET_ACCESS_KEY,
-                region_name=settings.S3_REGION
+                endpoint_url=settings.S3_ENDPOINT,
+                aws_access_key_id=settings.S3_ACCESS_KEY,
+                aws_secret_access_key=settings.S3_SECRET_KEY
             )
 
             s3_client.put_object(
