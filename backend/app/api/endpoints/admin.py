@@ -63,6 +63,7 @@ class UserManagementItem(BaseModel):
     is_banned: bool = False
     ban_reason: Optional[str] = None
     photo_url: Optional[str] = None
+    referral_count: int = 0
     created_at: datetime
 
     class Config:
@@ -436,22 +437,130 @@ async def promote_market(
 
 # ============ User Management ============
 
-@router.get("/users", response_model=List[UserManagementItem])
+@router.get("/users")
 async def get_all_users(
     limit: int = 50,
     offset: int = 0,
+    search: Optional[str] = None,
+    is_banned: Optional[bool] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    sort_by: Optional[str] = None,
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Get all users for management
+    Get all users for management with filters, sorting, and pagination
+
+    Filters:
+    - search: Search by username, first_name, telegram_id
+    - is_banned: Filter by ban status
+    - date_from, date_to: Filter by registration date range
+
+    Sorting:
+    - sort_by: pred_balance_asc, pred_balance_desc, ton_balance_asc, ton_balance_desc, created_at_desc (default)
     """
+    from sqlalchemy import or_, and_
+    from datetime import datetime
 
-    query = select(User).order_by(desc(User.created_at)).limit(limit).offset(offset)
+    # Base query
+    query = select(User)
+    count_query = select(func.count(User.id))
 
+    # Apply search filter
+    if search:
+        search_filter = or_(
+            User.username.ilike(f"%{search}%"),
+            User.first_name.ilike(f"%{search}%"),
+            User.telegram_id.cast(String).ilike(f"%{search}%")
+        )
+        query = query.where(search_filter)
+        count_query = count_query.where(search_filter)
+
+    # Apply banned filter
+    if is_banned is not None:
+        query = query.where(User.is_banned == is_banned)
+        count_query = count_query.where(User.is_banned == is_banned)
+
+    # Apply date range filter
+    if date_from:
+        try:
+            date_from_dt = datetime.fromisoformat(date_from.replace('Z', '+00:00'))
+            query = query.where(User.created_at >= date_from_dt)
+            count_query = count_query.where(User.created_at >= date_from_dt)
+        except ValueError:
+            pass
+
+    if date_to:
+        try:
+            date_to_dt = datetime.fromisoformat(date_to.replace('Z', '+00:00'))
+            query = query.where(User.created_at <= date_to_dt)
+            count_query = count_query.where(User.created_at <= date_to_dt)
+        except ValueError:
+            pass
+
+    # Apply sorting
+    if sort_by == "pred_balance_asc":
+        query = query.order_by(User.pred_balance.asc())
+    elif sort_by == "pred_balance_desc":
+        query = query.order_by(User.pred_balance.desc())
+    elif sort_by == "ton_balance_asc":
+        query = query.order_by(User.ton_balance.asc())
+    elif sort_by == "ton_balance_desc":
+        query = query.order_by(User.ton_balance.desc())
+    else:
+        # Default: newest first
+        query = query.order_by(desc(User.created_at))
+
+    # Get total count
+    count_result = await db.execute(count_query)
+    total_count = count_result.scalar()
+
+    # Apply pagination
+    query = query.limit(limit).offset(offset)
+
+    # Execute query
     result = await db.execute(query)
     users = result.scalars().all()
 
-    return [UserManagementItem.from_orm(user) for user in users]
+    # Get referral counts for all users
+    user_ids = [user.id for user in users]
+    referral_counts_query = select(
+        User.referrer_id,
+        func.count(User.id).label('count')
+    ).where(
+        User.referrer_id.in_(user_ids)
+    ).group_by(User.referrer_id)
+
+    referral_counts_result = await db.execute(referral_counts_query)
+    referral_counts_dict = {row[0]: row[1] for row in referral_counts_result.all()}
+
+    # Build response items
+    user_items = []
+    for user in users:
+        user_dict = {
+            "id": user.id,
+            "telegram_id": user.telegram_id,
+            "username": user.username,
+            "first_name": user.first_name,
+            "pred_balance": user.pred_balance,
+            "ton_balance": user.ton_balance,
+            "total_bets": user.total_bets,
+            "total_wins": user.total_wins,
+            "rank": user.rank,
+            "is_banned": user.is_banned,
+            "ban_reason": user.ban_reason,
+            "photo_url": user.photo_url,
+            "referral_count": referral_counts_dict.get(user.id, 0),
+            "created_at": user.created_at
+        }
+        user_items.append(user_dict)
+
+    return {
+        "users": user_items,
+        "total": total_count,
+        "limit": limit,
+        "offset": offset
+    }
 
 
 @router.put("/users/{user_id}/balance")

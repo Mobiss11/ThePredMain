@@ -2,22 +2,67 @@
 {% block title %}Users - ThePred Admin{% endblock %}
 {% block content %}
 <div class="max-w-7xl">
-    <div class="flex items-center justify-between mb-8">
+    <div class="flex items-center justify-between mb-6">
         <h1 class="text-3xl font-bold">User Management</h1>
-        <div class="relative">
-            <input
-                type="text"
-                id="user-search"
-                placeholder="Поиск по имени, ID, Telegram..."
-                class="bg-dark-700 rounded-lg px-4 py-2 pl-10 w-80 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                oninput="filterUsers()"
-            >
-            <svg class="w-5 h-5 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="bg-dark-800 rounded-lg p-6 mb-6 space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Search -->
+            <div class="relative">
+                <input
+                    type="text"
+                    id="user-search"
+                    placeholder="Поиск по имени, ID, Telegram..."
+                    class="bg-dark-700 rounded-lg px-4 py-2 pl-10 w-full focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                >
+                <svg class="w-5 h-5 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </div>
+
+            <!-- Ban Filter -->
+            <select id="filter-banned" class="bg-dark-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                <option value="">Все пользователи</option>
+                <option value="false">Активные</option>
+                <option value="true">Забаненные</option>
+            </select>
+
+            <!-- Date From -->
+            <input type="date" id="filter-date-from"
+                   class="bg-dark-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                   placeholder="От даты">
+
+            <!-- Date To -->
+            <input type="date" id="filter-date-to"
+                   class="bg-dark-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                   placeholder="До даты">
+        </div>
+
+        <div class="flex justify-between items-center">
+            <!-- Sort -->
+            <select id="sort-by" class="bg-dark-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                <option value="created_at_desc">Сортировка: Новые сначала</option>
+                <option value="pred_balance_desc">PRED: Больше → Меньше</option>
+                <option value="pred_balance_asc">PRED: Меньше → Больше</option>
+                <option value="ton_balance_desc">TON: Больше → Меньше</option>
+                <option value="ton_balance_asc">TON: Меньше → Больше</option>
+            </select>
+
+            <!-- Apply Filters Button -->
+            <button onclick="applyFilters()" class="px-6 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg font-medium transition">
+                Применить фильтры
+            </button>
         </div>
     </div>
 
+    <!-- Stats -->
+    <div id="stats-bar" class="bg-dark-800 rounded-lg p-4 mb-6 flex justify-between items-center">
+        <span class="text-gray-400">Загрузка...</span>
+    </div>
+
+    <!-- Users Table -->
     <div class="bg-dark-800 rounded-lg overflow-hidden">
         <table class="w-full">
             <thead class="bg-dark-700">
@@ -28,6 +73,7 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">PRED</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">TON</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Bets</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Рефералы</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Rank</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Created</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-400">Actions</th>
@@ -35,6 +81,16 @@
             </thead>
             <tbody id="users-tbody"></tbody>
         </table>
+    </div>
+
+    <!-- Pagination -->
+    <div id="pagination" class="mt-6 flex justify-between items-center">
+        <div class="text-gray-400" id="pagination-info">
+            <!-- Showing X-Y of Z users -->
+        </div>
+        <div class="flex gap-2" id="pagination-buttons">
+            <!-- Pagination buttons -->
+        </div>
     </div>
 </div>
 
@@ -185,46 +241,86 @@
 {% endblock %}
 {% block scripts %}
 <script>
-let currentUsers = [];
+// Pagination state
+let currentPage = 1;
+const usersPerPage = 50;
+let totalUsers = 0;
+let currentFilters = {};
 
-async function loadUsers() {
+// Load users with filters
+async function loadUsers(page = 1) {
     const tbody = document.getElementById('users-tbody');
-    tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-8 text-center text-gray-400">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="px-6 py-8 text-center text-gray-400">Loading...</td></tr>';
+
+    currentPage = page;
+    const offset = (page - 1) * usersPerPage;
+
+    // Build query params
+    const params = new URLSearchParams({
+        limit: usersPerPage,
+        offset: offset
+    });
+
+    // Add current filters
+    if (currentFilters.search) params.append('search', currentFilters.search);
+    if (currentFilters.is_banned !== undefined) params.append('is_banned', currentFilters.is_banned);
+    if (currentFilters.date_from) params.append('date_from', currentFilters.date_from);
+    if (currentFilters.date_to) params.append('date_to', currentFilters.date_to);
+    if (currentFilters.sort_by) params.append('sort_by', currentFilters.sort_by);
 
     try {
-        console.log('Loading users from:', `${API_URL}/admin/users?limit=100`);
-        const response = await fetch(`${API_URL}/admin/users?limit=100`);
+        console.log('Loading users from:', `${API_URL}/admin/users?${params.toString()}`);
+        const response = await fetch(`${API_URL}/admin/users?${params.toString()}`);
         console.log('Users response status:', response.status);
 
         if (!response.ok) {
             const errorText = await response.text();
             console.error('Failed to load users:', errorText);
-            tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-8 text-center text-red-400">Error loading users: ' + errorText + '</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" class="px-6 py-8 text-center text-red-400">Error loading users: ' + errorText + '</td></tr>';
             return;
         }
 
-        currentUsers = await response.json();
-        console.log('Loaded users:', currentUsers.length);
+        const data = await response.json();
+        console.log('Loaded data:', data);
 
-        if (currentUsers.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-8 text-center text-gray-400">No users found</td></tr>';
+        totalUsers = data.total;
+        const users = data.users;
+
+        // Update stats
+        updateStats(data.total, data.offset, data.limit, users.length);
+
+        if (users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="10" class="px-6 py-8 text-center text-gray-400">No users found</td></tr>';
+            renderPagination(0, page);
             return;
         }
 
-        renderUsers(currentUsers);
+        renderUsers(users);
+        renderPagination(totalUsers, page);
     } catch (error) {
         console.error('Error loading users:', error);
-        tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-8 text-center text-red-400">Error: ' + error.message + '</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="px-6 py-8 text-center text-red-400">Error: ' + error.message + '</td></tr>';
     }
+}
+
+function updateStats(total, offset, limit, currentCount) {
+    const showingFrom = offset + 1;
+    const showingTo = offset + currentCount;
+
+    const statsBar = document.getElementById('stats-bar');
+    statsBar.innerHTML = `
+        <span class="text-gray-300">
+            Показано <strong class="text-yellow-400">${showingFrom}-${showingTo}</strong>
+            из <strong class="text-yellow-400">${total}</strong> пользователей
+        </span>
+        <span class="text-gray-400 text-sm">
+            Страница ${currentPage} из ${Math.ceil(total / usersPerPage) || 1}
+        </span>
+    `;
 }
 
 function renderUsers(users) {
     const tbody = document.getElementById('users-tbody');
-
-    if (users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-8 text-center text-gray-400">Нет пользователей</td></tr>';
-        return;
-    }
 
     tbody.innerHTML = users.map(u => {
         const displayName = u.username || u.first_name || 'N/A';
@@ -233,24 +329,23 @@ function renderUsers(users) {
             : `<div class="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center font-bold text-black">${displayName.charAt(0).toUpperCase()}</div>`;
 
         return `
-            <tr class="border-t border-gray-800 hover:bg-dark-700" data-user-id="${u.id}" data-user-name="${displayName.toLowerCase()}" data-telegram-id="${u.telegram_id}">
+            <tr class="border-t border-gray-800 hover:bg-dark-700" data-user-id="${u.id}">
                 <td class="px-6 py-4">${avatarHtml}</td>
                 <td class="px-6 py-4">#${u.id}</td>
                 <td class="px-6 py-4">
-                    <div class="flex items-center gap-2">
-                        <span>${displayName}</span>
-                        ${u.is_banned ? '<span class="px-2 py-0.5 bg-red-600 rounded text-xs">🚫 BANNED</span>' : ''}
-                    </div>
+                    ${u.is_banned ? '<div class="mb-1"><span class="px-2 py-0.5 bg-red-600 rounded text-xs">🚫 BANNED</span></div>' : ''}
+                    <div class="font-medium">${displayName}</div>
                     <div class="text-xs text-gray-500">TG: ${u.telegram_id}</div>
                 </td>
                 <td class="px-6 py-4">${formatNumber(u.pred_balance)}</td>
                 <td class="px-6 py-4">${formatNumber(u.ton_balance)}</td>
                 <td class="px-6 py-4">${u.total_bets}</td>
+                <td class="px-6 py-4"><span class="px-2 py-1 bg-blue-600 rounded text-xs">${u.referral_count || 0}</span></td>
                 <td class="px-6 py-4"><span class="px-2 py-1 bg-yellow-600 rounded text-xs">${u.rank}</span></td>
                 <td class="px-6 py-4 text-sm text-gray-400">${formatDate(u.created_at)}</td>
                 <td class="px-6 py-4">
                     <div class="flex flex-wrap gap-2">
-                        <button onclick="editUser(${u.id})" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
+                        <button onclick="editUser(${u.id}, ${JSON.stringify(u).replace(/"/g, '&quot;')})" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
                             Редактировать
                         </button>
                         <button onclick="viewUser(${u.id})" class="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-sm">
@@ -270,36 +365,97 @@ function renderUsers(users) {
     }).join('');
 }
 
-function filterUsers() {
-    const searchTerm = document.getElementById('user-search').value.toLowerCase();
+function renderPagination(total, currentPage) {
+    const totalPages = Math.ceil(total / usersPerPage);
+    const paginationInfo = document.getElementById('pagination-info');
+    const paginationButtons = document.getElementById('pagination-buttons');
 
-    if (!searchTerm) {
-        renderUsers(currentUsers);
+    if (totalPages <= 1) {
+        paginationButtons.innerHTML = '';
         return;
     }
 
-    const filtered = currentUsers.filter(u => {
-        const username = (u.username || u.first_name || '').toLowerCase();
-        const telegramId = String(u.telegram_id || '');
-        const userId = String(u.id || '');
+    let buttonsHtml = '';
 
-        return username.includes(searchTerm) ||
-               telegramId.includes(searchTerm) ||
-               userId.includes(searchTerm);
-    });
+    // Previous button
+    if (currentPage > 1) {
+        buttonsHtml += `<button onclick="loadUsers(${currentPage - 1})" class="px-4 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg">← Назад</button>`;
+    }
 
-    renderUsers(filtered);
+    // Page numbers
+    const maxButtons = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+
+    if (endPage - startPage < maxButtons - 1) {
+        startPage = Math.max(1, endPage - maxButtons + 1);
+    }
+
+    if (startPage > 1) {
+        buttonsHtml += `<button onclick="loadUsers(1)" class="px-4 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg">1</button>`;
+        if (startPage > 2) {
+            buttonsHtml += `<span class="px-2 text-gray-500">...</span>`;
+        }
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        const activeClass = i === currentPage ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-dark-700 hover:bg-dark-600';
+        buttonsHtml += `<button onclick="loadUsers(${i})" class="px-4 py-2 ${activeClass} rounded-lg">${i}</button>`;
+    }
+
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            buttonsHtml += `<span class="px-2 text-gray-500">...</span>`;
+        }
+        buttonsHtml += `<button onclick="loadUsers(${totalPages})" class="px-4 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg">${totalPages}</button>`;
+    }
+
+    // Next button
+    if (currentPage < totalPages) {
+        buttonsHtml += `<button onclick="loadUsers(${currentPage + 1})" class="px-4 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg">Вперёд →</button>`;
+    }
+
+    paginationButtons.innerHTML = buttonsHtml;
 }
 
-function editUser(id) {
-    const user = currentUsers.find(u => u.id === id);
-    if (!user) return;
+// Apply filters
+function applyFilters() {
+    const search = document.getElementById('user-search').value.trim();
+    const isBanned = document.getElementById('filter-banned').value;
+    const dateFrom = document.getElementById('filter-date-from').value;
+    const dateTo = document.getElementById('filter-date-to').value;
+    const sortBy = document.getElementById('sort-by').value;
 
-    document.getElementById('edit-user-id').value = user.id;
-    document.getElementById('edit-username').value = user.username || user.first_name || 'N/A';
-    document.getElementById('edit-pred-balance').value = user.pred_balance;
-    document.getElementById('edit-ton-balance').value = user.ton_balance;
-    document.getElementById('edit-rank').value = user.rank;
+    currentFilters = {};
+
+    if (search) currentFilters.search = search;
+    if (isBanned !== '') currentFilters.is_banned = isBanned;
+    if (dateFrom) currentFilters.date_from = dateFrom + 'T00:00:00Z';
+    if (dateTo) currentFilters.date_to = dateTo + 'T23:59:59Z';
+    if (sortBy) currentFilters.sort_by = sortBy;
+
+    console.log('Applying filters:', currentFilters);
+    loadUsers(1); // Reset to page 1 when applying filters
+}
+
+// Listen for Enter key on search input
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('user-search');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                applyFilters();
+            }
+        });
+    }
+});
+
+function editUser(id, userData) {
+    document.getElementById('edit-user-id').value = id;
+    document.getElementById('edit-username').value = userData.username || userData.first_name || 'N/A';
+    document.getElementById('edit-pred-balance').value = userData.pred_balance;
+    document.getElementById('edit-ton-balance').value = userData.ton_balance;
+    document.getElementById('edit-rank').value = userData.rank;
 
     document.getElementById('edit-user-modal').style.display = 'flex';
 }
@@ -437,7 +593,7 @@ async function deleteUser() {
         closeDeleteModal();
 
         // Reload users list
-        loadUsers();
+        loadUsers(currentPage);
     } catch (error) {
         console.error('Error deleting user:', error);
         showToast('Failed to delete user: ' + error.message, 'error');
@@ -475,7 +631,7 @@ async function banUser() {
         const result = await response.json();
         showToast(`User ${userName} banned successfully`, 'success');
         closeBanModal();
-        loadUsers();
+        loadUsers(currentPage);
     } catch (error) {
         console.error('Error banning user:', error);
         showToast('Failed to ban user: ' + error.message, 'error');
@@ -496,7 +652,7 @@ async function unbanUser(userId) {
 
         const result = await response.json();
         showToast('User unbanned successfully', 'success');
-        loadUsers();
+        loadUsers(currentPage);
     } catch (error) {
         console.error('Error unbanning user:', error);
         showToast('Failed to unban user: ' + error.message, 'error');
@@ -555,7 +711,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('User updated successfully');
                 showToast('User updated successfully', 'success');
                 closeEditModal();
-                loadUsers();
+                loadUsers(currentPage);
             } catch (error) {
                 console.error('Error updating user:', error);
                 showToast('Failed to update user: ' + error.message, 'error');
