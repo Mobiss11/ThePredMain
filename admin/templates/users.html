@@ -50,10 +50,15 @@
                 <option value="ton_balance_asc">TON: Меньше → Больше</option>
             </select>
 
-            <!-- Apply Filters Button -->
-            <button onclick="applyFilters()" class="px-6 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg font-medium transition">
-                Применить фильтры
-            </button>
+            <!-- Buttons -->
+            <div class="flex gap-3">
+                <button onclick="resetFilters()" class="px-6 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg font-medium transition">
+                    Сбросить
+                </button>
+                <button onclick="applyFilters()" class="px-6 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg font-medium transition">
+                    Применить фильтры
+                </button>
+            </div>
         </div>
     </div>
 
@@ -262,15 +267,39 @@ async function loadUsers(page = 1) {
     });
 
     // Add current filters
-    if (currentFilters.search) params.append('search', currentFilters.search);
-    if (currentFilters.is_banned !== undefined) params.append('is_banned', currentFilters.is_banned);
-    if (currentFilters.date_from) params.append('date_from', currentFilters.date_from);
-    if (currentFilters.date_to) params.append('date_to', currentFilters.date_to);
-    if (currentFilters.sort_by) params.append('sort_by', currentFilters.sort_by);
+    console.log('[loadUsers] currentFilters:', currentFilters);
+
+    if (currentFilters.search) {
+        params.append('search', currentFilters.search);
+        console.log('[loadUsers] Added search:', currentFilters.search);
+    }
+
+    if (currentFilters.is_banned !== undefined && currentFilters.is_banned !== null) {
+        // Convert string to boolean if needed
+        const isBannedValue = currentFilters.is_banned === 'true' || currentFilters.is_banned === true;
+        params.append('is_banned', isBannedValue);
+        console.log('[loadUsers] Added is_banned:', isBannedValue);
+    }
+
+    if (currentFilters.date_from) {
+        params.append('date_from', currentFilters.date_from);
+        console.log('[loadUsers] Added date_from:', currentFilters.date_from);
+    }
+
+    if (currentFilters.date_to) {
+        params.append('date_to', currentFilters.date_to);
+        console.log('[loadUsers] Added date_to:', currentFilters.date_to);
+    }
+
+    if (currentFilters.sort_by) {
+        params.append('sort_by', currentFilters.sort_by);
+        console.log('[loadUsers] Added sort_by:', currentFilters.sort_by);
+    }
 
     try {
-        console.log('Loading users from:', `${API_URL}/admin/users?${params.toString()}`);
-        const response = await fetch(`${API_URL}/admin/users?${params.toString()}`);
+        const url = `${API_URL}/admin/users?${params.toString()}`;
+        console.log('[loadUsers] Fetching from:', url);
+        const response = await fetch(url);
         console.log('Users response status:', response.status);
 
         if (!response.ok) {
@@ -437,6 +466,24 @@ function handleSearch() {
     }, 500); // 500ms debounce
 }
 
+// Reset all filters
+function resetFilters() {
+    console.log('[resetFilters] Resetting all filters');
+
+    // Clear filter inputs
+    document.getElementById('user-search').value = '';
+    document.getElementById('filter-banned').value = '';
+    document.getElementById('filter-date-from').value = '';
+    document.getElementById('filter-date-to').value = '';
+    document.getElementById('sort-by').value = 'created_at_desc';
+
+    // Clear filter state
+    currentFilters = {};
+
+    // Reload users
+    loadUsers(1);
+}
+
 // Apply filters (ban, date, sort)
 function applyFilters() {
     const isBanned = document.getElementById('filter-banned').value;
@@ -444,22 +491,41 @@ function applyFilters() {
     const dateTo = document.getElementById('filter-date-to').value;
     const sortBy = document.getElementById('sort-by').value;
 
+    console.log('[applyFilters] Raw values:', { isBanned, dateFrom, dateTo, sortBy });
+
     // Keep search if it exists
     const currentSearch = currentFilters.search;
     currentFilters = {};
-    if (currentSearch) currentFilters.search = currentSearch;
+    if (currentSearch) {
+        currentFilters.search = currentSearch;
+    }
 
     // Apply other filters
-    if (isBanned !== '') currentFilters.is_banned = isBanned;
-    if (dateFrom) currentFilters.date_from = dateFrom + 'T00:00:00Z';
-    if (dateTo) currentFilters.date_to = dateTo + 'T23:59:59Z';
-    if (sortBy) currentFilters.sort_by = sortBy;
+    if (isBanned !== '') {
+        currentFilters.is_banned = isBanned; // Will be converted in loadUsers
+        console.log('[applyFilters] Set is_banned:', isBanned);
+    }
 
-    console.log('Applying filters:', currentFilters);
+    if (dateFrom) {
+        currentFilters.date_from = dateFrom + 'T00:00:00Z';
+        console.log('[applyFilters] Set date_from:', currentFilters.date_from);
+    }
+
+    if (dateTo) {
+        currentFilters.date_to = dateTo + 'T23:59:59Z';
+        console.log('[applyFilters] Set date_to:', currentFilters.date_to);
+    }
+
+    if (sortBy && sortBy !== 'created_at_desc') {
+        currentFilters.sort_by = sortBy;
+        console.log('[applyFilters] Set sort_by:', sortBy);
+    }
+
+    console.log('[applyFilters] Final filters:', currentFilters);
     loadUsers(1); // Reset to page 1 when applying filters
 }
 
-// Setup search listeners
+// Setup search and filter listeners
 document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('user-search');
     if (searchInput) {
@@ -472,6 +538,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 clearTimeout(searchTimeout);
                 handleSearch();
             }
+        });
+    }
+
+    // Auto-apply sort when changed
+    const sortSelect = document.getElementById('sort-by');
+    if (sortSelect) {
+        sortSelect.addEventListener('change', () => {
+            console.log('[sort-by] Changed, applying filters...');
+            applyFilters();
         });
     }
 });
