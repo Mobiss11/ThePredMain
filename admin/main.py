@@ -122,12 +122,38 @@ async def broadcast():
 async def api_admin_users():
     """Proxy admin users request to backend"""
     try:
-        limit = request.args.get('limit', 100)
+        # Get all query parameters
+        limit = request.args.get('limit', 50)
         offset = request.args.get('offset', 0)
+        search = request.args.get('search')
+        is_banned = request.args.get('is_banned')
+        date_from = request.args.get('date_from')
+        date_to = request.args.get('date_to')
+        sort_by = request.args.get('sort_by')
+
+        # Build query params
+        params = {
+            'limit': limit,
+            'offset': offset
+        }
+
+        if search:
+            params['search'] = search
+        if is_banned is not None:
+            params['is_banned'] = is_banned
+        if date_from:
+            params['date_from'] = date_from
+        if date_to:
+            params['date_to'] = date_to
+        if sort_by:
+            params['sort_by'] = sort_by
+
+        print(f"[admin/users proxy] Forwarding params: {params}")
 
         async with aiohttp.ClientSession() as session_http:
             async with session_http.get(
-                f"{app.config['API_URL']}/admin/users?limit={limit}&offset={offset}"
+                f"{app.config['API_URL']}/admin/users",
+                params=params
             ) as response:
                 data = await response.json()
                 return jsonify(data)
