@@ -71,3 +71,4 @@ certbot/
 *.backup
 *~.conf
 *.conf.temp
+poetry.lock
