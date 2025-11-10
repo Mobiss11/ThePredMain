@@ -60,10 +60,8 @@ class TONWallet {
 
         if (!this.tg) {
             console.error('TON Wallet: Telegram WebApp not available');
-            return {
-                success: false,
-                error: 'Telegram WebApp not available'
-            };
+            this.tg?.showAlert('Telegram WebApp не доступен. Откройте приложение через Telegram.');
+            return;
         }
 
         try {
@@ -100,17 +98,12 @@ class TONWallet {
                 }
             });
 
-            return {
-                success: false,
-                error: 'User interaction required'
-            };
+            // Success - popup shown, user will select an option
+            console.log('TON Wallet: Popup shown, waiting for user selection');
 
         } catch (error) {
             console.error('TON Wallet: Connection error:', error);
-            return {
-                success: false,
-                error: error.message || 'Failed to connect wallet'
-            };
+            this.tg?.showAlert('Ошибка: ' + error.message);
         }
     }
 
@@ -153,14 +146,18 @@ class TONWallet {
         await this.initPromise;
 
         try {
-            await this.tonConnectUI.disconnect();
-            return { success: true };
+            // Clear local state
+            this.connected = false;
+            this.address = null;
+
+            // Trigger callback
+            this.onConnectionChange(false, null);
+
+            console.log('TON Wallet: Disconnected');
+            this.tg?.showAlert('Кошелек отключен');
         } catch (error) {
             console.error('Failed to disconnect wallet:', error);
-            return {
-                success: false,
-                error: error.message
-            };
+            this.tg?.showAlert('Ошибка отключения кошелька: ' + error.message);
         }
     }
 

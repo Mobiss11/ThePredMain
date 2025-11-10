@@ -1402,52 +1402,38 @@ function updateWalletConnectionUI(connected, address) {
 
 // Connect wallet
 window.connectWallet = async function() {
-    const connectBtn = document.getElementById('connect-wallet-btn');
-    const originalText = connectBtn.textContent;
-    connectBtn.textContent = 'Подключение...';
-    connectBtn.disabled = true;
-
     try {
-        const result = await window.tonWallet.connect();
-
-        if (result.success && result.address) {
-            // Save address to backend
-            await window.tonWallet.saveAddress();
-
-            // Update UI
-            updateWalletConnectionUI(true, result.address);
-
-            // Show success message
-            alert('✅ Кошелек успешно подключен!');
-        } else {
-            throw new Error(result.error || 'Failed to connect wallet');
-        }
+        // Just call connect() - it will show popup
+        // Success is handled via onConnectionChange callback
+        await window.tonWallet.connect();
     } catch (error) {
         console.error('Wallet connection failed:', error);
         alert('❌ Ошибка подключения кошелька: ' + error.message);
-    } finally {
-        connectBtn.textContent = originalText;
-        connectBtn.disabled = false;
+    }
+};
+
+// Set up wallet connection callback
+window.tonWallet.onConnectionChange = function(connected, address) {
+    console.log('Wallet connection changed:', connected, address);
+
+    if (connected && address) {
+        // Update UI
+        updateWalletConnectionUI(true, address);
+
+        // Update deposit modal state
+        updateDepositModalState();
+
+        // Reload profile to show updated balance
+        loadProfile();
     }
 };
 
 // Connect wallet from modal
 window.connectWalletFromModal = async function() {
     try {
-        const result = await window.tonWallet.connect();
-
-        if (result.success && result.address) {
-            // Save address to backend
-            await window.tonWallet.saveAddress();
-
-            // Update UI
-            updateWalletConnectionUI(true, result.address);
-
-            // Show deposit form
-            updateDepositModalState();
-        } else {
-            throw new Error(result.error || 'Failed to connect wallet');
-        }
+        // Just call connect() - it will show popup
+        // Success is handled via onConnectionChange callback
+        await window.tonWallet.connect();
     } catch (error) {
         console.error('Wallet connection failed:', error);
         alert('❌ Ошибка подключения кошелька: ' + error.message);
