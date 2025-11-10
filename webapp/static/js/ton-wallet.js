@@ -19,8 +19,11 @@ class TONWallet {
         try {
             // Initialize TON Connect UI
             this.tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-                manifestUrl: window.location.origin + '/static/tonconnect-manifest.json',
+                manifestUrl: 'https://thepred.tech/static/tonconnect-manifest.json',
                 buttonRootId: null, // We'll create custom button
+                uiPreferences: {
+                    theme: 'DARK'
+                }
             });
 
             // Subscribe to connection status
@@ -45,9 +48,10 @@ class TONWallet {
                 this.address = currentWallet.account.address;
             }
 
-            console.log('TON Connect initialized');
+            console.log('TON Connect initialized successfully');
         } catch (error) {
             console.error('Failed to initialize TON Connect:', error);
+            throw error;
         }
     }
 
@@ -67,13 +71,20 @@ class TONWallet {
         await this.initPromise;
 
         try {
-            await this.tonConnectUI.connectWallet();
+            // Open wallet connection modal
+            const walletConnectionSource = await this.tonConnectUI.connectWallet();
 
-            // Wait for connection
-            return new Promise((resolve) => {
+            console.log('Wallet connection initiated');
+
+            // Wait for connection with timeout
+            return new Promise((resolve, reject) => {
+                let resolved = false;
+
                 const checkConnection = setInterval(() => {
-                    if (this.connected && this.address) {
+                    if (this.connected && this.address && !resolved) {
+                        resolved = true;
                         clearInterval(checkConnection);
+                        console.log('Wallet connected successfully:', this.address);
                         resolve({
                             success: true,
                             address: this.address
@@ -81,22 +92,36 @@ class TONWallet {
                     }
                 }, 100);
 
-                // Timeout after 30 seconds
+                // Timeout after 60 seconds
                 setTimeout(() => {
-                    clearInterval(checkConnection);
-                    if (!this.connected) {
-                        resolve({
-                            success: false,
-                            error: 'Connection timeout'
-                        });
+                    if (!resolved) {
+                        resolved = true;
+                        clearInterval(checkConnection);
+
+                        if (!this.connected) {
+                            console.log('Connection timeout or cancelled by user');
+                            resolve({
+                                success: false,
+                                error: 'Connection cancelled or timeout'
+                            });
+                        }
                     }
-                }, 30000);
+                }, 60000);
             });
         } catch (error) {
-            console.error('Failed to connect wallet:', error);
+            console.error('Wallet connection error:', error);
+
+            // Check if user cancelled
+            if (error.message && error.message.includes('cancel')) {
+                return {
+                    success: false,
+                    error: 'Connection cancelled by user'
+                };
+            }
+
             return {
                 success: false,
-                error: error.message
+                error: error.message || 'Failed to connect wallet'
             };
         }
     }
