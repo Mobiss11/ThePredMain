@@ -1,8 +1,8 @@
 # ThePred - Полная Документация Проекта
 
-**Версия**: 1.2
-**Дата обновления**: 8 ноября 2025
-**Прогресс**: 97% Complete 🎉
+**Версия**: 1.3
+**Дата обновления**: 10 ноября 2025
+**Прогресс**: 98% Complete 🎉
 
 > **⚡️ ВАЖНО**: Если продолжаешь работу после перерыва, сначала прочитай **[CONTEXT.md](CONTEXT.md)** - там описано на чем остановились, текущие задачи, известные проблемы и как продолжить работу.
 
@@ -479,8 +479,11 @@ PATCH  /admin/users/{id}               # Обновить пользовател
 POST   /admin/users/{id}/ban           # Забанить пользователя
 POST   /admin/users/{id}/unban         # Разбанить пользователя
 
-# Broadcast (NEW)
-POST   /admin/broadcast                # Массовая рассылка
+# Broadcast
+POST   /admin/broadcast                     # Массовая рассылка (немедленная)
+POST   /admin/broadcast/schedule            # Запланированная рассылка
+GET    /admin/broadcast/scheduled           # Список запланированных рассылок
+DELETE /admin/broadcast/scheduled/{id}     # Отменить запланированную рассылку
 
 # Stats
 GET    /admin/stats                    # Общая статистика
@@ -494,6 +497,11 @@ GET    /admin/stats                    # Общая статистика
 - Rate limiting через Telegram Worker
 - Форматирование: HTML, Markdown
 - Target: все пользователи или конкретный ID
+- **Scheduled Broadcasts** (NEW):
+  - Планирование на определенное время (UTC)
+  - Автоматическая отправка через broadcast-scheduler
+  - Статусы: PENDING, PROCESSING, COMPLETED, CANCELLED
+  - Возможность отмены до отправки
 
 **Market Resolution**:
 - Выбор исхода: YES, NO, CANCELLED
@@ -1530,9 +1538,9 @@ POST   /admin/users/{id}/ban          # Забанить
 POST   /admin/users/{id}/unban        # Разбанить
 ```
 
-#### Admin - Broadcast (NEW)
+#### Admin - Broadcast
 ```
-POST   /admin/broadcast               # Массовая рассылка
+POST   /admin/broadcast               # Немедленная массовая рассылка
   Content-Type: multipart/form-data
 
   Fields:
@@ -1546,6 +1554,47 @@ POST   /admin/broadcast               # Массовая рассылка
     "total_recipients": 150,
     "queued": 150,
     "message": "Broadcast queued for 150 users"
+  }
+
+POST   /admin/broadcast/schedule      # Запланированная рассылка (NEW)
+  Content-Type: multipart/form-data
+
+  Fields:
+    message: "Текст сообщения"
+    scheduled_at: "2025-11-10T10:50:00Z" (ISO 8601 UTC)
+    target: "all" | "specific"
+    telegram_id: 123456 (если target=specific)
+    parse_mode: "HTML" | "Markdown"
+    image: <file> (опционально)
+
+  Response: {
+    "id": 1,
+    "scheduled_at": "2025-11-10T10:50:00Z",
+    "status": "PENDING",
+    "message": "Broadcast scheduled successfully"
+  }
+
+GET    /admin/broadcast/scheduled     # Список запланированных рассылок (NEW)
+  Query params:
+    status: "PENDING" | "PROCESSING" | "COMPLETED" | "CANCELLED"
+    limit: 50
+    offset: 0
+
+  Response: [
+    {
+      "id": 1,
+      "message_text": "Текст...",
+      "scheduled_at": "2025-11-10T10:50:00Z",
+      "status": "PENDING",
+      "target": "all",
+      "total_recipients": 0,
+      "created_at": "2025-11-10T10:45:00Z"
+    }
+  ]
+
+DELETE /admin/broadcast/scheduled/{id}  # Отменить запланированную рассылку (NEW)
+  Response: {
+    "message": "Scheduled broadcast cancelled successfully"
   }
 ```
 
@@ -2140,7 +2189,7 @@ async def _send_message(self, notification: TelegramNotification):
 
 1. **Database**:
    - ✅ PostgreSQL + Alembic migrations
-   - ✅ 11 таблиц (users, markets, bets, missions, user_missions, transactions, wallet_addresses, support_tickets, support_messages, telegram_notifications_queue, leaderboard_snapshots)
+   - ✅ 12 таблиц (users, markets, bets, missions, user_missions, transactions, wallet_addresses, support_tickets, support_messages, telegram_notifications_queue, leaderboard_snapshots, scheduled_broadcasts)
    - ✅ 20 тестовых рынков + seed data
    - ✅ 19 миссий
 
@@ -2151,7 +2200,7 @@ async def _send_message(self, notification: TelegramNotification):
    - ✅ Users (profile, stats, public, ban/unban)
    - ✅ Missions (list, claim) - 19 миссий
    - ✅ Leaderboard (4 типа сортировки)
-   - ✅ Admin (stats, markets CRUD, users management, broadcast)
+   - ✅ Admin (stats, markets CRUD, users management, broadcast, scheduled broadcasts)
    - ✅ Support (tickets, messages, admin replies)
    - ✅ Scheduler (weekly rewards, cleanup)
 
@@ -2166,6 +2215,7 @@ async def _send_message(self, notification: TelegramNotification):
    - ✅ Support tickets (create, reply, close)
    - ✅ Notification queue (TelegramQueueService)
    - ✅ Broadcast system (text + images, rate limiting)
+   - ✅ Scheduled broadcasts (запланированные рассылки с datetime picker)
    - ✅ S3/MinIO integration (image storage)
    - ✅ Swagger documentation
 
@@ -2185,6 +2235,31 @@ async def _send_message(self, notification: TelegramNotification):
    - ✅ Standalone process
    - ✅ PM2 integration
    - ✅ Production-ready
+
+### ✅ Broadcast Scheduler - 100%
+
+1. **Функционал**:
+   - ✅ Автоматическая проверка scheduled broadcasts каждые 60 секунд
+   - ✅ Обработка PENDING broadcasts по времени
+   - ✅ Создание уведомлений через TelegramQueueService
+   - ✅ Поддержка target: all или specific user
+   - ✅ Статистика (total_recipients, sent_count)
+   - ✅ Статусы: PENDING → PROCESSING → COMPLETED
+   - ✅ Error handling с rollback на PENDING
+   - ✅ Photo support (передается через metadata)
+   - ✅ Logging
+
+2. **Deployment**:
+   - ✅ Standalone process (broadcast_scheduler.py)
+   - ✅ PM2 integration (ecosystem.config.js)
+   - ✅ Auto-restart
+   - ✅ 256MB memory limit
+
+3. **Database**:
+   - ✅ Таблица scheduled_broadcasts
+   - ✅ Enum broadcaststatus (PENDING, PROCESSING, COMPLETED, CANCELLED)
+   - ✅ Индексы: id, scheduled_at, status
+   - ✅ Migration fix_broadcast_table.py (для ручного создания)
 
 ### ✅ Telegram Bot - 100%
 
@@ -2233,7 +2308,7 @@ async def _send_message(self, notification: TelegramNotification):
    - ✅ Dashboard (статистика, Chart.js графики)
    - ✅ Markets (список, create, edit, resolve, delete)
    - ✅ Users (список, edit balance, ban/unban, view activity)
-   - ✅ Broadcast (rich editor, emoji picker, image upload, queue) - NEW
+   - ✅ Broadcast (rich editor, emoji picker, image upload, scheduling, queue)
    - ✅ Support (tickets list, reply, close)
 
 2. **Broadcast Features**:
@@ -2243,6 +2318,13 @@ async def _send_message(self, notification: TelegramNotification):
    - ✅ Character counter (динамический лимит)
    - ✅ Target selection (all/specific user)
    - ✅ Parse mode (HTML/Markdown)
+   - ✅ **Scheduled Broadcasts** (NEW):
+     - DateTime picker (UTC input)
+     - Real-time current time display (UTC + Moscow)
+     - Selected time preview (UTC + Moscow side-by-side)
+     - Auto-updating clock
+     - Min 5 minutes from now validation
+     - Scheduled broadcasts table (status, time, cancel button)
    - ✅ Queue integration
    - ✅ Success feedback
 
@@ -2455,6 +2537,17 @@ module.exports = {
       }
     },
     {
+      name: 'broadcast-scheduler',
+      script: 'venv/bin/python',
+      args: 'broadcast_scheduler.py',
+      cwd: '/home/ThePredMain/backend',
+      env: {
+        POSTGRES_HOST: 'localhost',
+        REDIS_HOST: 'localhost',
+        ...
+      }
+    },
+    {
       name: 'bot',
       script: 'python',
       args: 'main.py',
@@ -2500,11 +2593,13 @@ pm2 status
 pm2 logs
 pm2 logs backend
 pm2 logs telegram-worker
+pm2 logs broadcast-scheduler
 
 # Перезапуск
 pm2 restart all
 pm2 restart backend
 pm2 restart telegram-worker
+pm2 restart broadcast-scheduler
 
 # Остановка
 pm2 stop all
