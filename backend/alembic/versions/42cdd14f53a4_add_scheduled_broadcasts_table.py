@@ -19,34 +19,43 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Create BroadcastStatus enum
+    # Create BroadcastStatus enum if not exists
     op.execute("""
-        CREATE TYPE broadcaststatus AS ENUM (
-            'PENDING', 'PROCESSING', 'COMPLETED', 'CANCELLED'
-        )
+        DO $$ BEGIN
+            CREATE TYPE broadcaststatus AS ENUM (
+                'PENDING', 'PROCESSING', 'COMPLETED', 'CANCELLED'
+            );
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
     """)
 
-    # Create scheduled_broadcasts table
-    op.create_table(
-        'scheduled_broadcasts',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('message_text', sa.Text(), nullable=False),
-        sa.Column('parse_mode', sa.String(length=10), nullable=True),
-        sa.Column('photo_url', sa.String(length=500), nullable=True),
-        sa.Column('target', sa.String(length=20), nullable=True),
-        sa.Column('target_telegram_id', sa.Integer(), nullable=True),
-        sa.Column('scheduled_at', sa.DateTime(timezone=True), nullable=False),
-        sa.Column('status', sa.Enum('PENDING', 'PROCESSING', 'COMPLETED', 'CANCELLED', name='broadcaststatus'), nullable=False),
-        sa.Column('total_recipients', sa.Integer(), nullable=True),
-        sa.Column('sent_count', sa.Integer(), nullable=True),
-        sa.Column('created_by', sa.Integer(), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
-        sa.Column('processed_at', sa.DateTime(timezone=True), nullable=True),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_scheduled_broadcasts_id'), 'scheduled_broadcasts', ['id'], unique=False)
-    op.create_index(op.f('ix_scheduled_broadcasts_scheduled_at'), 'scheduled_broadcasts', ['scheduled_at'], unique=False)
-    op.create_index(op.f('ix_scheduled_broadcasts_status'), 'scheduled_broadcasts', ['status'], unique=False)
+    # Create scheduled_broadcasts table if not exists
+    from sqlalchemy import inspect
+    bind = op.get_bind()
+    inspector = inspect(bind)
+
+    if 'scheduled_broadcasts' not in inspector.get_table_names():
+        op.create_table(
+            'scheduled_broadcasts',
+            sa.Column('id', sa.Integer(), nullable=False),
+            sa.Column('message_text', sa.Text(), nullable=False),
+            sa.Column('parse_mode', sa.String(length=10), nullable=True),
+            sa.Column('photo_url', sa.String(length=500), nullable=True),
+            sa.Column('target', sa.String(length=20), nullable=True),
+            sa.Column('target_telegram_id', sa.Integer(), nullable=True),
+            sa.Column('scheduled_at', sa.DateTime(timezone=True), nullable=False),
+            sa.Column('status', sa.Enum('PENDING', 'PROCESSING', 'COMPLETED', 'CANCELLED', name='broadcaststatus'), nullable=False),
+            sa.Column('total_recipients', sa.Integer(), nullable=True),
+            sa.Column('sent_count', sa.Integer(), nullable=True),
+            sa.Column('created_by', sa.Integer(), nullable=True),
+            sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+            sa.Column('processed_at', sa.DateTime(timezone=True), nullable=True),
+            sa.PrimaryKeyConstraint('id')
+        )
+        op.create_index(op.f('ix_scheduled_broadcasts_id'), 'scheduled_broadcasts', ['id'], unique=False)
+        op.create_index(op.f('ix_scheduled_broadcasts_scheduled_at'), 'scheduled_broadcasts', ['scheduled_at'], unique=False)
+        op.create_index(op.f('ix_scheduled_broadcasts_status'), 'scheduled_broadcasts', ['status'], unique=False)
 
 
 def downgrade() -> None:
