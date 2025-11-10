@@ -44,6 +44,20 @@ async def logout():
     return redirect(url_for('login'))
 
 
+@app.route('/robots.txt')
+async def robots_txt():
+    """Prevent search engine indexing"""
+    return """User-agent: *
+Disallow: /""", 200, {'Content-Type': 'text/plain'}
+
+
+@app.after_request
+async def add_noindex_header(response):
+    """Add X-Robots-Tag to all responses to prevent indexing"""
+    response.headers['X-Robots-Tag'] = 'noindex, nofollow, noarchive'
+    return response
+
+
 @app.route('/')
 @login_required
 async def dashboard():
@@ -834,4 +848,5 @@ async def api_support_messages(ticket_id):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8002)
+    # Listen only on localhost - access via nginx proxy only
+    app.run(host='127.0.0.1', port=8002)
