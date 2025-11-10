@@ -6,33 +6,98 @@
 
 class TONWallet {
     constructor() {
-        this.tg = window.Telegram?.WebApp;
+        this.tonConnectUI = null;
         this.connected = false;
         this.address = null;
         this.initPromise = this.init();
     }
 
     /**
-     * Initialize TON Wallet
+     * Initialize TON Connect UI
      */
     async init() {
         try {
             console.log('TON Wallet: Initializing...');
 
-            if (!this.tg) {
-                console.warn('TON Wallet: Telegram WebApp not available');
+            // Wait for TON_CONNECT_UI to be available
+            if (typeof TON_CONNECT_UI === 'undefined') {
+                console.error('TON_CONNECT_UI not loaded');
                 return;
             }
 
-            console.log('TON Wallet: Telegram WebApp available');
-            console.log('TON Wallet: Platform:', this.tg.platform);
-            console.log('TON Wallet: Version:', this.tg.version);
+            // Initialize TON Connect UI
+            this.tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+                manifestUrl: 'https://thepred.tech/static/tonconnect-manifest.json',
+                buttonRootId: null, // We'll create custom button
+                uiPreferences: {
+                    theme: 'DARK'
+                },
+                walletsListConfiguration: {
+                    includeWallets: [
+                        {
+                            appName: 'telegram-wallet',
+                            name: 'Wallet',
+                            imageUrl: 'https://wallet.tg/images/logo-288.png',
+                            aboutUrl: 'https://wallet.tg/',
+                            universalLink: 'https://t.me/wallet?attach=wallet',
+                            bridgeUrl: 'https://bridge.ton.space/bridge',
+                            platforms: ['ios', 'android', 'macos', 'windows', 'linux']
+                        },
+                        {
+                            appName: 'tonkeeper',
+                            name: 'Tonkeeper',
+                            imageUrl: 'https://tonkeeper.com/assets/tonconnect-icon.png',
+                            aboutUrl: 'https://tonkeeper.com',
+                            universalLink: 'https://app.tonkeeper.com/ton-connect',
+                            bridgeUrl: 'https://bridge.tonapi.io/bridge',
+                            platforms: ['ios', 'android', 'chrome', 'firefox', 'safari']
+                        },
+                        {
+                            appName: 'mytonwallet',
+                            name: 'MyTonWallet',
+                            imageUrl: 'https://static.mytonwallet.io/icon-256.png',
+                            aboutUrl: 'https://mytonwallet.io',
+                            universalLink: 'https://connect.mytonwallet.org',
+                            bridgeUrl: 'https://tonconnectbridge.mytonwallet.org/bridge',
+                            platforms: ['chrome', 'ios', 'android', 'firefox', 'safari']
+                        }
+                    ]
+                },
+                actionsConfiguration: {
+                    twaReturnUrl: 'https://t.me/The_Pred_Bot/app'
+                }
+            });
 
-            // Check if wallet button is available (Telegram 7.2+)
-            if (typeof this.tg.requestWalletAccess === 'function') {
-                console.log('TON Wallet: Wallet access API available');
-            } else {
-                console.log('TON Wallet: Wallet access API not available in this Telegram version');
+            // Subscribe to connection status
+            this.tonConnectUI.onStatusChange((wallet) => {
+                console.log('TON Wallet: Status changed', wallet);
+
+                if (wallet) {
+                    this.connected = true;
+                    this.address = wallet.account.address;
+                    console.log('TON Wallet connected:', this.address);
+
+                    // Trigger callback
+                    this.onConnectionChange(true, this.address);
+
+                    // Auto-save to backend
+                    this.saveAddress().catch(error => {
+                        console.error('Failed to save address:', error);
+                    });
+                } else {
+                    this.connected = false;
+                    this.address = null;
+                    console.log('TON Wallet disconnected');
+                    this.onConnectionChange(false, null);
+                }
+            });
+
+            // Check if already connected
+            const currentWallet = this.tonConnectUI.wallet;
+            if (currentWallet) {
+                this.connected = true;
+                this.address = currentWallet.account.address;
+                console.log('TON Wallet: Already connected', this.address);
             }
 
             console.log('TON Wallet: Initialized successfully');
@@ -51,92 +116,34 @@ class TONWallet {
     }
 
     /**
-     * Connect wallet using Telegram WebApp API
+     * Connect wallet
      */
     async connect() {
         await this.initPromise;
 
-        console.log('TON Wallet: Starting connection...');
-
-        if (!this.tg) {
-            console.error('TON Wallet: Telegram WebApp not available');
-            this.tg?.showAlert('Telegram WebApp не доступен. Откройте приложение через Telegram.');
+        if (!this.tonConnectUI) {
+            console.error('TON Connect UI not initialized');
             return;
         }
 
         try {
-            // Show Telegram's built-in wallet button
-            // This will open the wallet selection modal
-            console.log('TON Wallet: Opening wallet connection...');
+            console.log('TON Wallet: Opening connection modal...');
 
-            // Use Telegram's showPopup to explain to user
-            this.tg.showPopup({
-                title: 'Подключение кошелька',
-                message: 'Для пополнения баланса вам нужен TON кошелек. Используйте @wallet в Telegram или установите Tonkeeper.',
-                buttons: [
-                    {
-                        id: 'open_wallet',
-                        type: 'default',
-                        text: 'Открыть @wallet'
-                    },
-                    {
-                        id: 'enter_manual',
-                        type: 'default',
-                        text: 'Ввести адрес вручную'
-                    },
-                    {
-                        type: 'cancel'
-                    }
-                ]
-            }, (buttonId) => {
-                if (buttonId === 'open_wallet') {
-                    // Open @wallet bot
-                    this.tg.openTelegramLink('https://t.me/wallet');
-                } else if (buttonId === 'enter_manual') {
-                    // Show input for manual address
-                    this.showManualAddressInput();
-                }
-            });
+            // Open wallet connection modal
+            await this.tonConnectUI.openModal();
 
-            // Success - popup shown, user will select an option
-            console.log('TON Wallet: Popup shown, waiting for user selection');
+            console.log('TON Wallet: Modal opened');
+            // Connection result will be handled by onStatusChange callback
 
         } catch (error) {
             console.error('TON Wallet: Connection error:', error);
-            this.tg?.showAlert('Ошибка: ' + error.message);
+
+            // Show error to user only if it's not a user cancellation
+            if (!error.message || !error.message.includes('cancel')) {
+                const tg = window.Telegram?.WebApp;
+                tg?.showAlert('Ошибка подключения кошелька: ' + (error.message || 'Unknown error'));
+            }
         }
-    }
-
-    /**
-     * Show manual address input
-     */
-    showManualAddressInput() {
-        const address = prompt('Введите ваш TON адрес (начинается с EQ или UQ):');
-
-        if (!address) {
-            return;
-        }
-
-        // Validate address format
-        if (!address.match(/^(EQ|UQ)[A-Za-z0-9_-]{46}$/)) {
-            this.tg?.showAlert('Неверный формат адреса. Адрес должен начинаться с EQ или UQ и содержать 48 символов.');
-            return;
-        }
-
-        // Save address
-        this.connected = true;
-        this.address = address;
-        console.log('TON Wallet: Manual address set:', address);
-
-        // Trigger callback
-        this.onConnectionChange(true, address);
-
-        // Save to backend
-        this.saveAddress().then(() => {
-            this.tg?.showAlert('✅ Кошелек успешно подключен!');
-        }).catch((error) => {
-            this.tg?.showAlert('❌ Ошибка сохранения адреса: ' + error.message);
-        });
     }
 
     /**
@@ -145,19 +152,19 @@ class TONWallet {
     async disconnect() {
         await this.initPromise;
 
+        if (!this.tonConnectUI) {
+            console.error('TON Connect UI not initialized');
+            return;
+        }
+
         try {
-            // Clear local state
-            this.connected = false;
-            this.address = null;
-
-            // Trigger callback
-            this.onConnectionChange(false, null);
-
+            await this.tonConnectUI.disconnect();
             console.log('TON Wallet: Disconnected');
-            this.tg?.showAlert('Кошелек отключен');
+
+            const tg = window.Telegram?.WebApp;
+            tg?.showAlert('Кошелек отключен');
         } catch (error) {
-            console.error('Failed to disconnect wallet:', error);
-            this.tg?.showAlert('Ошибка отключения кошелька: ' + error.message);
+            console.error('TON Wallet: Disconnect error:', error);
         }
     }
 
@@ -190,6 +197,12 @@ class TONWallet {
             }
 
             const data = await response.json();
+            console.log('TON Wallet: Address saved to backend', data);
+
+            // Show success message
+            const tg = window.Telegram?.WebApp;
+            tg?.showAlert('✅ Кошелек успешно подключен!');
+
             return data;
         } catch (error) {
             console.error('Failed to save address:', error);
