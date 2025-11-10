@@ -1084,10 +1084,18 @@ async def broadcast_message(
             # Read image data
             image_data = await image.read()
 
-            # Generate unique filename
+            # Generate safe filename (only ASCII, no spaces or special chars)
             from datetime import datetime
+            import uuid
+            import os as path_module
+
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"broadcast/{timestamp}_{image.filename}"
+            # Get file extension safely
+            _, ext = path_module.splitext(image.filename)
+            # Generate unique ID to avoid collisions
+            unique_id = str(uuid.uuid4())[:8]
+            # Create safe filename: broadcast/20251110_075030_a1b2c3d4.png
+            filename = f"broadcast/{timestamp}_{unique_id}{ext.lower()}"
 
             # Upload to S3
             s3_client = boto3.client(
