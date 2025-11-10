@@ -1179,6 +1179,194 @@ async def broadcast_message(
     }
 
 
+# ============ Scheduled Broadcasts ============
+
+@router.post("/broadcast/schedule")
+async def schedule_broadcast(
+    message: str = Form(...),
+    scheduled_at: str = Form(...),  # ISO 8601 datetime string in UTC
+    target: str = Form("all"),
+    parse_mode: str = Form("HTML"),
+    telegram_id: Optional[int] = Form(None),
+    image: Optional[UploadFile] = File(None),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Schedule a broadcast message for future delivery
+
+    Args:
+        message: Message text
+        scheduled_at: UTC datetime in ISO 8601 format (e.g., "2025-11-10T15:30:00Z")
+        target: "all" or "specific"
+        parse_mode: "HTML" or "Markdown"
+        telegram_id: Target user telegram_id if target="specific"
+        image: Optional image file
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+
+    from datetime import datetime, timezone
+    from app.models.scheduled_broadcast import ScheduledBroadcast, BroadcastStatus
+
+    # Parse scheduled datetime
+    try:
+        scheduled_datetime = datetime.fromisoformat(scheduled_at.replace('Z', '+00:00'))
+        if scheduled_datetime.tzinfo is None:
+            scheduled_datetime = scheduled_datetime.replace(tzinfo=timezone.utc)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid datetime format: {e}")
+
+    # Validate datetime is in the future
+    if scheduled_datetime <= datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Scheduled time must be in the future")
+
+    # Upload image to S3 if provided
+    photo_url = None
+    if image:
+        try:
+            import boto3
+            import uuid
+            from pathlib import Path
+            from app.core.config import settings
+
+            image_data = await image.read()
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            ext = Path(image.filename).suffix.lower()
+            unique_id = str(uuid.uuid4())[:8]
+            filename = f"broadcast/{timestamp}_{unique_id}{ext}"
+
+            s3_client = boto3.client(
+                's3',
+                endpoint_url=settings.S3_ENDPOINT,
+                aws_access_key_id=settings.S3_ACCESS_KEY,
+                aws_secret_access_key=settings.S3_SECRET_KEY
+            )
+
+            s3_client.put_object(
+                Bucket=settings.S3_BUCKET,
+                Key=filename,
+                Body=image_data,
+                ContentType=image.content_type,
+                ACL='public-read'
+            )
+
+            photo_url = f"{settings.S3_PUBLIC_URL}/{settings.S3_BUCKET}/{filename}"
+            logger.info(f"[Scheduled Broadcast] Uploaded image: {photo_url}")
+
+        except Exception as e:
+            logger.error(f"[Scheduled Broadcast] Failed to upload image: {e}")
+            raise HTTPException(status_code=500, detail="Failed to upload image")
+
+    # Create scheduled broadcast
+    scheduled_broadcast = ScheduledBroadcast(
+        message_text=message,
+        parse_mode=parse_mode,
+        photo_url=photo_url,
+        target=target,
+        target_telegram_id=telegram_id if target == "specific" else None,
+        scheduled_at=scheduled_datetime,
+        status=BroadcastStatus.PENDING
+    )
+
+    db.add(scheduled_broadcast)
+    await db.commit()
+    await db.refresh(scheduled_broadcast)
+
+    logger.info(f"[Scheduled Broadcast] Created broadcast ID {scheduled_broadcast.id} for {scheduled_datetime}")
+
+    return {
+        "id": scheduled_broadcast.id,
+        "scheduled_at": scheduled_broadcast.scheduled_at.isoformat(),
+        "message": "Broadcast scheduled successfully"
+    }
+
+
+@router.get("/broadcast/scheduled")
+async def list_scheduled_broadcasts(
+    status: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get list of scheduled broadcasts
+
+    Args:
+        status: Filter by status (PENDING, PROCESSING, COMPLETED, CANCELLED)
+        limit: Max results
+        offset: Pagination offset
+    """
+    from app.models.scheduled_broadcast import ScheduledBroadcast, BroadcastStatus
+
+    query = select(ScheduledBroadcast).order_by(ScheduledBroadcast.scheduled_at.desc())
+
+    if status:
+        try:
+            status_enum = BroadcastStatus(status)
+            query = query.where(ScheduledBroadcast.status == status_enum)
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid status: {status}")
+
+    query = query.limit(limit).offset(offset)
+    result = await db.execute(query)
+    broadcasts = result.scalars().all()
+
+    return {
+        "broadcasts": [
+            {
+                "id": b.id,
+                "message_text": b.message_text[:100] + "..." if len(b.message_text) > 100 else b.message_text,
+                "photo_url": b.photo_url,
+                "target": b.target,
+                "target_telegram_id": b.target_telegram_id,
+                "scheduled_at": b.scheduled_at.isoformat(),
+                "status": b.status.value,
+                "total_recipients": b.total_recipients,
+                "sent_count": b.sent_count,
+                "created_at": b.created_at.isoformat(),
+                "processed_at": b.processed_at.isoformat() if b.processed_at else None
+            }
+            for b in broadcasts
+        ],
+        "total": len(broadcasts),
+        "limit": limit,
+        "offset": offset
+    }
+
+
+@router.delete("/broadcast/scheduled/{broadcast_id}")
+async def cancel_scheduled_broadcast(
+    broadcast_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """Cancel a scheduled broadcast"""
+    from app.models.scheduled_broadcast import ScheduledBroadcast, BroadcastStatus
+    from datetime import datetime, timezone
+
+    result = await db.execute(
+        select(ScheduledBroadcast).where(ScheduledBroadcast.id == broadcast_id)
+    )
+    broadcast = result.scalar_one_or_none()
+
+    if not broadcast:
+        raise HTTPException(status_code=404, detail="Scheduled broadcast not found")
+
+    if broadcast.status != BroadcastStatus.PENDING:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot cancel broadcast with status {broadcast.status.value}"
+        )
+
+    # Check if already processed
+    if broadcast.scheduled_at <= datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Broadcast already processed or processing")
+
+    broadcast.status = BroadcastStatus.CANCELLED
+    await db.commit()
+
+    return {"message": "Broadcast cancelled successfully"}
+
+
 # ============ Leaderboard View ============
 
 class LeaderboardEntry(BaseModel):

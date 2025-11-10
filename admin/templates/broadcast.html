@@ -177,17 +177,37 @@
                 </div>
             </div>
 
-            <!-- Submit Button -->
+            <!-- Schedule Options -->
+            <div id="schedule-section" class="hidden space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-3">Schedule Delivery (UTC):</label>
+                    <input type="datetime-local" id="schedule-datetime"
+                           class="w-full bg-dark-700 border border-gray-700 rounded px-4 py-2"
+                           onchange="updateMoscowTime()">
+                    <p class="text-sm text-gray-400 mt-2" id="moscow-time-display"></p>
+                </div>
+            </div>
+
+            <!-- Submit Buttons -->
             <div class="flex justify-between items-center">
                 <div class="text-sm text-gray-400">
-                    <p>💡 <strong>Tip:</strong> Messages are queued and sent with rate limiting to comply with Telegram's limits (30 messages/sec)</p>
+                    <p>💡 <strong>Tip:</strong> Messages are queued and sent with rate limiting (30 msg/sec)</p>
                 </div>
-                <button type="submit" class="gradient-gold text-black font-bold px-8 py-3 rounded-lg hover:opacity-90 transition flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                    </svg>
-                    Send Broadcast
-                </button>
+                <div class="flex gap-3">
+                    <button type="button" onclick="toggleSchedule()" id="schedule-toggle-btn"
+                            class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-3 rounded-lg transition flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span id="schedule-toggle-text">Schedule</span>
+                    </button>
+                    <button type="submit" class="gradient-gold text-black font-bold px-8 py-3 rounded-lg hover:opacity-90 transition flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                        </svg>
+                        <span id="send-btn-text">Send Now</span>
+                    </button>
+                </div>
             </div>
         </form>
 
@@ -216,6 +236,27 @@
             <p class="text-sm text-gray-400 mt-4">
                 ℹ️ Messages are being sent in the background. Check the Telegram bot logs for delivery status.
             </p>
+        </div>
+
+        <!-- Scheduled Broadcasts Table -->
+        <div class="mt-8 bg-dark-800 rounded-lg p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    Scheduled Broadcasts
+                </h2>
+                <button onclick="loadScheduledBroadcasts()" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm">
+                    🔄 Refresh
+                </button>
+            </div>
+
+            <div id="scheduled-broadcasts-container">
+                <div class="text-center text-gray-400 py-8">
+                    Loading...
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -404,14 +445,32 @@ document.getElementById('broadcast-form').addEventListener('submit', async (e) =
         formData.append('image', uploadedImageFile);
     }
 
-    if (!confirm(`Send this message to ${target === 'all' ? 'ALL USERS' : 'user ' + formData.get('telegram_id')}?`)) {
+    // Check schedule mode
+    let endpoint = '/admin/broadcast';
+    let confirmMessage = `Send this message to ${target === 'all' ? 'ALL USERS' : 'user ' + formData.get('telegram_id')}?`;
+
+    if (scheduleMode) {
+        const scheduledAt = document.getElementById('schedule-datetime').value;
+        if (!scheduledAt) {
+            showToast('Please select scheduled time', 'error');
+            return;
+        }
+
+        // Convert to ISO 8601 UTC
+        const scheduledDate = new Date(scheduledAt);
+        formData.append('scheduled_at', scheduledDate.toISOString());
+        endpoint = '/admin/broadcast/schedule';
+        confirmMessage = `Schedule this message for ${scheduledDate.toLocaleString('en-US', { timeZone: 'UTC' })} UTC?`;
+    }
+
+    if (!confirm(confirmMessage)) {
         return;
     }
 
     try {
-        showToast('Queuing broadcast...', 'info');
+        showToast(scheduleMode ? 'Scheduling broadcast...' : 'Queuing broadcast...', 'info');
 
-        const response = await fetch(`${API_URL}/admin/broadcast`, {
+        const response = await fetch(`${API_URL}${endpoint}`, {
             method: 'POST',
             body: formData
         });
@@ -419,25 +478,36 @@ document.getElementById('broadcast-form').addEventListener('submit', async (e) =
         const result = await response.json();
 
         if (response.ok) {
-            showToast('Broadcast queued successfully!', 'success');
+            if (scheduleMode) {
+                showToast('Broadcast scheduled successfully!', 'success');
+                // Clear form and reload scheduled table
+                document.getElementById('message').value = '';
+                removeImage();
+                updatePreview();
+                updateCharCounter();
+                toggleSchedule(); // Reset schedule mode
+                loadScheduledBroadcasts();
+            } else {
+                showToast('Broadcast queued successfully!', 'success');
 
-            // Show stats
-            document.getElementById('total-recipients').textContent = result.total_recipients || 0;
-            document.getElementById('queued-count').textContent = result.queued || result.total_recipients || 0;
+                // Show stats
+                document.getElementById('total-recipients').textContent = result.total_recipients || 0;
+                document.getElementById('queued-count').textContent = result.queued || result.total_recipients || 0;
 
-            // Estimate time (30 messages per second Telegram limit)
-            const estimatedSeconds = Math.ceil((result.total_recipients || 0) / 30);
-            document.getElementById('estimated-time').textContent = estimatedSeconds < 60
-                ? `~${estimatedSeconds}s`
-                : `~${Math.ceil(estimatedSeconds / 60)}m`;
+                // Estimate time (30 messages per second Telegram limit)
+                const estimatedSeconds = Math.ceil((result.total_recipients || 0) / 30);
+                document.getElementById('estimated-time').textContent = estimatedSeconds < 60
+                    ? `~${estimatedSeconds}s`
+                    : `~${Math.ceil(estimatedSeconds / 60)}m`;
 
-            document.getElementById('stats').classList.remove('hidden');
+                document.getElementById('stats').classList.remove('hidden');
 
-            // Clear form
-            document.getElementById('message').value = '';
-            removeImage();
-            updatePreview();
-            updateCharCounter();
+                // Clear form
+                document.getElementById('message').value = '';
+                removeImage();
+                updatePreview();
+                updateCharCounter();
+            }
         } else {
             showToast(result.detail || 'Failed to send broadcast', 'error');
         }
@@ -447,7 +517,178 @@ document.getElementById('broadcast-form').addEventListener('submit', async (e) =
     }
 });
 
+// Scheduler functions
+let scheduleMode = false;
+
+function toggleSchedule() {
+    scheduleMode = !scheduleMode;
+    const section = document.getElementById('schedule-section');
+    const toggleBtn = document.getElementById('schedule-toggle-btn');
+    const toggleText = document.getElementById('schedule-toggle-text');
+    const sendBtnText = document.getElementById('send-btn-text');
+
+    if (scheduleMode) {
+        section.classList.remove('hidden');
+        toggleBtn.classList.remove('bg-purple-600', 'hover:bg-purple-700');
+        toggleBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+        toggleText.textContent = 'Cancel Schedule';
+        sendBtnText.textContent = 'Schedule Broadcast';
+
+        // Set min datetime to now
+        const now = new Date();
+        now.setMinutes(now.getMinutes() + 5); // Min 5 minutes from now
+        document.getElementById('schedule-datetime').min = now.toISOString().slice(0, 16);
+    } else {
+        section.classList.add('hidden');
+        toggleBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+        toggleBtn.classList.add('bg-purple-600', 'hover:bg-purple-700');
+        toggleText.textContent = 'Schedule';
+        sendBtnText.textContent = 'Send Now';
+        document.getElementById('schedule-datetime').value = '';
+        document.getElementById('moscow-time-display').textContent = '';
+    }
+}
+
+function updateMoscowTime() {
+    const utcInput = document.getElementById('schedule-datetime').value;
+    if (!utcInput) {
+        document.getElementById('moscow-time-display').textContent = '';
+        return;
+    }
+
+    const utcDate = new Date(utcInput + 'Z'); // Add Z to treat as UTC
+    const moscowOffset = 3; // Moscow is UTC+3
+    const moscowDate = new Date(utcDate.getTime() + moscowOffset * 60 * 60 * 1000);
+
+    const options = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Europe/Moscow'
+    };
+
+    document.getElementById('moscow-time-display').textContent =
+        `🕐 Moscow time: ${moscowDate.toLocaleString('en-US', options)}`;
+}
+
+async function loadScheduledBroadcasts() {
+    const container = document.getElementById('scheduled-broadcasts-container');
+    container.innerHTML = '<div class="text-center text-gray-400 py-8">Loading...</div>';
+
+    try {
+        const response = await fetch(`${API_URL}/admin/broadcast/scheduled?status=PENDING&limit=20`);
+        const data = await response.json();
+
+        if (!data.broadcasts || data.broadcasts.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-gray-400 py-8">
+                    <svg class="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    No scheduled broadcasts
+                </div>
+            `;
+            return;
+        }
+
+        let html = `
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-gray-700">
+                            <th class="text-left py-3 px-4">Message</th>
+                            <th class="text-left py-3 px-4">Target</th>
+                            <th class="text-left py-3 px-4">Scheduled (UTC)</th>
+                            <th class="text-left py-3 px-4">Status</th>
+                            <th class="text-center py-3 px-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        for (const broadcast of data.broadcasts) {
+            const scheduledDate = new Date(broadcast.scheduled_at);
+            const statusColors = {
+                'PENDING': 'bg-yellow-600',
+                'PROCESSING': 'bg-blue-600',
+                'COMPLETED': 'bg-green-600',
+                'CANCELLED': 'bg-red-600'
+            };
+
+            html += `
+                <tr class="border-b border-gray-700 hover:bg-dark-700">
+                    <td class="py-3 px-4">
+                        ${broadcast.photo_url ? '📷 ' : ''}
+                        ${broadcast.message_text}
+                    </td>
+                    <td class="py-3 px-4">
+                        ${broadcast.target === 'all' ? 'All Users' : `User ${broadcast.target_telegram_id}`}
+                    </td>
+                    <td class="py-3 px-4 text-sm">
+                        ${scheduledDate.toLocaleString('en-US', { timeZone: 'UTC' })}
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="px-2 py-1 rounded text-xs ${statusColors[broadcast.status] || 'bg-gray-600'}">
+                            ${broadcast.status}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                        ${broadcast.status === 'PENDING' ? `
+                            <button onclick="cancelScheduledBroadcast(${broadcast.id})"
+                                    class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm">
+                                Cancel
+                            </button>
+                        ` : '-'}
+                    </td>
+                </tr>
+            `;
+        }
+
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        container.innerHTML = html;
+    } catch (error) {
+        console.error('Failed to load scheduled broadcasts:', error);
+        container.innerHTML = `
+            <div class="text-center text-red-400 py-8">
+                Failed to load scheduled broadcasts. Please try again.
+            </div>
+        `;
+    }
+}
+
+async function cancelScheduledBroadcast(id) {
+    if (!confirm('Cancel this scheduled broadcast?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/admin/broadcast/scheduled/${id}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showToast('Scheduled broadcast cancelled', 'success');
+            loadScheduledBroadcasts();
+        } else {
+            showToast(result.detail || 'Failed to cancel broadcast', 'error');
+        }
+    } catch (error) {
+        console.error('Cancel error:', error);
+        showToast('Network error. Please try again.', 'error');
+    }
+}
+
 // Initialize
 updateCharCounter();
+loadScheduledBroadcasts();
 </script>
 {% endblock %}
