@@ -482,6 +482,92 @@ async def api_admin_broadcast():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/admin/broadcast/schedule', methods=['POST'])
+@login_required
+async def api_admin_broadcast_schedule():
+    """Proxy scheduled broadcast request to backend with FormData"""
+    try:
+        form = await request.form
+        files = await request.files
+
+        # Build FormData
+        data = aiohttp.FormData()
+        data.add_field('message', form.get('message'))
+        data.add_field('scheduled_at', form.get('scheduled_at'))
+        data.add_field('target', form.get('target', 'all'))
+        data.add_field('parse_mode', form.get('parse_mode', 'HTML'))
+
+        if form.get('telegram_id'):
+            data.add_field('telegram_id', form.get('telegram_id'))
+
+        # Add image if provided
+        if 'image' in files and files['image'].filename:
+            image = files['image']
+            image_bytes = image.read()
+            data.add_field(
+                'image',
+                image_bytes,
+                filename=image.filename,
+                content_type=image.content_type
+            )
+
+        print(f"[admin/broadcast/schedule proxy] Forwarding scheduled broadcast: scheduled_at={form.get('scheduled_at')}, target={form.get('target')}")
+
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.post(
+                f"{app.config['API_URL']}/admin/broadcast/schedule",
+                data=data
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error scheduling broadcast: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/admin/broadcast/scheduled', methods=['GET'])
+@login_required
+async def api_admin_broadcast_scheduled():
+    """Proxy get scheduled broadcasts request to backend"""
+    try:
+        status = request.args.get('status')
+        limit = request.args.get('limit', 50)
+        offset = request.args.get('offset', 0)
+
+        params = {'limit': limit, 'offset': offset}
+        if status:
+            params['status'] = status
+
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.get(
+                f"{app.config['API_URL']}/admin/broadcast/scheduled",
+                params=params
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching scheduled broadcasts: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/admin/broadcast/scheduled/<int:broadcast_id>', methods=['DELETE'])
+@login_required
+async def api_admin_broadcast_cancel(broadcast_id):
+    """Proxy cancel scheduled broadcast request to backend"""
+    try:
+        async with aiohttp.ClientSession() as session_http:
+            async with session_http.delete(
+                f"{app.config['API_URL']}/admin/broadcast/scheduled/{broadcast_id}"
+            ) as response:
+                result = await response.json()
+                return jsonify(result)
+    except Exception as e:
+        print(f"Error cancelling scheduled broadcast: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/admin/markets/generate-test', methods=['POST'])
 @login_required
 async def api_admin_generate_test_markets():
