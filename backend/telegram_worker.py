@@ -131,12 +131,33 @@ class TelegramNotificationsConsumer:
                 # Определяем parse mode
                 parse_mode = ParseMode.MARKDOWN if message.parse_mode == "Markdown" else ParseMode.HTML
 
-                # Отправляем сообщение
-                await self.bot.send_message(
-                    chat_id=message.telegram_id,
-                    text=message.message_text,
-                    parse_mode=parse_mode
-                )
+                # Парсим metadata для проверки photo_url
+                import json
+                metadata = {}
+                if message.notification_metadata:
+                    try:
+                        metadata = json.loads(message.notification_metadata)
+                    except Exception as e:
+                        logger.warning(f"⚠️ Не удалось распарсить metadata: {e}")
+
+                photo_url = metadata.get('photo_url')
+
+                # Если есть фото - отправляем через send_photo
+                if photo_url:
+                    logger.info(f"📸 Отправка сообщения с фото: {photo_url}")
+                    await self.bot.send_photo(
+                        chat_id=message.telegram_id,
+                        photo=photo_url,
+                        caption=message.message_text,
+                        parse_mode=parse_mode
+                    )
+                else:
+                    # Без фото - обычное текстовое сообщение
+                    await self.bot.send_message(
+                        chat_id=message.telegram_id,
+                        text=message.message_text,
+                        parse_mode=parse_mode
+                    )
 
                 # Отмечаем как sent
                 await TelegramQueueService.mark_sent(db=db, message_id=message.id)
