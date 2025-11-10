@@ -30,11 +30,16 @@ class Transaction(Base):
     currency = Column(String(10), nullable=False)
     amount = Column(DECIMAL(20, 2), nullable=False)
 
-    # TON specific
-    tx_hash = Column(String(255), nullable=True)
-    ton_address = Column(String(255), nullable=True)
+    # TON specific fields
+    tx_hash = Column(String(255), nullable=True, index=True)  # Transaction hash on blockchain
+    ton_address = Column(String(255), nullable=True)  # Sender/recipient address
 
-    status = Column(Enum(TransactionStatus), default=TransactionStatus.PENDING, nullable=False)
+    # TON deposit specific
+    deposit_address = Column(String(255), nullable=True)  # Platform address for deposit
+    confirmations = Column(BigInteger, default=0, nullable=True)  # Blockchain confirmations
+    converted_amount = Column(DECIMAL(20, 2), nullable=True)  # Amount in PRED after conversion
+
+    status = Column(Enum(TransactionStatus), default=TransactionStatus.PENDING, nullable=False, index=True)
 
     # Meta
     description = Column(String(500), nullable=True)
@@ -42,3 +47,4 @@ class Transaction(Base):
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     completed_at = Column(DateTime(timezone=True), nullable=True)
+    expires_at = Column(DateTime(timezone=True), nullable=True)  # For pending deposits

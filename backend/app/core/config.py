@@ -26,9 +26,17 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_HOURS: int = 24
 
-    # TON
-    TON_API_KEY: str = ""
-    TON_WALLET_ADDRESS: str = ""
+    # TON Blockchain Integration
+    TON_API_KEY: str = ""  # Optional, for higher rate limits on tonapi.io
+    TON_API_URL: str = "https://tonapi.io/v2"  # TON API endpoint
+    TON_DEPOSIT_ADDRESS: str = ""  # Platform wallet address for deposits
+
+    # TON Conversion & Limits
+    TON_TO_PRED_RATE: int = 1000  # 1 TON = 1000 PRED
+    MIN_DEPOSIT_TON: str = "0.1"  # Minimum deposit amount
+    MAX_DEPOSIT_TON: str = "1000"  # Maximum deposit amount
+    DEPOSIT_TIMEOUT_MINUTES: int = 30  # Time to complete deposit
+    REQUIRED_CONFIRMATIONS: int = 1  # Blockchain confirmations required
 
     # Gamification
     INITIAL_PRED_BALANCE: int = 1000
