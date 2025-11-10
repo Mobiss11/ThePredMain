@@ -30,16 +30,24 @@
         <div class="glass rounded-xl p-4">
             <div class="text-gray-400 text-sm mb-1">Баланс PRED</div>
             <div class="text-2xl font-bold text-yellow-400" id="pred-balance-display">...</div>
-            <button class="gold-gradient px-3 py-1 rounded-lg text-xs font-bold text-black mt-2">
+            <button onclick="openDepositModal()" class="gold-gradient px-3 py-1 rounded-lg text-xs font-bold text-black mt-2 hover:opacity-90 transition">
                 + Пополнить
             </button>
         </div>
         <div class="glass rounded-xl p-4">
             <div class="text-gray-400 text-sm mb-1">Баланс TON</div>
             <div class="text-2xl font-bold text-blue-400" id="ton-balance-display">...</div>
-            <button class="gold-gradient px-3 py-1 rounded-lg text-xs font-bold text-black mt-2">
-                + Пополнить
-            </button>
+
+            <!-- Wallet Connection Status -->
+            <div id="wallet-connection-status" class="mt-2">
+                <button onclick="connectWallet()" id="connect-wallet-btn" class="gold-gradient px-3 py-1 rounded-lg text-xs font-bold text-black hover:opacity-90 transition">
+                    🔗 Подключить
+                </button>
+                <div id="wallet-connected-info" style="display: none;">
+                    <div class="text-xs text-green-400 mt-1">✓ Кошелек подключен</div>
+                    <div class="text-xs text-gray-400 truncate" id="wallet-address-short">...</div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -261,6 +269,113 @@
     </div>
 </div>
 
+<!-- Deposit Modal -->
+<div id="deposit-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4" style="display: none;">
+    <div class="glass rounded-2xl max-w-md w-full">
+        <div class="p-6">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold">💎 Пополнить баланс</h2>
+                <button onclick="closeDepositModal()" class="text-gray-400 hover:text-white text-2xl">×</button>
+            </div>
+
+            <!-- Wallet Connection Check -->
+            <div id="deposit-connect-wallet" class="mb-6">
+                <div class="glass rounded-xl p-5 text-center">
+                    <div class="text-4xl mb-3">👛</div>
+                    <div class="font-semibold mb-2">Подключите TON кошелек</div>
+                    <div class="text-sm text-gray-400 mb-4">Для пополнения баланса необходимо подключить ваш TON кошелек</div>
+                    <button onclick="connectWalletFromModal()" class="gold-gradient px-6 py-3 rounded-xl font-bold text-black hover:opacity-90 transition w-full">
+                        🔗 Подключить кошелек
+                    </button>
+                </div>
+            </div>
+
+            <!-- Deposit Form (shown when wallet connected) -->
+            <div id="deposit-form" style="display: none;">
+                <!-- Conversion Info -->
+                <div class="glass rounded-xl p-4 mb-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-gray-400">Курс обмена</span>
+                        <span class="font-bold text-yellow-400">1 TON = 1,000 PRED</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs text-gray-500">
+                        <span>Минимум: 0.1 TON</span>
+                        <span>Максимум: 1,000 TON</span>
+                    </div>
+                </div>
+
+                <!-- Amount Input -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold mb-2">Сумма пополнения</label>
+                    <div class="glass rounded-xl p-4">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <div class="text-2xl">💎</div>
+                            <input
+                                type="number"
+                                id="deposit-amount-input"
+                                placeholder="0.0"
+                                step="0.1"
+                                min="0.1"
+                                max="1000"
+                                class="flex-1 bg-transparent text-2xl font-bold focus:outline-none"
+                                oninput="calculateExpectedPRED()"
+                            >
+                            <span class="text-blue-400 font-bold">TON</span>
+                        </div>
+
+                        <!-- Quick Amount Buttons -->
+                        <div class="flex space-x-2 mb-3">
+                            <button onclick="setDepositAmount(0.1)" class="flex-1 glass rounded-lg px-3 py-2 text-xs font-semibold hover:bg-opacity-30 transition">
+                                0.1 TON
+                            </button>
+                            <button onclick="setDepositAmount(1)" class="flex-1 glass rounded-lg px-3 py-2 text-xs font-semibold hover:bg-opacity-30 transition">
+                                1 TON
+                            </button>
+                            <button onclick="setDepositAmount(5)" class="flex-1 glass rounded-lg px-3 py-2 text-xs font-semibold hover:bg-opacity-30 transition">
+                                5 TON
+                            </button>
+                        </div>
+
+                        <!-- Expected PRED -->
+                        <div class="pt-3 border-t border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-400">Вы получите</span>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xl font-bold text-yellow-400" id="expected-pred">0</span>
+                                    <span class="text-sm text-gray-400">PRED</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Error Message -->
+                <div id="deposit-error" class="mb-4 p-3 rounded-lg bg-red-500 bg-opacity-20 border border-red-500 text-red-400 text-sm" style="display: none;">
+                    <div id="deposit-error-text"></div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="flex space-x-3">
+                    <button onclick="closeDepositModal()" class="flex-1 glass rounded-xl px-6 py-3 font-bold hover:bg-opacity-30 transition">
+                        Отмена
+                    </button>
+                    <button onclick="submitDeposit()" id="deposit-submit-btn" class="flex-1 gold-gradient rounded-xl px-6 py-3 font-bold text-black hover:opacity-90 transition">
+                        💳 Пополнить
+                    </button>
+                </div>
+
+                <!-- Processing State -->
+                <div id="deposit-processing" class="mt-4 glass rounded-xl p-4 text-center" style="display: none;">
+                    <div class="animate-spin text-4xl mb-3">⏳</div>
+                    <div class="font-semibold mb-2">Обработка транзакции...</div>
+                    <div class="text-sm text-gray-400" id="deposit-status-text">Ожидание подтверждения</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Promote Event Modal -->
 <div id="promote-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4" style="display: none;">
     <div class="glass rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -424,6 +539,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<script src="/static/js/ton-wallet.js?v=2025110704"></script>
 <script>
 // Load profile data
 async function loadProfile() {
@@ -1250,11 +1366,235 @@ async function clearSessionAndReauth() {
     }
 }
 
+// ============ TON Wallet & Deposit Functions ============
+
+// Check wallet connection status on load
+async function checkWalletConnection() {
+    try {
+        // Wait for tonWallet to initialize
+        await window.tonWallet.initPromise;
+
+        if (window.tonWallet.connected && window.tonWallet.address) {
+            updateWalletConnectionUI(true, window.tonWallet.address);
+        } else {
+            updateWalletConnectionUI(false, null);
+        }
+    } catch (error) {
+        console.error('Failed to check wallet connection:', error);
+    }
+}
+
+// Update wallet connection UI
+function updateWalletConnectionUI(connected, address) {
+    const connectBtn = document.getElementById('connect-wallet-btn');
+    const connectedInfo = document.getElementById('wallet-connected-info');
+    const addressShort = document.getElementById('wallet-address-short');
+
+    if (connected && address) {
+        connectBtn.style.display = 'none';
+        connectedInfo.style.display = 'block';
+        // Show shortened address (first 6 and last 4 chars)
+        addressShort.textContent = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+    } else {
+        connectBtn.style.display = 'block';
+        connectedInfo.style.display = 'none';
+    }
+}
+
+// Connect wallet
+window.connectWallet = async function() {
+    const connectBtn = document.getElementById('connect-wallet-btn');
+    const originalText = connectBtn.textContent;
+    connectBtn.textContent = 'Подключение...';
+    connectBtn.disabled = true;
+
+    try {
+        const result = await window.tonWallet.connect();
+
+        if (result.success && result.address) {
+            // Save address to backend
+            await window.tonWallet.saveAddress();
+
+            // Update UI
+            updateWalletConnectionUI(true, result.address);
+
+            // Show success message
+            alert('✅ Кошелек успешно подключен!');
+        } else {
+            throw new Error(result.error || 'Failed to connect wallet');
+        }
+    } catch (error) {
+        console.error('Wallet connection failed:', error);
+        alert('❌ Ошибка подключения кошелька: ' + error.message);
+    } finally {
+        connectBtn.textContent = originalText;
+        connectBtn.disabled = false;
+    }
+};
+
+// Connect wallet from modal
+window.connectWalletFromModal = async function() {
+    try {
+        const result = await window.tonWallet.connect();
+
+        if (result.success && result.address) {
+            // Save address to backend
+            await window.tonWallet.saveAddress();
+
+            // Update UI
+            updateWalletConnectionUI(true, result.address);
+
+            // Show deposit form
+            updateDepositModalState();
+        } else {
+            throw new Error(result.error || 'Failed to connect wallet');
+        }
+    } catch (error) {
+        console.error('Wallet connection failed:', error);
+        alert('❌ Ошибка подключения кошелька: ' + error.message);
+    }
+};
+
+// Open deposit modal
+window.openDepositModal = function() {
+    document.getElementById('deposit-modal').style.display = 'flex';
+    updateDepositModalState();
+
+    // Reset form
+    document.getElementById('deposit-amount-input').value = '';
+    document.getElementById('expected-pred').textContent = '0';
+    document.getElementById('deposit-error').style.display = 'none';
+    document.getElementById('deposit-processing').style.display = 'none';
+};
+
+// Close deposit modal
+window.closeDepositModal = function() {
+    document.getElementById('deposit-modal').style.display = 'none';
+};
+
+// Update deposit modal state based on wallet connection
+function updateDepositModalState() {
+    const connectSection = document.getElementById('deposit-connect-wallet');
+    const depositForm = document.getElementById('deposit-form');
+
+    if (window.tonWallet.connected) {
+        connectSection.style.display = 'none';
+        depositForm.style.display = 'block';
+    } else {
+        connectSection.style.display = 'block';
+        depositForm.style.display = 'none';
+    }
+}
+
+// Set deposit amount (quick buttons)
+window.setDepositAmount = function(amount) {
+    document.getElementById('deposit-amount-input').value = amount;
+    calculateExpectedPRED();
+};
+
+// Calculate expected PRED from TON amount
+window.calculateExpectedPRED = function() {
+    const amountInput = document.getElementById('deposit-amount-input');
+    const expectedPred = document.getElementById('expected-pred');
+
+    const amount = parseFloat(amountInput.value) || 0;
+    const pred = Math.floor(amount * 1000); // 1 TON = 1000 PRED
+
+    expectedPred.textContent = formatNumber(pred);
+};
+
+// Submit deposit
+window.submitDeposit = async function() {
+    const amountInput = document.getElementById('deposit-amount-input');
+    const amount = parseFloat(amountInput.value);
+
+    // Validate amount
+    if (!amount || amount < 0.1) {
+        showDepositError('Минимальная сумма депозита: 0.1 TON');
+        return;
+    }
+
+    if (amount > 1000) {
+        showDepositError('Максимальная сумма депозита: 1,000 TON');
+        return;
+    }
+
+    // Hide error
+    document.getElementById('deposit-error').style.display = 'none';
+
+    // Show processing
+    const submitBtn = document.getElementById('deposit-submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Обработка...';
+
+    const processingDiv = document.getElementById('deposit-processing');
+    processingDiv.style.display = 'block';
+
+    try {
+        // Update status
+        updateDepositStatus('Создание депозита...');
+
+        // Execute deposit flow
+        const result = await window.tonWallet.deposit(amount);
+
+        if (result.success) {
+            // Success!
+            updateDepositStatus('✅ Депозит успешно зачислен!');
+
+            // Wait 2 seconds before closing
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // Reload profile to update balances
+            await loadProfile();
+
+            // Close modal
+            closeDepositModal();
+
+            // Show success message
+            alert(`✅ Успешно! Зачислено ${result.pred_credited} PRED`);
+        } else {
+            throw new Error(result.error || 'Deposit failed');
+        }
+    } catch (error) {
+        console.error('Deposit failed:', error);
+        showDepositError('Ошибка депозита: ' + error.message);
+        processingDiv.style.display = 'none';
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '💳 Пополнить';
+    }
+};
+
+// Show deposit error
+function showDepositError(message) {
+    const errorDiv = document.getElementById('deposit-error');
+    const errorText = document.getElementById('deposit-error-text');
+
+    errorText.textContent = message;
+    errorDiv.style.display = 'block';
+}
+
+// Update deposit status text
+function updateDepositStatus(text) {
+    document.getElementById('deposit-status-text').textContent = text;
+}
+
+// Format number with commas
+function formatNumber(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+// Make formatNumber globally accessible
+window.formatNumber = formatNumber;
+
 // Load data on page load
 document.addEventListener('DOMContentLoaded', () => {
     loadProfile();
     loadUserMarkets();
     loadAchievements();
+
+    // Check wallet connection
+    checkWalletConnection();
 
     // Load my events after profile is loaded
     setTimeout(() => {
