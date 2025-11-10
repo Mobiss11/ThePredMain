@@ -6,52 +6,38 @@
 
 class TONWallet {
     constructor() {
-        this.tonConnectUI = null;
+        this.tg = window.Telegram?.WebApp;
         this.connected = false;
         this.address = null;
         this.initPromise = this.init();
     }
 
     /**
-     * Initialize TON Connect UI
+     * Initialize TON Wallet
      */
     async init() {
         try {
-            // Initialize TON Connect UI
-            this.tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-                manifestUrl: 'https://thepred.tech/static/tonconnect-manifest.json',
-                buttonRootId: null, // We'll create custom button
-                uiPreferences: {
-                    theme: 'DARK'
-                }
-            });
+            console.log('TON Wallet: Initializing...');
 
-            // Subscribe to connection status
-            this.tonConnectUI.onStatusChange((wallet) => {
-                if (wallet) {
-                    this.connected = true;
-                    this.address = wallet.account.address;
-                    console.log('TON Wallet connected:', this.address);
-                    this.onConnectionChange(true, this.address);
-                } else {
-                    this.connected = false;
-                    this.address = null;
-                    console.log('TON Wallet disconnected');
-                    this.onConnectionChange(false, null);
-                }
-            });
-
-            // Check if already connected
-            const currentWallet = this.tonConnectUI.wallet;
-            if (currentWallet) {
-                this.connected = true;
-                this.address = currentWallet.account.address;
+            if (!this.tg) {
+                console.warn('TON Wallet: Telegram WebApp not available');
+                return;
             }
 
-            console.log('TON Connect initialized successfully');
+            console.log('TON Wallet: Telegram WebApp available');
+            console.log('TON Wallet: Platform:', this.tg.platform);
+            console.log('TON Wallet: Version:', this.tg.version);
+
+            // Check if wallet button is available (Telegram 7.2+)
+            if (typeof this.tg.requestWalletAccess === 'function') {
+                console.log('TON Wallet: Wallet access API available');
+            } else {
+                console.log('TON Wallet: Wallet access API not available in this Telegram version');
+            }
+
+            console.log('TON Wallet: Initialized successfully');
         } catch (error) {
-            console.error('Failed to initialize TON Connect:', error);
-            throw error;
+            console.error('TON Wallet: Initialization failed:', error);
         }
     }
 
@@ -65,65 +51,99 @@ class TONWallet {
     }
 
     /**
-     * Connect wallet
+     * Connect wallet using Telegram WebApp API
      */
     async connect() {
         await this.initPromise;
 
+        console.log('TON Wallet: Starting connection...');
+
+        if (!this.tg) {
+            console.error('TON Wallet: Telegram WebApp not available');
+            return {
+                success: false,
+                error: 'Telegram WebApp not available'
+            };
+        }
+
         try {
-            // Open wallet connection modal
-            const walletConnectionSource = await this.tonConnectUI.connectWallet();
+            // Show Telegram's built-in wallet button
+            // This will open the wallet selection modal
+            console.log('TON Wallet: Opening wallet connection...');
 
-            console.log('Wallet connection initiated');
-
-            // Wait for connection with timeout
-            return new Promise((resolve, reject) => {
-                let resolved = false;
-
-                const checkConnection = setInterval(() => {
-                    if (this.connected && this.address && !resolved) {
-                        resolved = true;
-                        clearInterval(checkConnection);
-                        console.log('Wallet connected successfully:', this.address);
-                        resolve({
-                            success: true,
-                            address: this.address
-                        });
+            // Use Telegram's showPopup to explain to user
+            this.tg.showPopup({
+                title: 'Подключение кошелька',
+                message: 'Для пополнения баланса вам нужен TON кошелек. Используйте @wallet в Telegram или установите Tonkeeper.',
+                buttons: [
+                    {
+                        id: 'open_wallet',
+                        type: 'default',
+                        text: 'Открыть @wallet'
+                    },
+                    {
+                        id: 'enter_manual',
+                        type: 'default',
+                        text: 'Ввести адрес вручную'
+                    },
+                    {
+                        type: 'cancel'
                     }
-                }, 100);
-
-                // Timeout after 60 seconds
-                setTimeout(() => {
-                    if (!resolved) {
-                        resolved = true;
-                        clearInterval(checkConnection);
-
-                        if (!this.connected) {
-                            console.log('Connection timeout or cancelled by user');
-                            resolve({
-                                success: false,
-                                error: 'Connection cancelled or timeout'
-                            });
-                        }
-                    }
-                }, 60000);
+                ]
+            }, (buttonId) => {
+                if (buttonId === 'open_wallet') {
+                    // Open @wallet bot
+                    this.tg.openTelegramLink('https://t.me/wallet');
+                } else if (buttonId === 'enter_manual') {
+                    // Show input for manual address
+                    this.showManualAddressInput();
+                }
             });
+
+            return {
+                success: false,
+                error: 'User interaction required'
+            };
+
         } catch (error) {
-            console.error('Wallet connection error:', error);
-
-            // Check if user cancelled
-            if (error.message && error.message.includes('cancel')) {
-                return {
-                    success: false,
-                    error: 'Connection cancelled by user'
-                };
-            }
-
+            console.error('TON Wallet: Connection error:', error);
             return {
                 success: false,
                 error: error.message || 'Failed to connect wallet'
             };
         }
+    }
+
+    /**
+     * Show manual address input
+     */
+    showManualAddressInput() {
+        const address = prompt('Введите ваш TON адрес (начинается с EQ или UQ):');
+
+        if (!address) {
+            return;
+        }
+
+        // Validate address format
+        if (!address.match(/^(EQ|UQ)[A-Za-z0-9_-]{46}$/)) {
+            this.tg?.showAlert('Неверный формат адреса. Адрес должен начинаться с EQ или UQ и содержать 48 символов.');
+            return;
+        }
+
+        // Save address
+        this.connected = true;
+        this.address = address;
+        console.log('TON Wallet: Manual address set:', address);
+
+        // Trigger callback
+        this.onConnectionChange(true, address);
+
+        // Save to backend
+        this.saveAddress().then(() => {
+            this.tg?.showAlert('✅ Кошелек успешно подключен!');
+        }).catch((error) => {
+            this.tg?.showAlert('❌ Ошибка сохранения адреса: ' + error.message);
+        });
     }
 
     /**
