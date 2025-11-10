@@ -6,7 +6,6 @@ from decimal import Decimal
 from pydantic import BaseModel, field_validator
 
 from app.core.database import get_db
-from app.core.security import get_current_user
 from app.core.config import settings
 from app.models.transaction import Transaction, TransactionType, TransactionStatus
 from app.models.user import User
@@ -87,7 +86,7 @@ class VerifyDepositResponse(BaseModel):
 @router.post("/connect")
 async def connect_wallet(
     data: ConnectWalletRequest,
-    current_user: User = Depends(get_current_user),
+    user_id: int,
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -101,7 +100,7 @@ async def connect_wallet(
     )
     existing = existing_wallet.scalar_one_or_none()
 
-    if existing and existing.user_id != current_user.id:
+    if existing and existing.user_id != user_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="This wallet is already connected to another account"
@@ -109,7 +108,7 @@ async def connect_wallet(
 
     # Проверить есть ли уже кошелек у пользователя
     user_wallet = await db.execute(
-        select(WalletAddress).where(WalletAddress.user_id == current_user.id)
+        select(WalletAddress).where(WalletAddress.user_id == user_id)
     )
     wallet = user_wallet.scalar_one_or_none()
 
@@ -118,15 +117,15 @@ async def connect_wallet(
         wallet.ton_address = data.ton_address
         wallet.is_active = True
         wallet.updated_at = datetime.now()
-        logger.info(f"Updated wallet for user {current_user.id}: {data.ton_address}")
+        logger.info(f"Updated wallet for user {user_id}: {data.ton_address}")
     else:
         # Создать новый кошелек
         wallet = WalletAddress(
-            user_id=current_user.id,
+            user_id=user_id,
             ton_address=data.ton_address
         )
         db.add(wallet)
-        logger.info(f"Connected new wallet for user {current_user.id}: {data.ton_address}")
+        logger.info(f"Connected new wallet for user {user_id}: {data.ton_address}")
 
     await db.commit()
     await db.refresh(wallet)
@@ -141,7 +140,7 @@ async def connect_wallet(
 @router.post("/deposit/create", response_model=DepositResponse)
 async def create_deposit(
     data: CreateDepositRequest,
-    current_user: User = Depends(get_current_user),
+    user_id: int,
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -164,7 +163,7 @@ async def create_deposit(
     expires_at = datetime.now() + timedelta(minutes=settings.DEPOSIT_TIMEOUT_MINUTES)
 
     transaction = Transaction(
-        user_id=current_user.id,
+        user_id=user_id,
         type=TransactionType.DEPOSIT,
         currency="TON",
         amount=data.amount_ton,
@@ -180,7 +179,7 @@ async def create_deposit(
     await db.refresh(transaction)
 
     logger.info(
-        f"Created deposit request: user={current_user.id}, "
+        f"Created deposit request: user={user_id}, "
         f"amount={data.amount_ton} TON, tx_id={transaction.id}"
     )
 
@@ -197,7 +196,7 @@ async def create_deposit(
 @router.post("/deposit/verify", response_model=VerifyDepositResponse)
 async def verify_deposit(
     data: VerifyDepositRequest,
-    current_user: User = Depends(get_current_user),
+    user_id: int,
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -206,6 +205,16 @@ async def verify_deposit(
     Пользователь отправляет tx_hash после совершения транзакции.
     Backend проверяет на blockchain и начисляет PRED.
     """
+    # Получить пользователя
+    user_result = await db.execute(select(User).where(User.id == user_id))
+    current_user = user_result.scalar_one_or_none()
+
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
     # Получить транзакцию
     transaction = await db.get(Transaction, data.transaction_id)
 
@@ -215,7 +224,7 @@ async def verify_deposit(
             detail="Transaction not found"
         )
 
-    if transaction.user_id != current_user.id:
+    if transaction.user_id != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied"
@@ -254,7 +263,7 @@ async def verify_deposit(
     if not verification["valid"]:
         error_msg = verification.get("error", "Transaction verification failed")
         logger.warning(
-            f"Deposit verification failed: user={current_user.id}, "
+            f"Deposit verification failed: user={user_id}, "
             f"tx={data.transaction_id}, error={error_msg}"
         )
 
@@ -287,7 +296,7 @@ async def verify_deposit(
     await db.refresh(current_user)
 
     logger.info(
-        f"Deposit completed: user={current_user.id}, "
+        f"Deposit completed: user={user_id}, "
         f"amount={transaction.amount} TON, pred={pred_amount}"
     )
 
@@ -302,7 +311,7 @@ async def verify_deposit(
             f"Новый баланс: <b>{current_user.pred_balance}</b> PRED"
         ),
         notification_type=NotificationType.SYSTEM,
-        user_id=current_user.id
+        user_id=user_id
     )
 
     return VerifyDepositResponse(
@@ -316,7 +325,7 @@ async def verify_deposit(
 @router.get("/deposit/{transaction_id}/status")
 async def get_deposit_status(
     transaction_id: int,
-    current_user: User = Depends(get_current_user),
+    user_id: int,
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -333,7 +342,7 @@ async def get_deposit_status(
             detail="Transaction not found"
         )
 
-    if transaction.user_id != current_user.id:
+    if transaction.user_id != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied"
@@ -354,16 +363,26 @@ async def get_deposit_status(
 
 @router.get("/balance", response_model=WalletBalanceResponse)
 async def get_wallet_balance(
-    current_user: User = Depends(get_current_user),
+    user_id: int,
     db: AsyncSession = Depends(get_db)
 ):
     """
     Получить баланс пользователя и информацию о подключенном кошельке
     """
+    # Получить пользователя
+    user_result = await db.execute(select(User).where(User.id == user_id))
+    current_user = user_result.scalar_one_or_none()
+
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
     # Проверить подключенный кошелек
     wallet_result = await db.execute(
         select(WalletAddress).where(
-            WalletAddress.user_id == current_user.id,
+            WalletAddress.user_id == user_id,
             WalletAddress.is_active == True
         )
     )
