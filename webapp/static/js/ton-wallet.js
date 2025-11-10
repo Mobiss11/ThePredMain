@@ -127,12 +127,15 @@ class TONWallet {
             throw new Error('Wallet not connected');
         }
 
+        if (!window.userProfile || !window.userProfile.id) {
+            throw new Error('User not authenticated');
+        }
+
         try {
-            const response = await fetch('/api/wallet/connect', {
+            const response = await fetch(`/api/wallet/connect?user_id=${window.userProfile.id}`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${getAuthToken()}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     ton_address: this.address
@@ -160,12 +163,15 @@ class TONWallet {
             throw new Error('Wallet not connected');
         }
 
+        if (!window.userProfile || !window.userProfile.id) {
+            throw new Error('User not authenticated');
+        }
+
         try {
-            const response = await fetch('/api/wallet/deposit/create', {
+            const response = await fetch(`/api/wallet/deposit/create?user_id=${window.userProfile.id}`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${getAuthToken()}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     amount_ton: amountTON.toString()
@@ -222,12 +228,15 @@ class TONWallet {
      * Verify deposit on backend
      */
     async verifyDeposit(transactionId, txHash) {
+        if (!window.userProfile || !window.userProfile.id) {
+            throw new Error('User not authenticated');
+        }
+
         try {
-            const response = await fetch('/api/wallet/deposit/verify', {
+            const response = await fetch(`/api/wallet/deposit/verify?user_id=${window.userProfile.id}`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${getAuthToken()}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     transaction_id: transactionId,
@@ -294,17 +303,16 @@ class TONWallet {
      * Poll deposit status
      */
     async pollDepositStatus(transactionId, maxAttempts = 40) {
+        if (!window.userProfile || !window.userProfile.id) {
+            throw new Error('User not authenticated');
+        }
+
         let attempts = 0;
 
         while (attempts < maxAttempts) {
             try {
                 const response = await fetch(
-                    `/api/wallet/deposit/${transactionId}/status`,
-                    {
-                        headers: {
-                            'Authorization': `Bearer ${getAuthToken()}`
-                        }
-                    }
+                    `/api/wallet/deposit/${transactionId}/status?user_id=${window.userProfile.id}`
                 );
 
                 if (!response.ok) {
@@ -360,12 +368,12 @@ class TONWallet {
      * Get user balance
      */
     async getBalance() {
+        if (!window.userProfile || !window.userProfile.id) {
+            throw new Error('User not authenticated');
+        }
+
         try {
-            const response = await fetch('/api/wallet/balance', {
-                headers: {
-                    'Authorization': `Bearer ${getAuthToken()}`
-                }
-            });
+            const response = await fetch(`/api/wallet/balance?user_id=${window.userProfile.id}`);
 
             if (!response.ok) {
                 throw new Error('Failed to get balance');
