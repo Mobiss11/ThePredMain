@@ -36,6 +36,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Отключаем SQL логи (они спамят консоль)
+logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
+logging.getLogger('sqlalchemy.pool').setLevel(logging.WARNING)
+
 
 class TelegramNotificationsConsumer:
     """Consumer для отправки Telegram уведомлений из БД очереди"""
