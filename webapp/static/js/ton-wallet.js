@@ -101,43 +101,61 @@ class TONWallet {
                     // Close modal and handle return for Telegram Wallet
                     if (isTelegramWallet) {
                         try {
-                            console.log('🔄 Detected Telegram Wallet - handling return...');
+                            console.log('🔄 Detected Telegram Wallet - FORCE closing modal NOW...');
 
-                            // Try to use Telegram WebApp API to close wallet
-                            const tg = window.Telegram?.WebApp;
-                            if (tg) {
-                                console.log('📱 Using Telegram WebApp API to close');
-                                // Close the modal first
-                                setTimeout(() => {
-                                    this.tonConnectUI.closeModal();
-                                    console.log('✅ Modal closed');
+                            // IMMEDIATE close - no setTimeout
+                            this.tonConnectUI.closeModal();
+                            console.log('✅ Modal closed via API');
 
-                                    // Try to trigger back button if available
-                                    if (tg.BackButton?.isVisible) {
-                                        console.log('⬅️ Triggering back button');
-                                        tg.BackButton.hide();
+                            // Force close modal via DOM manipulation as backup
+                            setTimeout(() => {
+                                const modal = document.querySelector('tc-root');
+                                if (modal) {
+                                    modal.style.display = 'none';
+                                    modal.remove();
+                                    console.log('✅ Modal removed via DOM');
+                                }
+
+                                // Also try to find and remove any overlays
+                                const overlays = document.querySelectorAll('[class*="modal"], [class*="overlay"]');
+                                overlays.forEach(el => {
+                                    if (el.style.display !== 'none') {
+                                        el.style.display = 'none';
+                                        console.log('✅ Overlay hidden:', el.className);
                                     }
-                                }, 100);
-                            } else {
-                                // Fallback to just closing modal
+                                });
+                            }, 50);
+
+                            // Show visual feedback
+                            this.showConnectionStatus('Telegram Wallet connected!', 'success');
+
+                            // Also show Telegram alert
+                            const tg = window.Telegram?.WebApp;
+                            if (tg && tg.showAlert) {
                                 setTimeout(() => {
-                                    this.tonConnectUI.closeModal();
-                                    console.log('✅ Modal closed (fallback)');
-                                }, 300);
+                                    tg.showAlert('✅ Telegram Wallet подключен!\n\nАдрес: ' + this.address.substring(0, 8) + '...' + this.address.substring(this.address.length - 6));
+                                }, 200);
                             }
                         } catch (error) {
                             console.log('⚠️ Could not close modal:', error);
+                            this.showConnectionStatus('Connected, but modal stuck', 'warning');
+
+                            // Try Telegram alert anyway
+                            const tg = window.Telegram?.WebApp;
+                            if (tg && tg.showAlert) {
+                                tg.showAlert('⚠️ Кошелек подключен, но модальное окно не закрылось. Попробуйте закрыть вручную.');
+                            }
                         }
                     } else {
-                        console.log('ℹ️ Non-Telegram wallet - letting TON Connect handle modal');
-                        // Still try to close modal after a delay for other wallets
+                        console.log('ℹ️ Non-Telegram wallet - standard closing');
+                        // For other wallets, close after short delay
                         setTimeout(() => {
                             try {
                                 this.tonConnectUI.closeModal();
                             } catch (e) {
-                                // Ignore
+                                console.log('Could not close modal:', e);
                             }
-                        }, 1000);
+                        }, 500);
                     }
 
                     // Trigger callback first
@@ -217,6 +235,8 @@ class TONWallet {
                 address: this.address,
                 hasUI: !!this.tonConnectUI
             });
+
+            this.showConnectionStatus('Opening wallet selection...', 'info');
 
             // Open wallet connection modal
             await this.tonConnectUI.openModal();
@@ -535,6 +555,54 @@ class TONWallet {
             console.error('Failed to get balance:', error);
             throw error;
         }
+    }
+
+    /**
+     * Show connection status (visual feedback)
+     */
+    showConnectionStatus(message, type = 'info') {
+        console.log(`[${type.toUpperCase()}] ${message}`);
+
+        // Create or update status indicator
+        let indicator = document.getElementById('ton-wallet-status-indicator');
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'ton-wallet-status-indicator';
+            indicator.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.9);
+                color: white;
+                padding: 20px 30px;
+                border-radius: 15px;
+                font-size: 16px;
+                font-weight: bold;
+                z-index: 999999;
+                text-align: center;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            `;
+            document.body.appendChild(indicator);
+        }
+
+        // Set color based on type
+        const colors = {
+            success: '#4CAF50',
+            error: '#f44336',
+            warning: '#ff9800',
+            info: '#2196F3'
+        };
+        indicator.style.borderLeft = `5px solid ${colors[type] || colors.info}`;
+        indicator.textContent = message;
+        indicator.style.display = 'block';
+
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            if (indicator) {
+                indicator.style.display = 'none';
+            }
+        }, 3000);
     }
 }
 

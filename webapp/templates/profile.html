@@ -1439,10 +1439,14 @@ window.tonWallet.onConnectionChange = function(connected, address) {
         // Update deposit modal state
         updateDepositModalState();
 
-        // Show success notification
+        // Show success notification (for non-Telegram wallets)
+        // Telegram Wallet alert is shown in ton-wallet.js
         const tg = window.Telegram?.WebApp;
         if (tg && tg.showAlert) {
-            tg.showAlert('✅ Кошелек успешно подключен!');
+            // Short delay to avoid conflict with Telegram Wallet alert
+            setTimeout(() => {
+                tg.showAlert('✅ Кошелек успешно подключен!');
+            }, 500);
         }
 
         // Reload profile to show updated balance
