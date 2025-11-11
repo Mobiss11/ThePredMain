@@ -312,18 +312,49 @@ class TONWallet {
         }
 
         try {
-            console.log('📱 TON Wallet: Opening connection modal...');
-            console.log('📊 Current state:', {
-                connected: this.connected,
-                address: this.address,
-                hasUI: !!this.tonConnectUI
+            // Check if we're in Telegram WebApp
+            const tg = window.Telegram?.WebApp;
+            const isTelegramWebApp = !!tg;
+
+            console.log('📱 Environment:', {
+                isTelegramWebApp,
+                platform: tg?.platform,
+                version: tg?.version
             });
 
-            // Set flag to indicate modal was opened by user action
-            this.modalJustOpened = true;
-            console.log('🚩 modalJustOpened flag set to TRUE');
+            // DIRECT CONNECTION to Telegram Wallet (skip modal entirely!)
+            if (isTelegramWebApp) {
+                console.log('🎯 DIRECT CONNECTION mode - skipping modal!');
 
-            // Auto-reset flag after 30 seconds (if user closes modal without connecting)
+                // Set flag
+                this.modalJustOpened = true;
+
+                try {
+                    // Connect directly to Telegram Wallet using its universal link
+                    // This bypasses the modal selection screen
+                    const walletConnectionSource = {
+                        universalLink: 'https://t.me/wallet?attach=wallet',
+                        bridgeUrl: 'https://bridge.ton.space/bridge'
+                    };
+
+                    console.log('🔗 Connecting directly to Telegram Wallet...');
+
+                    // Use connector directly instead of UI modal
+                    await this.tonConnectUI.connector.connect(walletConnectionSource);
+
+                    console.log('✅ Direct connection initiated!');
+                    return;
+                } catch (directError) {
+                    console.log('⚠️ Direct connection failed:', directError);
+                    console.log('Falling back to modal...');
+                }
+            }
+
+            // FALLBACK: Use modal for non-Telegram or if direct failed
+            console.log('📱 Opening modal (fallback)...');
+            this.modalJustOpened = true;
+
+            // Auto-reset flag after 30 seconds
             setTimeout(() => {
                 if (this.modalJustOpened) {
                     console.log('⏰ 30s timeout - resetting modalJustOpened flag');
@@ -331,29 +362,18 @@ class TONWallet {
                 }
             }, 30000);
 
-            // Open wallet connection modal
+            // Open modal
             await this.tonConnectUI.openModal();
 
-            console.log('✅ TON Wallet: Modal opened successfully');
-            console.log('⏳ Waiting for user to connect wallet...');
-            // Connection result will be handled by onStatusChange callback
+            console.log('✅ Modal opened successfully');
 
         } catch (error) {
-            console.error('❌ TON Wallet: Connection error:', error);
-            console.error('Error details:', {
-                message: error.message,
-                stack: error.stack
-            });
-
+            console.error('❌ Connection error:', error);
             this.showConnectionStatus('Connection failed: ' + error.message, 'error');
 
-            // Show error to user only if it's not a user cancellation
             if (!error.message || !error.message.includes('cancel')) {
-                console.log('⚠️ Showing error alert to user');
                 const tg = window.Telegram?.WebApp;
-                tg?.showAlert('Ошибка подключения кошелька: ' + (error.message || 'Unknown error'));
-            } else {
-                console.log('ℹ️ User cancelled connection');
+                tg?.showAlert('Ошибка подключения: ' + (error.message || 'Unknown error'));
             }
         }
     }
