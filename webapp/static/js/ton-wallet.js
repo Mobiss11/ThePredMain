@@ -42,13 +42,10 @@ class TONWallet {
                             name: 'Wallet',
                             imageUrl: 'https://wallet.tg/images/logo-288.png',
                             aboutUrl: 'https://wallet.tg/',
-                            // Use deep link that returns to current app
-                            universalLink: 'https://t.me/wallet/start',
+                            universalLink: 'https://t.me/wallet?attach=wallet',
                             bridgeUrl: 'https://bridge.ton.space/bridge',
                             platforms: ['ios', 'android', 'macos', 'windows', 'linux'],
-                            jsBridgeKey: 'telegram-wallet',
-                            // Add embedded flag for Telegram WebApp
-                            embedded: true
+                            jsBridgeKey: 'telegram-wallet'
                         },
                         {
                             appName: 'tonkeeper',
@@ -71,10 +68,8 @@ class TONWallet {
                     ]
                 },
                 actionsConfiguration: {
-                    // Let wallet decide return behavior (no forced return URL)
-                    // This works better with Telegram Wallet embedded in WebApp
-                    returnStrategy: 'none'
-                    // twaReturnUrl removed - causes issues with return flow
+                    // Return to our WebApp URL (not bot URL!)
+                    twaReturnUrl: 'https://thepred.tech'
                 }
             });
 
@@ -102,64 +97,26 @@ class TONWallet {
                         device: wallet.device
                     });
 
-                    // Close modal and handle return for Telegram Wallet
-                    if (isTelegramWallet) {
+                    // Show visual feedback
+                    this.showConnectionStatus('Wallet connected!', 'success');
+
+                    // Close modal after connection (let return URL work first)
+                    console.log('🔄 Wallet connected - closing modal...');
+                    setTimeout(() => {
                         try {
-                            console.log('🔄 Detected Telegram Wallet - FORCE closing modal NOW...');
-
-                            // IMMEDIATE close - no setTimeout
                             this.tonConnectUI.closeModal();
-                            console.log('✅ Modal closed via API');
-
-                            // Force close modal via DOM manipulation as backup
-                            setTimeout(() => {
-                                const modal = document.querySelector('tc-root');
-                                if (modal) {
-                                    modal.style.display = 'none';
-                                    modal.remove();
-                                    console.log('✅ Modal removed via DOM');
-                                }
-
-                                // Also try to find and remove any overlays
-                                const overlays = document.querySelectorAll('[class*="modal"], [class*="overlay"]');
-                                overlays.forEach(el => {
-                                    if (el.style.display !== 'none') {
-                                        el.style.display = 'none';
-                                        console.log('✅ Overlay hidden:', el.className);
-                                    }
-                                });
-                            }, 50);
-
-                            // Show visual feedback
-                            this.showConnectionStatus('Telegram Wallet connected!', 'success');
-
-                            // Also show Telegram alert
-                            const tg = window.Telegram?.WebApp;
-                            if (tg && tg.showAlert) {
-                                setTimeout(() => {
-                                    tg.showAlert('✅ Telegram Wallet подключен!\n\nАдрес: ' + this.address.substring(0, 8) + '...' + this.address.substring(this.address.length - 6));
-                                }, 200);
-                            }
-                        } catch (error) {
-                            console.log('⚠️ Could not close modal:', error);
-                            this.showConnectionStatus('Connected, but modal stuck', 'warning');
-
-                            // Try Telegram alert anyway
-                            const tg = window.Telegram?.WebApp;
-                            if (tg && tg.showAlert) {
-                                tg.showAlert('⚠️ Кошелек подключен, но модальное окно не закрылось. Попробуйте закрыть вручную.');
-                            }
+                            console.log('✅ Modal closed');
+                        } catch (e) {
+                            console.log('⚠️ Could not close modal:', e);
                         }
-                    } else {
-                        console.log('ℹ️ Non-Telegram wallet - standard closing');
-                        // For other wallets, close after short delay
+                    }, 1000);
+
+                    // Show success alert with wallet address
+                    const tg = window.Telegram?.WebApp;
+                    if (tg && tg.showAlert && isTelegramWallet) {
                         setTimeout(() => {
-                            try {
-                                this.tonConnectUI.closeModal();
-                            } catch (e) {
-                                console.log('Could not close modal:', e);
-                            }
-                        }, 500);
+                            tg.showAlert('✅ Telegram Wallet подключен!\n\nАдрес: ' + this.address.substring(0, 8) + '...' + this.address.substring(this.address.length - 6));
+                        }, 1500);
                     }
 
                     // Trigger callback first
@@ -233,53 +190,16 @@ class TONWallet {
         }
 
         try {
-            // Check if we're in Telegram WebApp
-            const tg = window.Telegram?.WebApp;
-            const isTelegramWebApp = !!tg;
-
             console.log('📱 TON Wallet: Opening connection modal...');
             console.log('📊 Current state:', {
                 connected: this.connected,
                 address: this.address,
-                hasUI: !!this.tonConnectUI,
-                isTelegramWebApp: isTelegramWebApp
+                hasUI: !!this.tonConnectUI
             });
 
             this.showConnectionStatus('Opening wallet selection...', 'info');
 
-            // For Telegram WebApp, try to use embedded wallet first
-            if (isTelegramWebApp) {
-                console.log('🔵 Telegram WebApp detected - trying embedded wallet connection');
-
-                // Try to connect directly without modal for better compatibility
-                try {
-                    const walletsList = await this.tonConnectUI.getWallets();
-                    console.log('Available wallets:', walletsList);
-
-                    // Find Telegram Wallet
-                    const telegramWallet = walletsList.find(w =>
-                        w.appName === 'telegram-wallet' ||
-                        w.name?.toLowerCase().includes('telegram') ||
-                        w.jsBridgeKey === 'telegram-wallet'
-                    );
-
-                    if (telegramWallet) {
-                        console.log('✅ Found Telegram Wallet, connecting directly...');
-                        this.showConnectionStatus('Connecting to Telegram Wallet...', 'info');
-
-                        // Connect directly to Telegram Wallet
-                        await this.tonConnectUI.connectWallet(telegramWallet);
-                        console.log('✅ Direct connection initiated');
-                        return;
-                    } else {
-                        console.log('⚠️ Telegram Wallet not found in list, falling back to modal');
-                    }
-                } catch (directError) {
-                    console.log('⚠️ Direct connection failed, using modal:', directError);
-                }
-            }
-
-            // Fallback to modal (for non-Telegram or if direct connection failed)
+            // Open wallet connection modal
             await this.tonConnectUI.openModal();
 
             console.log('✅ TON Wallet: Modal opened successfully');
