@@ -135,15 +135,6 @@ class TONConnectManual {
                                 <div class="ton-wallet-desc">Web wallet for TON</div>
                             </div>
                         </div>
-
-                        <!-- OpenMask -->
-                        <div class="ton-wallet-item" onclick="window.tonConnectManual.connectWallet('openmask')">
-                            <div class="ton-wallet-icon">🎭</div>
-                            <div class="ton-wallet-info">
-                                <div class="ton-wallet-name">OpenMask</div>
-                                <div class="ton-wallet-desc">Browser extension</div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -218,21 +209,37 @@ class TONConnectManual {
             // Close modal immediately
             this.closeModal();
 
-            // Connect to wallet - SDK returns connection URL as string
+            const tg = window.Telegram?.WebApp;
+            const isTelegramWebApp = !!tg;
+
+            // Connect with twaReturnUrl for auto-return to Telegram
             console.log('🔗 Initiating connection...');
-            const connectionUrl = await this.connector.connect({
+            const connectParams = {
                 universalLink: wallet.universalLink,
                 bridgeUrl: wallet.bridgeUrl
-            });
+            };
+
+            // Add return URL for Telegram Mini Apps (auto-return after connection)
+            if (isTelegramWebApp) {
+                connectParams.twaReturnUrl = 'https://t.me/The_Pred_Bot/app';
+            }
+
+            const connectionUrl = await this.connector.connect(connectParams);
 
             console.log('✅ Connection URL:', connectionUrl);
 
-            // Open the connection URL
-            const tg = window.Telegram?.WebApp;
-            if (tg && tg.openLink) {
+            // Special handling for Telegram Wallet - use openTelegramLink to stay inside Telegram
+            if (walletId === 'telegram-wallet' && isTelegramWebApp && tg.openTelegramLink) {
+                console.log('💎 Opening Telegram Wallet via openTelegramLink (stays inside Telegram)');
+                tg.openTelegramLink(connectionUrl);
+            }
+            // Other wallets - use openLink
+            else if (isTelegramWebApp && tg.openLink) {
                 console.log('📱 Opening via Telegram.WebApp.openLink');
                 tg.openLink(connectionUrl);
-            } else {
+            }
+            // Fallback for non-Telegram environments
+            else {
                 console.log('🌐 Opening via window.open');
                 window.open(connectionUrl, '_blank');
             }
