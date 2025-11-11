@@ -42,9 +42,23 @@ class TONConnectManual {
         console.log('🔧 Creating TonConnect instance...');
         console.log('TonConnectSDK object:', window.TonConnectSDK);
 
+        // Setup openLink callback for Telegram Mini App
+        const tg = window.Telegram?.WebApp;
+        const openLinkCallback = (url) => {
+            console.log('🔗 OpenLink callback:', url);
+            if (tg && tg.openLink) {
+                console.log('📱 Opening via Telegram.WebApp.openLink');
+                tg.openLink(url);
+            } else {
+                console.log('🌐 Opening via window.open');
+                window.open(url, '_blank');
+            }
+        };
+
         // The actual class is TonConnectSDK.TonConnect
         this.connector = new window.TonConnectSDK.TonConnect({
-            manifestUrl: this.manifestUrl
+            manifestUrl: this.manifestUrl,
+            openLink: openLinkCallback
         });
 
         // Listen to status changes
@@ -167,66 +181,39 @@ class TONConnectManual {
         console.log('🔌 Connecting to wallet:', walletId);
 
         try {
-            const tg = window.Telegram?.WebApp;
-            const isTelegramWebApp = !!tg;
-
-            // SPECIAL CASE: Telegram Wallet in Mini App
-            if (walletId === 'telegram-wallet' && isTelegramWebApp) {
-                console.log('📱 Connecting via Telegram Wallet...');
-
-                // Get wallet list
-                const wallets = await this.connector.getWallets();
-                const telegramWallet = wallets.find(w =>
-                    w.appName === 'telegram-wallet' ||
-                    w.name === 'Wallet'
-                );
-
-                if (telegramWallet) {
-                    console.log('✅ Found Telegram Wallet:', telegramWallet);
-
-                    // Connect
-                    await this.connector.connect({
-                        universalLink: telegramWallet.universalLink,
-                        bridgeUrl: telegramWallet.bridgeUrl
-                    });
-
-                    // IMMEDIATELY close modal - don't wait for status change
-                    this.closeModal();
-
-                    console.log('✅ Connection request sent');
-                    return;
-                }
-            }
-
-            // OTHER WALLETS: Use universal connector
+            // Get wallet list
             const wallets = await this.connector.getWallets();
             const wallet = wallets.find(w =>
                 w.appName === walletId ||
                 w.jsBridgeKey === walletId ||
-                w.name.toLowerCase().includes(walletId)
+                w.name.toLowerCase().includes(walletId) ||
+                w.name === 'Wallet'
             );
 
-            if (wallet) {
-                console.log('✅ Found wallet:', wallet.name);
-
-                // Connect
-                const connectionResult = await this.connector.connect({
-                    universalLink: wallet.universalLink,
-                    bridgeUrl: wallet.bridgeUrl
-                });
-
-                console.log('✅ Connection initiated:', connectionResult);
-
-                // Close modal after connection started
-                setTimeout(() => this.closeModal(), 500);
-            } else {
+            if (!wallet) {
                 console.error('❌ Wallet not found:', walletId);
-                alert('Wallet not found');
+                alert('Кошелёк не найден');
+                return;
             }
+
+            console.log('✅ Found wallet:', wallet.name);
+
+            // Close modal immediately
+            this.closeModal();
+
+            // Connect to wallet
+            // openLink callback is already set during initialization
+            console.log('🔗 Initiating connection...');
+            await this.connector.connect({
+                universalLink: wallet.universalLink,
+                bridgeUrl: wallet.bridgeUrl
+            });
+
+            console.log('✅ Connection initiated');
 
         } catch (error) {
             console.error('❌ Connection error:', error);
-            alert('Connection failed: ' + error.message);
+            alert('Ошибка подключения: ' + error.message);
         }
     }
 
