@@ -64,11 +64,23 @@ class TONConnectManual {
             }
         });
 
-        // Check existing connection
-        if (this.connector.connected) {
-            this.connected = true;
-            this.address = this.connector.wallet.account.address;
-            console.log('✅ Already connected:', this.address);
+        // Restore connection from localStorage if exists
+        console.log('🔄 Attempting to restore previous connection...');
+        try {
+            await this.connector.restoreConnection();
+
+            // Check if connection was restored
+            if (this.connector.connected && this.connector.wallet) {
+                this.connected = true;
+                this.address = this.connector.wallet.account.address;
+                console.log('✅ Connection restored:', this.address);
+                // Trigger callback immediately
+                this.onConnectionChange(true, this.address);
+            } else {
+                console.log('ℹ️ No previous connection found');
+            }
+        } catch (error) {
+            console.log('ℹ️ Could not restore connection:', error.message);
         }
 
         console.log('🎉 TON Connect Manual initialized');
