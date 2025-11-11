@@ -388,89 +388,73 @@ class TONWallet {
                 version: tg?.version
             });
 
-            // FINAL HACK: Intercept Telegram MainButton click to close modal
+            // BRUTAL HACK: Poll wallet status every 500ms and nuke modal when connected
             console.log('📱 Opening TON Connect modal...');
             this.modalJustOpened = true;
 
-            let mainButtonHandler = null;
+            let pollCount = 0;
+            const maxPolls = 60; // 30 seconds
+            let alreadyProcessed = false;
 
-            if (tg && tg.MainButton) {
-                // Create handler for MainButton click
-                mainButtonHandler = async () => {
-                    console.log('🔘 MainButton clicked!');
-
-                    // Check if button text contains "Back" or "Назад"
-                    const buttonText = tg.MainButton.text || '';
-                    console.log('🔍 Button text:', buttonText);
-
-                    if (buttonText.includes('Back') || buttonText.includes('Назад')) {
-                        console.log('🎯 "Back" button detected - checking wallet...');
-
-                        // Small delay to let SDK update
-                        await new Promise(resolve => setTimeout(resolve, 300));
-
-                        // Check if wallet connected
-                        const currentWallet = this.tonConnectUI.wallet;
-                        console.log('🔍 Wallet check:', currentWallet);
-
-                        if (currentWallet && currentWallet.account) {
-                            console.log('🎉 WALLET CONNECTED! Address:', currentWallet.account.address);
-
-                            // Remove handler
-                            if (mainButtonHandler) {
-                                tg.MainButton.offClick(mainButtonHandler);
-                            }
-
-                            this.connected = true;
-                            this.address = currentWallet.account.address;
-
-                            // AGGRESSIVELY NUKE MODAL
-                            console.log('💥 NUKING MODAL NOW');
-                            for (let i = 0; i < 15; i++) {
-                                setTimeout(() => {
-                                    this.nukeAllModals();
-                                    console.log(`💥 Nuke attempt ${i + 1}/15`);
-                                }, i * 150);
-                            }
-
-                            // Callbacks
-                            this.onConnectionChange(true, this.address);
-                            await this.saveAddress().catch(err => console.error('Save failed:', err));
-
-                            // Show success popup
-                            setTimeout(() => {
-                                if (tg.showPopup) {
-                                    tg.showPopup({
-                                        title: '✅ Успешно!',
-                                        message: 'Кошелек подключен',
-                                        buttons: [{type: 'ok'}]
-                                    });
-                                }
-                            }, 500);
-                        } else {
-                            console.log('⚠️ Wallet not connected yet');
-                        }
-                    }
-                };
-
-                // Subscribe to MainButton clicks
-                tg.MainButton.onClick(mainButtonHandler);
-                console.log('✅ Subscribed to MainButton clicks');
-            }
-
-            // Cleanup after 30 seconds
-            setTimeout(() => {
-                if (tg && tg.MainButton && mainButtonHandler) {
-                    tg.MainButton.offClick(mainButtonHandler);
-                    console.log('⏰ MainButton handler removed after 30s');
+            const checkWalletConnection = async () => {
+                if (alreadyProcessed) {
+                    console.log('Already processed, stopping');
+                    return;
                 }
-                this.modalJustOpened = false;
-            }, 30000);
+
+                pollCount++;
+
+                // Check if wallet is connected
+                const currentWallet = this.tonConnectUI.wallet;
+
+                if (currentWallet && currentWallet.account) {
+                    console.log(`🎉 WALLET CONNECTED (poll ${pollCount})!`, currentWallet.account.address);
+                    alreadyProcessed = true;
+                    clearInterval(pollInterval);
+
+                    this.connected = true;
+                    this.address = currentWallet.account.address;
+
+                    // BRUTALLY NUKE MODAL 20 TIMES
+                    console.log('💥 STARTING AGGRESSIVE MODAL DESTRUCTION');
+                    for (let i = 0; i < 20; i++) {
+                        setTimeout(() => {
+                            this.nukeAllModals();
+                            console.log(`💥 Nuke ${i + 1}/20`);
+                        }, i * 100); // Every 100ms for 2 seconds
+                    }
+
+                    // Callbacks
+                    this.onConnectionChange(true, this.address);
+                    await this.saveAddress().catch(err => console.error('Save failed:', err));
+
+                    // Success popup after nuking
+                    setTimeout(() => {
+                        if (tg && tg.showPopup) {
+                            tg.showPopup({
+                                title: '✅ Успешно!',
+                                message: 'Кошелек подключен',
+                                buttons: [{type: 'ok'}]
+                            });
+                        }
+                    }, 1000);
+                }
+
+                if (pollCount >= maxPolls && !alreadyProcessed) {
+                    console.log('⏰ Polling timeout after 30s');
+                    clearInterval(pollInterval);
+                    this.modalJustOpened = false;
+                }
+            };
+
+            // Start polling
+            const pollInterval = setInterval(checkWalletConnection, 500);
+            console.log('✅ Started polling wallet status every 500ms');
 
             // Open modal
             await this.tonConnectUI.openModal();
 
-            console.log('✅ Modal opened, listening for MainButton');
+            console.log('✅ Modal opened, polling for connection');
 
         } catch (error) {
             console.error('❌ Connection error:', error);
