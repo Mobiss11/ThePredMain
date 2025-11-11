@@ -16,40 +16,34 @@ class TONConnectManual {
 
     async init() {
         console.log('🚀 TON Connect Manual: Initializing...');
-        console.log('📦 Checking available TON Connect objects:', {
-            TonConnect: typeof window.TonConnect,
-            TONConnect: typeof window.TONConnect,
-            tonconnect: typeof window.tonconnect
-        });
 
-        // Wait for SDK to load (check multiple possible global names)
-        let TonConnectClass = window.TonConnect || window.TONConnect || window.tonconnect;
-
-        if (!TonConnectClass) {
-            console.log('⏳ Waiting for TonConnect SDK...');
+        // Wait for SDK to load - the SDK exports as TonConnectSDK.TonConnect
+        if (!window.TonConnectSDK) {
+            console.log('⏳ Waiting for TonConnectSDK...');
             await new Promise((resolve, reject) => {
                 let attempts = 0;
                 const maxAttempts = 50; // 5 seconds
                 const check = setInterval(() => {
                     attempts++;
-                    TonConnectClass = window.TonConnect || window.TONConnect || window.tonconnect;
 
-                    if (TonConnectClass) {
-                        console.log('✅ Found TonConnect SDK:', typeof TonConnectClass);
+                    if (window.TonConnectSDK) {
+                        console.log('✅ Found TonConnectSDK');
                         clearInterval(check);
                         resolve();
                     } else if (attempts >= maxAttempts) {
                         clearInterval(check);
-                        console.error('❌ TonConnect SDK not found after 5 seconds');
-                        console.log('Available window objects:', Object.keys(window).filter(k => k.toLowerCase().includes('ton')));
-                        reject(new Error('TonConnect SDK failed to load'));
+                        console.error('❌ TonConnectSDK not found after 5 seconds');
+                        reject(new Error('TonConnectSDK failed to load'));
                     }
                 }, 100);
             });
         }
 
         console.log('🔧 Creating TonConnect instance...');
-        this.connector = new TonConnectClass({
+        console.log('TonConnectSDK object:', window.TonConnectSDK);
+
+        // The actual class is TonConnectSDK.TonConnect
+        this.connector = new window.TonConnectSDK.TonConnect({
             manifestUrl: this.manifestUrl
         });
 
