@@ -1445,10 +1445,12 @@ window.tonConnectManual.onConnectionChange = function(connected, address) {
         // Save address to backend
         window.tonConnectManual.saveAddress();
 
-        // Show success notification
-        const tg = window.Telegram?.WebApp;
-        if (tg && tg.showAlert) {
-            tg.showAlert('✅ Кошелек успешно подключен!');
+        // Show success notification ONLY if not restoring connection
+        if (!window.tonConnectManual.isRestoringConnection) {
+            const tg = window.Telegram?.WebApp;
+            if (tg && tg.showAlert) {
+                tg.showAlert('✅ Кошелек успешно подключен!');
+            }
         }
 
         // Reload profile to show updated balance

@@ -10,6 +10,7 @@ class TONConnectManual {
         this.connected = false;
         this.address = null;
         this.onConnectionChange = () => {};
+        this.isRestoringConnection = false; // Flag to prevent alert on restore
 
         this.initPromise = this.init();
     }
@@ -67,6 +68,7 @@ class TONConnectManual {
         // Restore connection from localStorage if exists
         console.log('🔄 Attempting to restore previous connection...');
         try {
+            this.isRestoringConnection = true; // Set flag to prevent alert
             await this.connector.restoreConnection();
 
             // Check if connection was restored
@@ -74,13 +76,15 @@ class TONConnectManual {
                 this.connected = true;
                 this.address = this.connector.wallet.account.address;
                 console.log('✅ Connection restored:', this.address);
-                // Trigger callback immediately
+                // Trigger callback immediately (without showing alert)
                 this.onConnectionChange(true, this.address);
             } else {
                 console.log('ℹ️ No previous connection found');
             }
         } catch (error) {
             console.log('ℹ️ Could not restore connection:', error.message);
+        } finally {
+            this.isRestoringConnection = false; // Reset flag
         }
 
         console.log('🎉 TON Connect Manual initialized');
