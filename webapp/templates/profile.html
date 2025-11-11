@@ -1379,13 +1379,39 @@ async function checkWalletConnection() {
         // Wait for tonConnectManual to initialize
         await window.tonConnectManual.initPromise;
 
+        // First check localStorage connection (from TON Connect SDK)
         if (window.tonConnectManual.connected && window.tonConnectManual.address) {
             updateWalletConnectionUI(true, window.tonConnectManual.address);
+            return;
+        }
+
+        // If not connected in localStorage, check database
+        console.log('🔍 Checking wallet in database...');
+        const response = await fetch('/api/wallet/balance');
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Wallet info from database:', data);
+
+            if (data.wallet_connected && data.ton_address) {
+                console.log('📍 Wallet found in database:', data.ton_address);
+                // Update UI to show wallet as connected
+                updateWalletConnectionUI(true, data.ton_address);
+
+                // Update internal state
+                window.tonConnectManual.connected = true;
+                window.tonConnectManual.address = data.ton_address;
+            } else {
+                console.log('ℹ️ No wallet connected in database');
+                updateWalletConnectionUI(false, null);
+            }
         } else {
+            console.log('ℹ️ Could not fetch wallet info from database');
             updateWalletConnectionUI(false, null);
         }
     } catch (error) {
         console.error('Failed to check wallet connection:', error);
+        updateWalletConnectionUI(false, null);
     }
 }
 

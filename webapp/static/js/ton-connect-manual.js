@@ -444,20 +444,22 @@ class TONConnectManual {
         console.log('💾 Saving address to backend:', this.address);
 
         try {
-            const response = await fetch('/api/wallet/address', {
+            const response = await fetch('/api/wallet/connect', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    address: this.address
+                    ton_address: this.address
                 })
             });
 
             if (response.ok) {
-                console.log('✅ Address saved');
+                const result = await response.json();
+                console.log('✅ Address saved to database:', result);
             } else {
-                console.error('❌ Failed to save address:', response.status);
+                const error = await response.json();
+                console.error('❌ Failed to save address:', error);
             }
         } catch (error) {
             console.error('❌ Save error:', error);
