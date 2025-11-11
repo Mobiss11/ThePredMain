@@ -276,87 +276,38 @@ class TONWallet {
                     const walletsList = await this.tonConnectUI.getWallets();
                     console.log('📋 Total wallets found:', walletsList.length);
 
-                    // Log EVERY wallet with ALL properties
-                    walletsList.forEach((wallet, index) => {
-                        console.log(`Wallet ${index + 1}:`, {
-                            name: wallet.name,
-                            appName: wallet.appName,
-                            embedded: wallet.embedded,
-                            injected: wallet.injected,
-                            jsBridgeKey: wallet.jsBridgeKey,
-                            bridgeUrl: wallet.bridgeUrl,
-                            platforms: wallet.platforms,
-                            aboutUrl: wallet.aboutUrl
-                        });
-                    });
+                    // Find Telegram Wallet by appName
+                    const telegramWallet = walletsList.find(wallet =>
+                        wallet.appName === 'telegram-wallet' ||
+                        wallet.name === 'Wallet'
+                    );
 
-                    // Try multiple detection methods
-                    let embeddedWallet = null;
-
-                    // Method 1: Check embedded property
-                    embeddedWallet = walletsList.find(wallet => wallet.embedded === true);
-                    if (embeddedWallet) {
-                        console.log('✅ Found via embedded=true:', embeddedWallet.name);
-                    }
-
-                    // Method 2: Check for injected wallet
-                    if (!embeddedWallet) {
-                        embeddedWallet = walletsList.find(wallet => wallet.injected === true);
-                        if (embeddedWallet) {
-                            console.log('✅ Found via injected=true:', embeddedWallet.name);
-                        }
-                    }
-
-                    // Method 3: Check for specific jsBridgeKey
-                    if (!embeddedWallet) {
-                        embeddedWallet = walletsList.find(wallet =>
-                            wallet.jsBridgeKey && (
-                                wallet.jsBridgeKey.includes('telegram') ||
-                                wallet.jsBridgeKey.includes('tonkeeper')
-                            )
-                        );
-                        if (embeddedWallet) {
-                            console.log('✅ Found via jsBridgeKey:', embeddedWallet.name);
-                        }
-                    }
-
-                    // Method 4: Check name contains "Wallet" or "Telegram"
-                    if (!embeddedWallet) {
-                        embeddedWallet = walletsList.find(wallet =>
-                            wallet.name && (
-                                wallet.name.toLowerCase().includes('wallet') ||
-                                wallet.name.toLowerCase().includes('telegram')
-                            )
-                        );
-                        if (embeddedWallet) {
-                            console.log('✅ Found via name matching:', embeddedWallet.name);
-                        }
-                    }
-
-                    if (embeddedWallet) {
-                        console.log('🎯 ATTEMPTING DIRECT CONNECTION:', {
-                            walletName: embeddedWallet.name,
-                            jsBridgeKey: embeddedWallet.jsBridgeKey,
-                            embedded: embeddedWallet.embedded,
-                            injected: embeddedWallet.injected
+                    if (telegramWallet) {
+                        console.log('✅ Found Telegram Wallet:', {
+                            name: telegramWallet.name,
+                            appName: telegramWallet.appName,
+                            embedded: telegramWallet.embedded,
+                            jsBridgeKey: telegramWallet.jsBridgeKey,
+                            bridgeUrl: telegramWallet.bridgeUrl,
+                            universalLink: telegramWallet.universalLink
                         });
 
-                        // Try direct connection
-                        if (embeddedWallet.jsBridgeKey) {
-                            await this.tonConnectUI.connector.connect({
-                                jsBridgeKey: embeddedWallet.jsBridgeKey
-                            });
-                            console.log('✅ Direct connection initiated via jsBridgeKey - NO MODAL!');
-                            return;
-                        } else {
-                            console.error('❌ No jsBridgeKey found, cannot connect directly');
-                        }
+                        console.log('🎯 Opening single wallet modal for Telegram Wallet...');
+
+                        // Use openSingleWalletModal to connect directly to Telegram Wallet
+                        await this.tonConnectUI.openSingleWalletModal(telegramWallet.appName);
+
+                        console.log('✅ Telegram Wallet modal opened - should auto-close after connection');
+                        return; // Exit - no selection modal
                     } else {
-                        console.log('⚠️ NO EMBEDDED WALLET FOUND BY ANY METHOD');
-                        console.log('📋 Falling back to modal...');
+                        console.log('⚠️ Telegram Wallet not found in wallet list');
+                        console.log('Available wallets:', walletsList.map(w => ({
+                            name: w.name,
+                            appName: w.appName
+                        })));
                     }
                 } catch (embeddedError) {
-                    console.error('❌ Embedded wallet check failed:', embeddedError);
+                    console.error('❌ Telegram Wallet connection failed:', embeddedError);
                     console.error('Error stack:', embeddedError.stack);
                 }
             } else {
