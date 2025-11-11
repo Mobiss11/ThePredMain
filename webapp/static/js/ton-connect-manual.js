@@ -183,20 +183,51 @@ class TONConnectManual {
         try {
             // Get wallet list
             const wallets = await this.connector.getWallets();
-            const wallet = wallets.find(w =>
-                w.appName === walletId ||
-                w.jsBridgeKey === walletId ||
-                w.name.toLowerCase().includes(walletId) ||
-                w.name === 'Wallet'
-            );
+            console.log('📋 Available wallets:', wallets.map(w => ({
+                name: w.name,
+                appName: w.appName,
+                jsBridgeKey: w.jsBridgeKey
+            })));
+
+            // Find wallet with better matching logic
+            let wallet = null;
+
+            // Priority 1: Exact appName match
+            wallet = wallets.find(w => w.appName === walletId);
+
+            // Priority 2: Exact jsBridgeKey match
+            if (!wallet) {
+                wallet = wallets.find(w => w.jsBridgeKey === walletId);
+            }
+
+            // Priority 3: Name contains walletId (case-insensitive)
+            if (!wallet) {
+                const normalizedId = walletId.toLowerCase().replace('-', '').replace('_', '');
+                wallet = wallets.find(w => {
+                    const normalizedName = w.name.toLowerCase().replace('-', '').replace('_', '').replace(' ', '');
+                    const normalizedAppName = (w.appName || '').toLowerCase().replace('-', '').replace('_', '');
+                    return normalizedName.includes(normalizedId) || normalizedAppName.includes(normalizedId);
+                });
+            }
+
+            // Special case: telegram-wallet
+            if (!wallet && walletId === 'telegram-wallet') {
+                wallet = wallets.find(w => w.name === 'Wallet' || w.appName === 'telegram-wallet');
+            }
 
             if (!wallet) {
                 console.error('❌ Wallet not found:', walletId);
-                alert('Кошелёк не найден');
+                console.log('Available wallet IDs:', wallets.map(w => w.appName || w.name));
+                alert('Кошелёк не найден: ' + walletId);
                 return;
             }
 
-            console.log('✅ Found wallet:', wallet.name);
+            console.log('✅ Found wallet:', {
+                name: wallet.name,
+                appName: wallet.appName,
+                universalLink: wallet.universalLink,
+                bridgeUrl: wallet.bridgeUrl
+            });
 
             // Close modal immediately
             this.closeModal();
@@ -204,12 +235,12 @@ class TONConnectManual {
             // Connect to wallet
             // openLink callback is already set during initialization
             console.log('🔗 Initiating connection...');
-            await this.connector.connect({
+            const result = await this.connector.connect({
                 universalLink: wallet.universalLink,
                 bridgeUrl: wallet.bridgeUrl
             });
 
-            console.log('✅ Connection initiated');
+            console.log('✅ Connection result:', result);
 
         } catch (error) {
             console.error('❌ Connection error:', error);
