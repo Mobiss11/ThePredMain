@@ -392,7 +392,6 @@ class TONWallet {
             console.log('📱 Opening TON Connect modal...');
             this.modalJustOpened = true;
 
-            const tg = window.Telegram?.WebApp;
             let mainButtonHandler = null;
 
             if (tg && tg.MainButton) {
