@@ -266,36 +266,101 @@ class TONWallet {
             // CRITICAL: Check for embedded wallet (runs inside Telegram)
             if (isTelegramWebApp) {
                 console.log('🔍 Checking for embedded wallet...');
+                console.log('📱 Telegram WebApp data:', {
+                    platform: tg.platform,
+                    version: tg.version,
+                    initData: tg.initData ? 'exists' : 'missing'
+                });
 
                 try {
                     const walletsList = await this.tonConnectUI.getWallets();
-                    console.log('📋 Available wallets:', walletsList);
+                    console.log('📋 Total wallets found:', walletsList.length);
 
-                    // Find embedded wallet (Telegram Wallet when app runs inside Telegram)
-                    const embeddedWallet = walletsList.find(wallet => wallet.embedded);
+                    // Log EVERY wallet with ALL properties
+                    walletsList.forEach((wallet, index) => {
+                        console.log(`Wallet ${index + 1}:`, {
+                            name: wallet.name,
+                            appName: wallet.appName,
+                            embedded: wallet.embedded,
+                            injected: wallet.injected,
+                            jsBridgeKey: wallet.jsBridgeKey,
+                            bridgeUrl: wallet.bridgeUrl,
+                            platforms: wallet.platforms,
+                            aboutUrl: wallet.aboutUrl
+                        });
+                    });
+
+                    // Try multiple detection methods
+                    let embeddedWallet = null;
+
+                    // Method 1: Check embedded property
+                    embeddedWallet = walletsList.find(wallet => wallet.embedded === true);
+                    if (embeddedWallet) {
+                        console.log('✅ Found via embedded=true:', embeddedWallet.name);
+                    }
+
+                    // Method 2: Check for injected wallet
+                    if (!embeddedWallet) {
+                        embeddedWallet = walletsList.find(wallet => wallet.injected === true);
+                        if (embeddedWallet) {
+                            console.log('✅ Found via injected=true:', embeddedWallet.name);
+                        }
+                    }
+
+                    // Method 3: Check for specific jsBridgeKey
+                    if (!embeddedWallet) {
+                        embeddedWallet = walletsList.find(wallet =>
+                            wallet.jsBridgeKey && (
+                                wallet.jsBridgeKey.includes('telegram') ||
+                                wallet.jsBridgeKey.includes('tonkeeper')
+                            )
+                        );
+                        if (embeddedWallet) {
+                            console.log('✅ Found via jsBridgeKey:', embeddedWallet.name);
+                        }
+                    }
+
+                    // Method 4: Check name contains "Wallet" or "Telegram"
+                    if (!embeddedWallet) {
+                        embeddedWallet = walletsList.find(wallet =>
+                            wallet.name && (
+                                wallet.name.toLowerCase().includes('wallet') ||
+                                wallet.name.toLowerCase().includes('telegram')
+                            )
+                        );
+                        if (embeddedWallet) {
+                            console.log('✅ Found via name matching:', embeddedWallet.name);
+                        }
+                    }
 
                     if (embeddedWallet) {
-                        console.log('✅ Found embedded wallet:', embeddedWallet);
-                        console.log('🎯 Connecting directly via jsBridgeKey:', embeddedWallet.jsBridgeKey);
-
-                        // Connect directly without showing modal!
-                        await this.tonConnectUI.connector.connect({
-                            jsBridgeKey: embeddedWallet.jsBridgeKey
+                        console.log('🎯 ATTEMPTING DIRECT CONNECTION:', {
+                            walletName: embeddedWallet.name,
+                            jsBridgeKey: embeddedWallet.jsBridgeKey,
+                            embedded: embeddedWallet.embedded,
+                            injected: embeddedWallet.injected
                         });
 
-                        console.log('✅ Direct connection initiated - NO MODAL!');
-                        return; // Exit - no modal shown!
+                        // Try direct connection
+                        if (embeddedWallet.jsBridgeKey) {
+                            await this.tonConnectUI.connector.connect({
+                                jsBridgeKey: embeddedWallet.jsBridgeKey
+                            });
+                            console.log('✅ Direct connection initiated via jsBridgeKey - NO MODAL!');
+                            return;
+                        } else {
+                            console.error('❌ No jsBridgeKey found, cannot connect directly');
+                        }
                     } else {
-                        console.log('⚠️ No embedded wallet found');
-                        console.log('Wallet details:', walletsList.map(w => ({
-                            name: w.name,
-                            embedded: w.embedded,
-                            jsBridgeKey: w.jsBridgeKey
-                        })));
+                        console.log('⚠️ NO EMBEDDED WALLET FOUND BY ANY METHOD');
+                        console.log('📋 Falling back to modal...');
                     }
                 } catch (embeddedError) {
                     console.error('❌ Embedded wallet check failed:', embeddedError);
+                    console.error('Error stack:', embeddedError.stack);
                 }
+            } else {
+                console.log('⚠️ NOT running in Telegram WebApp, will show modal');
             }
 
             // FALLBACK: Show modal if embedded wallet not found or not in Telegram
