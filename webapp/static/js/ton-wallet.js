@@ -388,60 +388,75 @@ class TONWallet {
                 version: tg?.version
             });
 
-            // Simply open modal - will poll for connection
+            // Listen for Telegram Wallet connection via postMessage
             console.log('📱 Opening TON Connect modal...');
             this.modalJustOpened = true;
 
-            // CRITICAL: Poll for connection status every 500ms
-            // This is needed because onStatusChange may not fire after Telegram Wallet connection
-            let pollAttempts = 0;
-            const maxPollAttempts = 60; // 30 seconds
-            const pollInterval = setInterval(() => {
-                pollAttempts++;
-                console.log(`🔍 Polling connection status (attempt ${pollAttempts}/${maxPollAttempts})...`);
+            // CRITICAL: Listen to postMessage for wallet connection
+            const messageHandler = async (event) => {
+                // Check if message is from TON Connect
+                if (event.data && typeof event.data === 'object') {
+                    console.log('📨 Received postMessage:', event.data);
 
-                const currentWallet = this.tonConnectUI.wallet;
-                if (currentWallet && currentWallet.account) {
-                    console.log('🎉 WALLET CONNECTED DETECTED VIA POLLING!', currentWallet.account.address);
-                    clearInterval(pollInterval);
-                    this.modalJustOpened = false;
+                    // Check for connection success
+                    if (event.data.type === 'ton-connect-ui-connection-completed' ||
+                        event.data.event === 'connect' ||
+                        event.data.name === 'connect' ||
+                        (event.data.method === 'connect' && event.data.result)) {
 
-                    // Manually trigger connection logic
-                    this.connected = true;
-                    this.address = currentWallet.account.address;
+                        console.log('🎉 WALLET CONNECTION EVENT DETECTED!');
+                        window.removeEventListener('message', messageHandler);
 
-                    // IMMEDIATE NUKE
-                    console.log('💥 NUKING MODAL IMMEDIATELY');
-                    this.nukeAllModals();
+                        // Wait a bit for SDK to update
+                        await new Promise(resolve => setTimeout(resolve, 500));
 
-                    // Trigger callback
-                    this.onConnectionChange(true, this.address);
+                        // Try to get wallet info
+                        const currentWallet = this.tonConnectUI.wallet;
+                        if (currentWallet && currentWallet.account) {
+                            console.log('✅ Wallet info retrieved:', currentWallet.account.address);
 
-                    // Save address
-                    this.saveAddress().catch(err => console.error('Save failed:', err));
+                            this.connected = true;
+                            this.address = currentWallet.account.address;
 
-                    // Show success
-                    const tg = window.Telegram?.WebApp;
-                    if (tg && tg.showPopup) {
-                        tg.showPopup({
-                            title: '✅ Успешно!',
-                            message: 'Кошелек подключен\n\n' + this.address.substring(0, 8) + '...' + this.address.substring(this.address.length - 6),
-                            buttons: [{type: 'ok'}]
-                        });
+                            // NUKE MODAL
+                            console.log('💥 NUKING MODAL');
+                            this.nukeAllModals();
+                            setTimeout(() => this.nukeAllModals(), 100);
+                            setTimeout(() => this.nukeAllModals(), 300);
+                            setTimeout(() => this.nukeAllModals(), 600);
+
+                            // Callbacks
+                            this.onConnectionChange(true, this.address);
+                            await this.saveAddress().catch(err => console.error('Save failed:', err));
+
+                            // Show success
+                            const tg = window.Telegram?.WebApp;
+                            if (tg && tg.showPopup) {
+                                tg.showPopup({
+                                    title: '✅ Успешно!',
+                                    message: 'Кошелек подключен',
+                                    buttons: [{type: 'ok'}]
+                                });
+                            }
+                        } else {
+                            console.error('❌ Wallet info not available after connection event');
+                        }
                     }
                 }
+            };
 
-                if (pollAttempts >= maxPollAttempts) {
-                    console.log('⏰ Polling timeout - stopping');
-                    clearInterval(pollInterval);
-                    this.modalJustOpened = false;
-                }
-            }, 500);
+            window.addEventListener('message', messageHandler);
+
+            // Cleanup after 30 seconds
+            setTimeout(() => {
+                window.removeEventListener('message', messageHandler);
+                this.modalJustOpened = false;
+            }, 30000);
 
             // Open modal
             await this.tonConnectUI.openModal();
 
-            console.log('✅ Modal opened, polling started');
+            console.log('✅ Modal opened, listening for connection events');
 
         } catch (error) {
             console.error('❌ Connection error:', error);
