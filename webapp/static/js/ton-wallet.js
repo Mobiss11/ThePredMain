@@ -28,6 +28,16 @@ class TONWallet {
             console.log('✅ TON_CONNECT_UI library loaded');
             console.log('🔧 Creating TonConnectUI instance...');
 
+            // Check if we're in Telegram WebApp
+            const tg = window.Telegram?.WebApp;
+            const isTelegramWebApp = !!tg;
+
+            if (isTelegramWebApp) {
+                console.log('🔵 Telegram WebApp detected');
+                console.log('📍 WebApp version:', tg.version);
+                console.log('📍 Platform:', tg.platform);
+            }
+
             // Initialize TON Connect UI
             this.tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
                 manifestUrl: 'https://thepred.tech/static/tonconnect-manifest.json',
@@ -66,11 +76,9 @@ class TONWallet {
                             platforms: ['chrome', 'ios', 'android', 'firefox', 'safari']
                         }
                     ]
-                },
-                actionsConfiguration: {
-                    // Return to our WebApp URL (not bot URL!)
-                    twaReturnUrl: 'https://thepred.tech'
                 }
+                // NO actionsConfiguration for Telegram Mini Apps
+                // Telegram Wallet knows how to return to WebApp automatically
             });
 
             // Subscribe to connection status
