@@ -117,63 +117,126 @@ class TONWallet {
 
                     console.log('💥 FORCE CLOSE - Removing ALL TON Connect elements NOW');
 
-                    // SIMPLE & AGGRESSIVE: Just delete everything immediately
+                    // AGGRESSIVE NUCLEAR OPTION: Delete EVERYTHING
                     const nukeModal = () => {
-                        // Find and remove ALL tc-root elements
-                        document.querySelectorAll('tc-root').forEach(el => el.remove());
+                        let removedCount = 0;
 
-                        // Remove ALL TON Connect UI elements
-                        document.querySelectorAll('[class*="tc-"], [class*="ton-connect-"]').forEach(el => {
+                        // 1. Remove tc-root (main TON Connect container)
+                        document.querySelectorAll('tc-root').forEach(el => {
+                            el.remove();
+                            removedCount++;
+                        });
+
+                        // 2. Remove by class patterns
+                        document.querySelectorAll('[class*="tc-"], [class*="ton-connect-"], [class*="tonconnect"]').forEach(el => {
                             if (el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE') {
                                 el.remove();
+                                removedCount++;
                             }
                         });
 
-                        console.log('💥 Nuked all TON Connect elements');
+                        // 3. Remove by ID patterns
+                        document.querySelectorAll('[id*="tc-"], [id*="ton-connect-"], [id*="tonconnect"]').forEach(el => {
+                            if (el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE') {
+                                el.remove();
+                                removedCount++;
+                            }
+                        });
+
+                        // 4. Remove iframes (TON Connect uses iframes)
+                        document.querySelectorAll('iframe').forEach(iframe => {
+                            const src = iframe.src || '';
+                            if (src.includes('ton') || src.includes('wallet') || src.includes('bridge')) {
+                                iframe.remove();
+                                removedCount++;
+                            }
+                        });
+
+                        // 5. Remove any modal overlays/backdrops
+                        document.querySelectorAll('[class*="modal"], [class*="overlay"], [class*="backdrop"]').forEach(el => {
+                            const classes = el.className || '';
+                            if (typeof classes === 'string' && (classes.includes('tc') || classes.includes('ton'))) {
+                                el.remove();
+                                removedCount++;
+                            }
+                        });
+
+                        // 6. Nuclear option - find anything with TON/wallet in data attributes
+                        document.querySelectorAll('[data-tc-modal], [data-tonconnect]').forEach(el => {
+                            el.remove();
+                            removedCount++;
+                        });
+
+                        console.log(`💥 Nuked ${removedCount} TON Connect elements`);
                     };
 
-                    // Close via API
+                    // STEP 1: Close via API (might not work, but try)
                     try {
+                        console.log('🚪 Attempting closeModal()...');
                         this.tonConnectUI.closeModal();
+                        console.log('✅ closeModal() called');
                     } catch (e) {
-                        console.log('API close failed (expected):', e.message);
+                        console.log('⚠️ closeModal() failed:', e.message);
                     }
 
-                    // Nuke immediately
-                    setTimeout(nukeModal, 10);
+                    // STEP 2: Immediate nuke (no delay)
+                    nukeModal();
 
-                    // Nuke again after 100ms
-                    setTimeout(nukeModal, 100);
-
-                    // Nuke again after 300ms
+                    // STEP 3: Nuke again at different intervals
+                    setTimeout(nukeModal, 50);
+                    setTimeout(nukeModal, 150);
                     setTimeout(nukeModal, 300);
-
-                    // Final nuke after 1000ms
+                    setTimeout(nukeModal, 600);
                     setTimeout(nukeModal, 1000);
+                    setTimeout(nukeModal, 2000); // Extra nuke after 2 seconds
 
                     // Reset flag
                     this.modalJustOpened = false;
 
-                    // Try to use Telegram WebApp API to force close everything
+                    // CRITICAL: Use Telegram WebApp API to force return to app
                     const tg = window.Telegram?.WebApp;
-                    if (tg && isTelegramWallet) {
-                        // Try to close any open windows/modals using Telegram API
+                    if (tg) {
+                        console.log('📱 Using Telegram WebApp API to return to app...');
+
                         try {
+                            // Hide back button if visible
                             if (tg.BackButton && tg.BackButton.isVisible) {
-                                console.log('📱 Hiding Telegram BackButton');
+                                console.log('🔙 Hiding Telegram BackButton');
                                 tg.BackButton.hide();
                             }
 
-                            // Try to expand WebApp to full screen (might help close wallet view)
+                            // Expand to full screen (forces focus back to WebApp)
                             if (tg.expand) {
                                 console.log('📱 Expanding WebApp to full screen');
                                 tg.expand();
                             }
 
-                            // Show success alert
-                            if (tg.showAlert) {
+                            // Call ready() to signal WebApp is ready (might trigger return)
+                            if (tg.ready) {
+                                console.log('✅ Calling WebApp.ready()');
+                                tg.ready();
+                            }
+
+                            // Hide MainButton if visible
+                            if (tg.MainButton && tg.MainButton.isVisible) {
+                                console.log('🔘 Hiding MainButton');
+                                tg.MainButton.hide();
+                            }
+
+                            // Trigger haptic feedback (shows we're back in app)
+                            if (tg.HapticFeedback) {
+                                console.log('📳 Triggering success haptic');
+                                tg.HapticFeedback.notificationOccurred('success');
+                            }
+
+                            // Show popup instead of alert (doesn't block UI)
+                            if (tg.showPopup) {
                                 setTimeout(() => {
-                                    tg.showAlert('✅ Кошелек подключен!\n\nАдрес: ' + this.address.substring(0, 8) + '...' + this.address.substring(this.address.length - 6));
+                                    tg.showPopup({
+                                        title: '✅ Успешно!',
+                                        message: 'Кошелек подключен\n\n' + this.address.substring(0, 8) + '...' + this.address.substring(this.address.length - 6),
+                                        buttons: [{type: 'ok'}]
+                                    });
                                 }, 500);
                             }
                         } catch (e) {
