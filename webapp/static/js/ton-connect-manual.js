@@ -212,21 +212,23 @@ class TONConnectManual {
             const tg = window.Telegram?.WebApp;
             const isTelegramWebApp = !!tg;
 
-            // Connect with twaReturnUrl for auto-return to Telegram
+            // Connect to wallet
             console.log('🔗 Initiating connection...');
-            const connectParams = {
+            let connectionUrl = await this.connector.connect({
                 universalLink: wallet.universalLink,
                 bridgeUrl: wallet.bridgeUrl
-            };
+            });
 
-            // Add return URL for Telegram Mini Apps (auto-return after connection)
-            if (isTelegramWebApp) {
-                connectParams.twaReturnUrl = 'https://t.me/The_Pred_Bot/app';
+            console.log('✅ Connection URL (before return URL):', connectionUrl);
+
+            // Add return URL for auto-return to Telegram after connection
+            if (isTelegramWebApp && walletId !== 'telegram-wallet') {
+                // Use back parameter for Tonkeeper/MyTonWallet
+                const returnUrl = 'back'; // Special value to return to previous app
+                const separator = connectionUrl.includes('?') ? '&' : '?';
+                connectionUrl = `${connectionUrl}${separator}ret=${returnUrl}`;
+                console.log('✅ Connection URL (with return URL):', connectionUrl);
             }
-
-            const connectionUrl = await this.connector.connect(connectParams);
-
-            console.log('✅ Connection URL:', connectionUrl);
 
             // Special handling for Telegram Wallet - use openTelegramLink to stay inside Telegram
             if (walletId === 'telegram-wallet' && isTelegramWebApp && tg.openTelegramLink) {
