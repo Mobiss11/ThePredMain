@@ -137,41 +137,75 @@ class TONWallet {
                             console.log('⚠️ API close failed:', e);
                         }
 
-                        // Step 2: FORCE REMOVE ALL TON CONNECT ELEMENTS FROM DOM
+                        // Step 2: AGGRESSIVE CLEANUP with MULTIPLE ATTEMPTS
+                        // Function to remove all TON Connect elements
+                        const removeAllTonConnectElements = () => {
+                            let removed = 0;
+
+                            // Remove tc-root
+                            const allModals = document.querySelectorAll('tc-root');
+                            allModals.forEach(modal => {
+                                modal.remove();
+                                removed++;
+                            });
+
+                            // Remove all TON Connect elements
+                            const allTCElements = document.querySelectorAll('[class*="tc-"], [class*="ton-connect-"], [id*="tc-"], [id*="ton-connect-"]');
+                            allTCElements.forEach(el => {
+                                if (el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE') {
+                                    el.remove();
+                                    removed++;
+                                }
+                            });
+
+                            console.log(`🗑️ Removed ${removed} TON Connect elements`);
+                            return removed;
+                        };
+
+                        // Attempt 1: Immediate (50ms)
                         setTimeout(() => {
-                            try {
-                                // Find and remove ALL tc-root elements (TON Connect modals)
-                                const allModals = document.querySelectorAll('tc-root');
-                                console.log(`Found ${allModals.length} tc-root elements`);
-                                allModals.forEach((modal, index) => {
-                                    modal.remove();
-                                    console.log(`✅ Removed tc-root #${index + 1}`);
-                                });
+                            console.log('🔄 Cleanup attempt #1');
+                            removeAllTonConnectElements();
+                        }, 50);
 
-                                // Remove ALL backdrop/overlay elements
-                                const allBackdrops = document.querySelectorAll('[class*="tc-"], [class*="ton-connect-"], [id*="tc-"], [id*="ton-connect-"]');
-                                console.log(`Found ${allBackdrops.length} TON Connect elements`);
-                                allBackdrops.forEach((el, index) => {
-                                    if (el.tagName !== 'SCRIPT') { // Don't remove script tags
-                                        el.remove();
-                                        console.log(`✅ Removed element #${index + 1}: ${el.tagName}.${el.className}`);
-                                    }
-                                });
+                        // Attempt 2: After 200ms (in case modal reappears)
+                        setTimeout(() => {
+                            console.log('🔄 Cleanup attempt #2');
+                            removeAllTonConnectElements();
+                        }, 200);
 
-                                // Also check for any fixed/absolute positioned overlays
-                                const overlays = document.querySelectorAll('[style*="position: fixed"], [style*="position: absolute"]');
-                                overlays.forEach(el => {
-                                    if (el.style.zIndex > 1000 && el.innerHTML.includes('Connect')) {
-                                        el.remove();
-                                        console.log('✅ Removed high z-index overlay');
-                                    }
-                                });
+                        // Attempt 3: After 500ms (final cleanup)
+                        setTimeout(() => {
+                            console.log('🔄 Cleanup attempt #3 (FINAL)');
+                            const removed = removeAllTonConnectElements();
 
-                                console.log('💥 ALL TON Connect elements removed from DOM');
-                            } catch (e) {
-                                console.log('⚠️ DOM cleanup failed:', e);
+                            if (removed === 0) {
+                                console.log('✅ All TON Connect elements already removed');
+                            } else {
+                                console.log(`⚠️ Found ${removed} more elements after 500ms - something is recreating them!`);
                             }
-                        }, 50); // Reduced to 50ms for faster cleanup
+
+                            // NUCLEAR OPTION: Disable TON Connect modal functionality temporarily
+                            try {
+                                if (this.tonConnectUI && this.tonConnectUI.modal) {
+                                    // Try to hide modal container
+                                    const originalOpen = this.tonConnectUI.modal.open;
+                                    this.tonConnectUI.modal.open = () => {
+                                        console.log('🚫 Modal open() called but blocked temporarily');
+                                    };
+
+                                    // Re-enable after 2 seconds
+                                    setTimeout(() => {
+                                        if (this.tonConnectUI && this.tonConnectUI.modal) {
+                                            this.tonConnectUI.modal.open = originalOpen;
+                                            console.log('✅ Modal open() re-enabled');
+                                        }
+                                    }, 2000);
+                                }
+                            } catch (e) {
+                                console.log('⚠️ Could not disable modal:', e);
+                            }
+                        }, 500);
 
                         // Reset flag
                         this.modalJustOpened = false;
@@ -179,12 +213,31 @@ class TONWallet {
                         console.log('ℹ️ Modal not open or connection restored - not closing');
                     }
 
-                    // Show success alert
+                    // Try to use Telegram WebApp API to force close everything
                     const tg = window.Telegram?.WebApp;
-                    if (tg && tg.showAlert && isTelegramWallet) {
-                        setTimeout(() => {
-                            tg.showAlert('✅ Кошелек подключен!\n\nАдрес: ' + this.address.substring(0, 8) + '...' + this.address.substring(this.address.length - 6));
-                        }, 500);
+                    if (tg && isTelegramWallet) {
+                        // Try to close any open windows/modals using Telegram API
+                        try {
+                            if (tg.BackButton && tg.BackButton.isVisible) {
+                                console.log('📱 Hiding Telegram BackButton');
+                                tg.BackButton.hide();
+                            }
+
+                            // Try to expand WebApp to full screen (might help close wallet view)
+                            if (tg.expand) {
+                                console.log('📱 Expanding WebApp to full screen');
+                                tg.expand();
+                            }
+
+                            // Show success alert
+                            if (tg.showAlert) {
+                                setTimeout(() => {
+                                    tg.showAlert('✅ Кошелек подключен!\n\nАдрес: ' + this.address.substring(0, 8) + '...' + this.address.substring(this.address.length - 6));
+                                }, 500);
+                            }
+                        } catch (e) {
+                            console.log('⚠️ Telegram API calls failed:', e);
+                        }
                     }
 
                     // Trigger callback first
