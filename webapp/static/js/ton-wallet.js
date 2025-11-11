@@ -268,7 +268,7 @@ class TONWallet {
                 console.log('🔍 Checking for embedded wallet...');
 
                 try {
-                    const walletsList = this.tonConnectUI.getWallets();
+                    const walletsList = await this.tonConnectUI.getWallets();
                     console.log('📋 Available wallets:', walletsList);
 
                     // Find embedded wallet (Telegram Wallet when app runs inside Telegram)
