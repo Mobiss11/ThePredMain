@@ -127,9 +127,9 @@ class TONWallet {
 
                     // ONLY close modal if it was just opened by user (not on page load)
                     if (this.modalJustOpened && isModalVisible) {
-                        console.log('🔄 Modal is open - closing it now...');
+                        console.log('🔄 Modal is open - AGGRESSIVE CLOSE NOW...');
 
-                        // Close via API immediately
+                        // Step 1: Close via API immediately
                         try {
                             this.tonConnectUI.closeModal();
                             console.log('✅ Modal closed via API');
@@ -137,25 +137,41 @@ class TONWallet {
                             console.log('⚠️ API close failed:', e);
                         }
 
-                        // Force close via DOM after 100ms
+                        // Step 2: FORCE REMOVE ALL TON CONNECT ELEMENTS FROM DOM
                         setTimeout(() => {
                             try {
-                                const modal = document.querySelector('tc-root');
-                                if (modal) {
+                                // Find and remove ALL tc-root elements (TON Connect modals)
+                                const allModals = document.querySelectorAll('tc-root');
+                                console.log(`Found ${allModals.length} tc-root elements`);
+                                allModals.forEach((modal, index) => {
                                     modal.remove();
-                                    console.log('✅ Modal removed from DOM');
-                                }
+                                    console.log(`✅ Removed tc-root #${index + 1}`);
+                                });
 
-                                // Remove any backdrop/overlay
-                                const backdrop = document.querySelector('[class*="tc-modal"], [class*="tc-overlay"]');
-                                if (backdrop) {
-                                    backdrop.remove();
-                                    console.log('✅ Backdrop removed');
-                                }
+                                // Remove ALL backdrop/overlay elements
+                                const allBackdrops = document.querySelectorAll('[class*="tc-"], [class*="ton-connect-"], [id*="tc-"], [id*="ton-connect-"]');
+                                console.log(`Found ${allBackdrops.length} TON Connect elements`);
+                                allBackdrops.forEach((el, index) => {
+                                    if (el.tagName !== 'SCRIPT') { // Don't remove script tags
+                                        el.remove();
+                                        console.log(`✅ Removed element #${index + 1}: ${el.tagName}.${el.className}`);
+                                    }
+                                });
+
+                                // Also check for any fixed/absolute positioned overlays
+                                const overlays = document.querySelectorAll('[style*="position: fixed"], [style*="position: absolute"]');
+                                overlays.forEach(el => {
+                                    if (el.style.zIndex > 1000 && el.innerHTML.includes('Connect')) {
+                                        el.remove();
+                                        console.log('✅ Removed high z-index overlay');
+                                    }
+                                });
+
+                                console.log('💥 ALL TON Connect elements removed from DOM');
                             } catch (e) {
                                 console.log('⚠️ DOM cleanup failed:', e);
                             }
-                        }, 100);
+                        }, 50); // Reduced to 50ms for faster cleanup
 
                         // Reset flag
                         this.modalJustOpened = false;
