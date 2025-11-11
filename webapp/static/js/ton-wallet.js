@@ -115,103 +115,44 @@ class TONWallet {
                     // Show visual feedback
                     this.showConnectionStatus('Wallet connected!', 'success');
 
-                    // Check if modal is actually open before trying to close it
-                    const modal = document.querySelector('tc-root');
-                    const isModalVisible = modal && modal.style.display !== 'none' && modal.offsetParent !== null;
+                    console.log('💥 FORCE CLOSE - Removing ALL TON Connect elements NOW');
 
-                    console.log('📊 Modal state:', {
-                        modalExists: !!modal,
-                        isVisible: isModalVisible,
-                        shouldClose: this.modalJustOpened
-                    });
+                    // SIMPLE & AGGRESSIVE: Just delete everything immediately
+                    const nukeModal = () => {
+                        // Find and remove ALL tc-root elements
+                        document.querySelectorAll('tc-root').forEach(el => el.remove());
 
-                    // ONLY close modal if it was just opened by user (not on page load)
-                    if (this.modalJustOpened && isModalVisible) {
-                        console.log('🔄 Modal is open - AGGRESSIVE CLOSE NOW...');
-
-                        // Step 1: Close via API immediately
-                        try {
-                            this.tonConnectUI.closeModal();
-                            console.log('✅ Modal closed via API');
-                        } catch (e) {
-                            console.log('⚠️ API close failed:', e);
-                        }
-
-                        // Step 2: AGGRESSIVE CLEANUP with MULTIPLE ATTEMPTS
-                        // Function to remove all TON Connect elements
-                        const removeAllTonConnectElements = () => {
-                            let removed = 0;
-
-                            // Remove tc-root
-                            const allModals = document.querySelectorAll('tc-root');
-                            allModals.forEach(modal => {
-                                modal.remove();
-                                removed++;
-                            });
-
-                            // Remove all TON Connect elements
-                            const allTCElements = document.querySelectorAll('[class*="tc-"], [class*="ton-connect-"], [id*="tc-"], [id*="ton-connect-"]');
-                            allTCElements.forEach(el => {
-                                if (el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE') {
-                                    el.remove();
-                                    removed++;
-                                }
-                            });
-
-                            console.log(`🗑️ Removed ${removed} TON Connect elements`);
-                            return removed;
-                        };
-
-                        // Attempt 1: Immediate (50ms)
-                        setTimeout(() => {
-                            console.log('🔄 Cleanup attempt #1');
-                            removeAllTonConnectElements();
-                        }, 50);
-
-                        // Attempt 2: After 200ms (in case modal reappears)
-                        setTimeout(() => {
-                            console.log('🔄 Cleanup attempt #2');
-                            removeAllTonConnectElements();
-                        }, 200);
-
-                        // Attempt 3: After 500ms (final cleanup)
-                        setTimeout(() => {
-                            console.log('🔄 Cleanup attempt #3 (FINAL)');
-                            const removed = removeAllTonConnectElements();
-
-                            if (removed === 0) {
-                                console.log('✅ All TON Connect elements already removed');
-                            } else {
-                                console.log(`⚠️ Found ${removed} more elements after 500ms - something is recreating them!`);
+                        // Remove ALL TON Connect UI elements
+                        document.querySelectorAll('[class*="tc-"], [class*="ton-connect-"]').forEach(el => {
+                            if (el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE') {
+                                el.remove();
                             }
+                        });
 
-                            // NUCLEAR OPTION: Disable TON Connect modal functionality temporarily
-                            try {
-                                if (this.tonConnectUI && this.tonConnectUI.modal) {
-                                    // Try to hide modal container
-                                    const originalOpen = this.tonConnectUI.modal.open;
-                                    this.tonConnectUI.modal.open = () => {
-                                        console.log('🚫 Modal open() called but blocked temporarily');
-                                    };
+                        console.log('💥 Nuked all TON Connect elements');
+                    };
 
-                                    // Re-enable after 2 seconds
-                                    setTimeout(() => {
-                                        if (this.tonConnectUI && this.tonConnectUI.modal) {
-                                            this.tonConnectUI.modal.open = originalOpen;
-                                            console.log('✅ Modal open() re-enabled');
-                                        }
-                                    }, 2000);
-                                }
-                            } catch (e) {
-                                console.log('⚠️ Could not disable modal:', e);
-                            }
-                        }, 500);
-
-                        // Reset flag
-                        this.modalJustOpened = false;
-                    } else {
-                        console.log('ℹ️ Modal not open or connection restored - not closing');
+                    // Close via API
+                    try {
+                        this.tonConnectUI.closeModal();
+                    } catch (e) {
+                        console.log('API close failed (expected):', e.message);
                     }
+
+                    // Nuke immediately
+                    setTimeout(nukeModal, 10);
+
+                    // Nuke again after 100ms
+                    setTimeout(nukeModal, 100);
+
+                    // Nuke again after 300ms
+                    setTimeout(nukeModal, 300);
+
+                    // Final nuke after 1000ms
+                    setTimeout(nukeModal, 1000);
+
+                    // Reset flag
+                    this.modalJustOpened = false;
 
                     // Try to use Telegram WebApp API to force close everything
                     const tg = window.Telegram?.WebApp;
@@ -322,66 +263,7 @@ class TONWallet {
                 version: tg?.version
             });
 
-            // TRY DIRECT CONNECTION in Telegram WebApp
-            if (isTelegramWebApp) {
-                console.log('🎯 Attempting DIRECT connection to Telegram Wallet...');
-
-                // Set flag
-                this.modalJustOpened = true;
-
-                try {
-                    // Method 1: Try using openSingleWalletModal
-                    if (this.tonConnectUI.openSingleWalletModal) {
-                        console.log('Method 1: openSingleWalletModal');
-                        await this.tonConnectUI.openSingleWalletModal('telegram-wallet');
-                        console.log('✅ Single wallet modal opened');
-                        return;
-                    }
-                } catch (e1) {
-                    console.log('⚠️ Method 1 failed:', e1.message);
-                }
-
-                try {
-                    // Method 2: Get wallets list and connect to specific one
-                    console.log('Method 2: getWallets + connect');
-                    const wallets = this.tonConnectUI.getWallets();
-                    console.log('Available wallets:', wallets);
-
-                    const telegramWallet = wallets.find(w =>
-                        w.appName === 'telegram-wallet' ||
-                        w.name?.toLowerCase().includes('telegram')
-                    );
-
-                    if (telegramWallet) {
-                        console.log('Found Telegram Wallet:', telegramWallet);
-                        await this.tonConnectUI.connectWallet(telegramWallet);
-                        console.log('✅ Connect initiated');
-                        return;
-                    } else {
-                        console.log('⚠️ Telegram Wallet not found in list');
-                    }
-                } catch (e2) {
-                    console.log('⚠️ Method 2 failed:', e2.message);
-                }
-
-                try {
-                    // Method 3: Direct connector.connect
-                    console.log('Method 3: connector.connect');
-                    await this.tonConnectUI.connector.connect({
-                        universalLink: 'https://t.me/wallet?attach=wallet',
-                        bridgeUrl: 'https://bridge.ton.space/bridge'
-                    });
-                    console.log('✅ Connector.connect initiated');
-                    return;
-                } catch (e3) {
-                    console.log('⚠️ Method 3 failed:', e3.message);
-                }
-
-                console.log('⚠️ All direct methods failed, falling back to modal');
-            }
-
-            // FALLBACK: Use modal for non-Telegram or if direct failed
-            console.log('📱 Opening modal (fallback)...');
+            // Set flag
             this.modalJustOpened = true;
 
             // Auto-reset flag after 30 seconds
