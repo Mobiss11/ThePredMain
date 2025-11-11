@@ -42,10 +42,13 @@ class TONWallet {
                             name: 'Wallet',
                             imageUrl: 'https://wallet.tg/images/logo-288.png',
                             aboutUrl: 'https://wallet.tg/',
-                            universalLink: 'https://t.me/wallet?attach=wallet',
+                            // Use deep link that returns to current app
+                            universalLink: 'https://t.me/wallet/start',
                             bridgeUrl: 'https://bridge.ton.space/bridge',
                             platforms: ['ios', 'android', 'macos', 'windows', 'linux'],
-                            jsBridgeKey: 'telegram-wallet'
+                            jsBridgeKey: 'telegram-wallet',
+                            // Add embedded flag for Telegram WebApp
+                            embedded: true
                         },
                         {
                             appName: 'tonkeeper',
@@ -68,9 +71,10 @@ class TONWallet {
                     ]
                 },
                 actionsConfiguration: {
-                    // Use 'back' instead of specific URL for better Telegram Wallet compatibility
-                    returnStrategy: 'back',
-                    twaReturnUrl: 'https://t.me/The_Pred_Bot/app'
+                    // Let wallet decide return behavior (no forced return URL)
+                    // This works better with Telegram Wallet embedded in WebApp
+                    returnStrategy: 'none'
+                    // twaReturnUrl removed - causes issues with return flow
                 }
             });
 
@@ -229,16 +233,53 @@ class TONWallet {
         }
 
         try {
+            // Check if we're in Telegram WebApp
+            const tg = window.Telegram?.WebApp;
+            const isTelegramWebApp = !!tg;
+
             console.log('📱 TON Wallet: Opening connection modal...');
             console.log('📊 Current state:', {
                 connected: this.connected,
                 address: this.address,
-                hasUI: !!this.tonConnectUI
+                hasUI: !!this.tonConnectUI,
+                isTelegramWebApp: isTelegramWebApp
             });
 
             this.showConnectionStatus('Opening wallet selection...', 'info');
 
-            // Open wallet connection modal
+            // For Telegram WebApp, try to use embedded wallet first
+            if (isTelegramWebApp) {
+                console.log('🔵 Telegram WebApp detected - trying embedded wallet connection');
+
+                // Try to connect directly without modal for better compatibility
+                try {
+                    const walletsList = await this.tonConnectUI.getWallets();
+                    console.log('Available wallets:', walletsList);
+
+                    // Find Telegram Wallet
+                    const telegramWallet = walletsList.find(w =>
+                        w.appName === 'telegram-wallet' ||
+                        w.name?.toLowerCase().includes('telegram') ||
+                        w.jsBridgeKey === 'telegram-wallet'
+                    );
+
+                    if (telegramWallet) {
+                        console.log('✅ Found Telegram Wallet, connecting directly...');
+                        this.showConnectionStatus('Connecting to Telegram Wallet...', 'info');
+
+                        // Connect directly to Telegram Wallet
+                        await this.tonConnectUI.connectWallet(telegramWallet);
+                        console.log('✅ Direct connection initiated');
+                        return;
+                    } else {
+                        console.log('⚠️ Telegram Wallet not found in list, falling back to modal');
+                    }
+                } catch (directError) {
+                    console.log('⚠️ Direct connection failed, using modal:', directError);
+                }
+            }
+
+            // Fallback to modal (for non-Telegram or if direct connection failed)
             await this.tonConnectUI.openModal();
 
             console.log('✅ TON Wallet: Modal opened successfully');
@@ -251,6 +292,8 @@ class TONWallet {
                 message: error.message,
                 stack: error.stack
             });
+
+            this.showConnectionStatus('Connection failed: ' + error.message, 'error');
 
             // Show error to user only if it's not a user cancellation
             if (!error.message || !error.message.includes('cancel')) {
