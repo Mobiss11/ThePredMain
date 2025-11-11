@@ -9,6 +9,7 @@ class TONWallet {
         this.tonConnectUI = null;
         this.connected = false;
         this.address = null;
+        this.modalJustOpened = false; // Track if modal just opened
         this.initPromise = this.init();
     }
 
@@ -114,38 +115,53 @@ class TONWallet {
                     // Show visual feedback
                     this.showConnectionStatus('Wallet connected!', 'success');
 
-                    // CRITICAL: Telegram Wallet CANNOT auto-return to TMA
-                    // Must force close modal IMMEDIATELY
-                    console.log('🔄 Wallet connected - FORCE closing modal NOW...');
+                    // Check if modal is actually open before trying to close it
+                    const modal = document.querySelector('tc-root');
+                    const isModalVisible = modal && modal.style.display !== 'none' && modal.offsetParent !== null;
 
-                    // Close via API immediately
-                    try {
-                        this.tonConnectUI.closeModal();
-                        console.log('✅ Modal closed via API');
-                    } catch (e) {
-                        console.log('⚠️ API close failed:', e);
-                    }
+                    console.log('📊 Modal state:', {
+                        modalExists: !!modal,
+                        isVisible: isModalVisible,
+                        shouldClose: this.modalJustOpened
+                    });
 
-                    // Force close via DOM after 100ms
-                    setTimeout(() => {
+                    // ONLY close modal if it was just opened by user (not on page load)
+                    if (this.modalJustOpened && isModalVisible) {
+                        console.log('🔄 Modal is open - closing it now...');
+
+                        // Close via API immediately
                         try {
-                            // Find and remove TON Connect modal
-                            const modal = document.querySelector('tc-root');
-                            if (modal) {
-                                modal.remove();
-                                console.log('✅ Modal removed from DOM');
-                            }
-
-                            // Remove any backdrop/overlay
-                            const backdrop = document.querySelector('[class*="tc-modal"], [class*="tc-overlay"]');
-                            if (backdrop) {
-                                backdrop.remove();
-                                console.log('✅ Backdrop removed');
-                            }
+                            this.tonConnectUI.closeModal();
+                            console.log('✅ Modal closed via API');
                         } catch (e) {
-                            console.log('⚠️ DOM cleanup failed:', e);
+                            console.log('⚠️ API close failed:', e);
                         }
-                    }, 100);
+
+                        // Force close via DOM after 100ms
+                        setTimeout(() => {
+                            try {
+                                const modal = document.querySelector('tc-root');
+                                if (modal) {
+                                    modal.remove();
+                                    console.log('✅ Modal removed from DOM');
+                                }
+
+                                // Remove any backdrop/overlay
+                                const backdrop = document.querySelector('[class*="tc-modal"], [class*="tc-overlay"]');
+                                if (backdrop) {
+                                    backdrop.remove();
+                                    console.log('✅ Backdrop removed');
+                                }
+                            } catch (e) {
+                                console.log('⚠️ DOM cleanup failed:', e);
+                            }
+                        }, 100);
+
+                        // Reset flag
+                        this.modalJustOpened = false;
+                    } else {
+                        console.log('ℹ️ Modal not open or connection restored - not closing');
+                    }
 
                     // Show success alert
                     const tg = window.Telegram?.WebApp;
@@ -171,6 +187,7 @@ class TONWallet {
                 } else {
                     this.connected = false;
                     this.address = null;
+                    this.modalJustOpened = false; // Reset flag on disconnect
                     console.log('❌ TON Wallet disconnected');
                     this.onConnectionChange(false, null);
                 }
@@ -233,7 +250,17 @@ class TONWallet {
                 hasUI: !!this.tonConnectUI
             });
 
-            // NO status message - user requested removal
+            // Set flag to indicate modal was opened by user action
+            this.modalJustOpened = true;
+            console.log('🚩 modalJustOpened flag set to TRUE');
+
+            // Auto-reset flag after 30 seconds (if user closes modal without connecting)
+            setTimeout(() => {
+                if (this.modalJustOpened) {
+                    console.log('⏰ 30s timeout - resetting modalJustOpened flag');
+                    this.modalJustOpened = false;
+                }
+            }, 30000);
 
             // Open wallet connection modal
             await this.tonConnectUI.openModal();
