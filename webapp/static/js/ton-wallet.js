@@ -304,6 +304,68 @@ class TONWallet {
     }
 
     /**
+     * Nuclear option - remove ALL TON Connect UI elements
+     */
+    nukeAllModals() {
+        let removedCount = 0;
+
+        // 1. Remove tc-root (main TON Connect container)
+        document.querySelectorAll('tc-root').forEach(el => {
+            el.remove();
+            removedCount++;
+        });
+
+        // 2. Remove by class patterns
+        document.querySelectorAll('[class*="tc-"], [class*="ton-connect-"], [class*="tonconnect"]').forEach(el => {
+            if (el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE') {
+                el.remove();
+                removedCount++;
+            }
+        });
+
+        // 3. Remove by ID patterns
+        document.querySelectorAll('[id*="tc-"], [id*="ton-connect-"], [id*="tonconnect"]').forEach(el => {
+            if (el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE') {
+                el.remove();
+                removedCount++;
+            }
+        });
+
+        // 4. Remove iframes (TON Connect uses iframes)
+        document.querySelectorAll('iframe').forEach(iframe => {
+            const src = iframe.src || '';
+            if (src.includes('ton') || src.includes('wallet') || src.includes('bridge')) {
+                iframe.remove();
+                removedCount++;
+            }
+        });
+
+        // 5. Remove any modal overlays/backdrops
+        document.querySelectorAll('[class*="modal"], [class*="overlay"], [class*="backdrop"]').forEach(el => {
+            const classes = el.className || '';
+            if (typeof classes === 'string' && (classes.includes('tc') || classes.includes('ton'))) {
+                el.remove();
+                removedCount++;
+            }
+        });
+
+        // 6. Remove by data attributes
+        document.querySelectorAll('[data-tc-modal], [data-tonconnect]').forEach(el => {
+            el.remove();
+            removedCount++;
+        });
+
+        console.log(`💥 Nuked ${removedCount} TON Connect elements`);
+
+        // Try closeModal API too
+        try {
+            this.tonConnectUI.closeModal();
+        } catch (e) {
+            console.log('closeModal() failed (expected):', e.message);
+        }
+    }
+
+    /**
      * Connect wallet
      */
     async connect() {
@@ -326,73 +388,60 @@ class TONWallet {
                 version: tg?.version
             });
 
-            // CRITICAL: Check for embedded wallet (runs inside Telegram)
-            if (isTelegramWebApp) {
-                console.log('🔍 Checking for embedded wallet...');
-                console.log('📱 Telegram WebApp data:', {
-                    platform: tg.platform,
-                    version: tg.version,
-                    initData: tg.initData ? 'exists' : 'missing'
-                });
-
-                try {
-                    const walletsList = await this.tonConnectUI.getWallets();
-                    console.log('📋 Total wallets found:', walletsList.length);
-
-                    // Find Telegram Wallet by appName
-                    const telegramWallet = walletsList.find(wallet =>
-                        wallet.appName === 'telegram-wallet' ||
-                        wallet.name === 'Wallet'
-                    );
-
-                    if (telegramWallet) {
-                        console.log('✅ Found Telegram Wallet:', {
-                            name: telegramWallet.name,
-                            appName: telegramWallet.appName,
-                            embedded: telegramWallet.embedded,
-                            jsBridgeKey: telegramWallet.jsBridgeKey,
-                            bridgeUrl: telegramWallet.bridgeUrl,
-                            universalLink: telegramWallet.universalLink
-                        });
-
-                        console.log('🎯 Opening single wallet modal for Telegram Wallet...');
-
-                        // Use openSingleWalletModal to connect directly to Telegram Wallet
-                        await this.tonConnectUI.openSingleWalletModal(telegramWallet.appName);
-
-                        console.log('✅ Telegram Wallet modal opened - should auto-close after connection');
-                        return; // Exit - no selection modal
-                    } else {
-                        console.log('⚠️ Telegram Wallet not found in wallet list');
-                        console.log('Available wallets:', walletsList.map(w => ({
-                            name: w.name,
-                            appName: w.appName
-                        })));
-                    }
-                } catch (embeddedError) {
-                    console.error('❌ Telegram Wallet connection failed:', embeddedError);
-                    console.error('Error stack:', embeddedError.stack);
-                }
-            } else {
-                console.log('⚠️ NOT running in Telegram WebApp, will show modal');
-            }
-
-            // FALLBACK: Show modal if embedded wallet not found or not in Telegram
-            console.log('📱 Opening modal (fallback)...');
+            // Simply open modal - will poll for connection
+            console.log('📱 Opening TON Connect modal...');
             this.modalJustOpened = true;
 
-            // Auto-reset flag after 30 seconds
-            setTimeout(() => {
-                if (this.modalJustOpened) {
-                    console.log('⏰ 30s timeout - resetting modalJustOpened flag');
+            // CRITICAL: Poll for connection status every 500ms
+            // This is needed because onStatusChange may not fire after Telegram Wallet connection
+            let pollAttempts = 0;
+            const maxPollAttempts = 60; // 30 seconds
+            const pollInterval = setInterval(() => {
+                pollAttempts++;
+                console.log(`🔍 Polling connection status (attempt ${pollAttempts}/${maxPollAttempts})...`);
+
+                const currentWallet = this.tonConnectUI.wallet;
+                if (currentWallet && currentWallet.account) {
+                    console.log('🎉 WALLET CONNECTED DETECTED VIA POLLING!', currentWallet.account.address);
+                    clearInterval(pollInterval);
+                    this.modalJustOpened = false;
+
+                    // Manually trigger connection logic
+                    this.connected = true;
+                    this.address = currentWallet.account.address;
+
+                    // IMMEDIATE NUKE
+                    console.log('💥 NUKING MODAL IMMEDIATELY');
+                    this.nukeAllModals();
+
+                    // Trigger callback
+                    this.onConnectionChange(true, this.address);
+
+                    // Save address
+                    this.saveAddress().catch(err => console.error('Save failed:', err));
+
+                    // Show success
+                    const tg = window.Telegram?.WebApp;
+                    if (tg && tg.showPopup) {
+                        tg.showPopup({
+                            title: '✅ Успешно!',
+                            message: 'Кошелек подключен\n\n' + this.address.substring(0, 8) + '...' + this.address.substring(this.address.length - 6),
+                            buttons: [{type: 'ok'}]
+                        });
+                    }
+                }
+
+                if (pollAttempts >= maxPollAttempts) {
+                    console.log('⏰ Polling timeout - stopping');
+                    clearInterval(pollInterval);
                     this.modalJustOpened = false;
                 }
-            }, 30000);
+            }, 500);
 
             // Open modal
             await this.tonConnectUI.openModal();
 
-            console.log('✅ Modal opened');
+            console.log('✅ Modal opened, polling started');
 
         } catch (error) {
             console.error('❌ Connection error:', error);

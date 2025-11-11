@@ -940,5 +940,18 @@ async def api_admin_update_ticket_status(ticket_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/static/tonconnect-manifest.json')
+async def tonconnect_manifest():
+    """Serve TON Connect manifest with CORS headers"""
+    from quart import send_from_directory, make_response
+
+    response = await make_response(await send_from_directory('static', 'tonconnect-manifest.json'))
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    response.headers['Content-Type'] = 'application/json'
+    return response
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8001, debug=app.config['DEV_MODE'])
