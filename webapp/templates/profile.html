@@ -1439,6 +1439,12 @@ window.tonWallet.onConnectionChange = function(connected, address) {
         // Update deposit modal state
         updateDepositModalState();
 
+        // Show success notification
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.showAlert) {
+            tg.showAlert('✅ Кошелек успешно подключен!');
+        }
+
         // Reload profile to show updated balance
         loadProfile();
     } else {

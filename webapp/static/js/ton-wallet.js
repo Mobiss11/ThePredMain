@@ -17,13 +17,16 @@ class TONWallet {
      */
     async init() {
         try {
-            console.log('TON Wallet: Initializing...');
+            console.log('🚀 TON Wallet: Initializing...');
 
             // Wait for TON_CONNECT_UI to be available
             if (typeof TON_CONNECT_UI === 'undefined') {
-                console.error('TON_CONNECT_UI not loaded');
+                console.error('❌ TON_CONNECT_UI not loaded');
                 return;
             }
+
+            console.log('✅ TON_CONNECT_UI library loaded');
+            console.log('🔧 Creating TonConnectUI instance...');
 
             // Initialize TON Connect UI
             this.tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
@@ -69,38 +72,72 @@ class TONWallet {
             });
 
             // Subscribe to connection status
-            this.tonConnectUI.onStatusChange((wallet) => {
-                console.log('TON Wallet: Status changed', wallet);
+            this.tonConnectUI.onStatusChange(async (wallet) => {
+                console.log('🔔 TON Wallet: Status changed', wallet);
 
                 if (wallet) {
                     this.connected = true;
                     this.address = wallet.account.address;
-                    console.log('TON Wallet connected:', this.address);
+                    console.log('✅ TON Wallet connected:', this.address);
+                    console.log('📍 Wallet details:', {
+                        address: wallet.account.address,
+                        chain: wallet.account.chain,
+                        publicKey: wallet.account.publicKey
+                    });
 
-                    // Trigger callback
+                    // Close modal immediately after connection
+                    try {
+                        console.log('🔄 Closing connection modal...');
+                        this.tonConnectUI.closeModal();
+                        console.log('✅ Modal closed');
+                    } catch (error) {
+                        console.log('⚠️ Could not close modal:', error);
+                    }
+
+                    // Trigger callback first
                     this.onConnectionChange(true, this.address);
 
-                    // Auto-save to backend
-                    this.saveAddress().catch(error => {
-                        console.error('Failed to save address:', error);
-                    });
+                    // Auto-save to backend (without blocking UI)
+                    try {
+                        console.log('💾 Attempting to save address to backend...');
+                        await this.saveAddress();
+                        console.log('✅ Address saved successfully');
+                    } catch (error) {
+                        console.error('❌ Failed to save address (non-critical):', error);
+                        // Don't show alert here - it blocks UI
+                        // Just log the error
+                    }
                 } else {
                     this.connected = false;
                     this.address = null;
-                    console.log('TON Wallet disconnected');
+                    console.log('❌ TON Wallet disconnected');
                     this.onConnectionChange(false, null);
                 }
             });
+
+            console.log('✅ TonConnectUI instance created successfully');
+            console.log('🔍 Checking for existing connection...');
 
             // Check if already connected
             const currentWallet = this.tonConnectUI.wallet;
             if (currentWallet) {
                 this.connected = true;
                 this.address = currentWallet.account.address;
-                console.log('TON Wallet: Already connected', this.address);
+                console.log('✅ TON Wallet: Already connected', this.address);
+                console.log('📍 Wallet details:', {
+                    address: currentWallet.account.address,
+                    chain: currentWallet.account.chain
+                });
+            } else {
+                console.log('ℹ️ No existing wallet connection found');
             }
 
-            console.log('TON Wallet: Initialized successfully');
+            console.log('🎉 TON Wallet: Initialized successfully');
+            console.log('📊 Final state:', {
+                connected: this.connected,
+                address: this.address,
+                hasUI: !!this.tonConnectUI
+            });
         } catch (error) {
             console.error('TON Wallet: Initialization failed:', error);
         }
@@ -119,29 +156,43 @@ class TONWallet {
      * Connect wallet
      */
     async connect() {
+        console.log('🔌 TON Wallet: connect() called');
         await this.initPromise;
 
         if (!this.tonConnectUI) {
-            console.error('TON Connect UI not initialized');
+            console.error('❌ TON Connect UI not initialized');
             return;
         }
 
         try {
-            console.log('TON Wallet: Opening connection modal...');
+            console.log('📱 TON Wallet: Opening connection modal...');
+            console.log('📊 Current state:', {
+                connected: this.connected,
+                address: this.address,
+                hasUI: !!this.tonConnectUI
+            });
 
             // Open wallet connection modal
             await this.tonConnectUI.openModal();
 
-            console.log('TON Wallet: Modal opened');
+            console.log('✅ TON Wallet: Modal opened successfully');
+            console.log('⏳ Waiting for user to connect wallet...');
             // Connection result will be handled by onStatusChange callback
 
         } catch (error) {
-            console.error('TON Wallet: Connection error:', error);
+            console.error('❌ TON Wallet: Connection error:', error);
+            console.error('Error details:', {
+                message: error.message,
+                stack: error.stack
+            });
 
             // Show error to user only if it's not a user cancellation
             if (!error.message || !error.message.includes('cancel')) {
+                console.log('⚠️ Showing error alert to user');
                 const tg = window.Telegram?.WebApp;
                 tg?.showAlert('Ошибка подключения кошелька: ' + (error.message || 'Unknown error'));
+            } else {
+                console.log('ℹ️ User cancelled connection');
             }
         }
     }
@@ -161,8 +212,7 @@ class TONWallet {
             await this.tonConnectUI.disconnect();
             console.log('TON Wallet: Disconnected');
 
-            const tg = window.Telegram?.WebApp;
-            tg?.showAlert('Кошелек отключен');
+            // Don't show alert - UI will update automatically via onStatusChange
         } catch (error) {
             console.error('TON Wallet: Disconnect error:', error);
         }
@@ -199,9 +249,8 @@ class TONWallet {
             const data = await response.json();
             console.log('TON Wallet: Address saved to backend', data);
 
-            // Show success message
-            const tg = window.Telegram?.WebApp;
-            tg?.showAlert('✅ Кошелек успешно подключен!');
+            // Don't show alert here - it can block the UI during connection
+            // Success notification will be shown in the UI callback instead
 
             return data;
         } catch (error) {
