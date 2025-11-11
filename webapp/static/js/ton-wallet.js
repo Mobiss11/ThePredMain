@@ -263,7 +263,43 @@ class TONWallet {
                 version: tg?.version
             });
 
-            // Set flag
+            // CRITICAL: Check for embedded wallet (runs inside Telegram)
+            if (isTelegramWebApp) {
+                console.log('🔍 Checking for embedded wallet...');
+
+                try {
+                    const walletsList = this.tonConnectUI.getWallets();
+                    console.log('📋 Available wallets:', walletsList);
+
+                    // Find embedded wallet (Telegram Wallet when app runs inside Telegram)
+                    const embeddedWallet = walletsList.find(wallet => wallet.embedded);
+
+                    if (embeddedWallet) {
+                        console.log('✅ Found embedded wallet:', embeddedWallet);
+                        console.log('🎯 Connecting directly via jsBridgeKey:', embeddedWallet.jsBridgeKey);
+
+                        // Connect directly without showing modal!
+                        await this.tonConnectUI.connector.connect({
+                            jsBridgeKey: embeddedWallet.jsBridgeKey
+                        });
+
+                        console.log('✅ Direct connection initiated - NO MODAL!');
+                        return; // Exit - no modal shown!
+                    } else {
+                        console.log('⚠️ No embedded wallet found');
+                        console.log('Wallet details:', walletsList.map(w => ({
+                            name: w.name,
+                            embedded: w.embedded,
+                            jsBridgeKey: w.jsBridgeKey
+                        })));
+                    }
+                } catch (embeddedError) {
+                    console.error('❌ Embedded wallet check failed:', embeddedError);
+                }
+            }
+
+            // FALLBACK: Show modal if embedded wallet not found or not in Telegram
+            console.log('📱 Opening modal (fallback)...');
             this.modalJustOpened = true;
 
             // Auto-reset flag after 30 seconds
@@ -277,7 +313,7 @@ class TONWallet {
             // Open modal
             await this.tonConnectUI.openModal();
 
-            console.log('✅ Modal opened successfully');
+            console.log('✅ Modal opened');
 
         } catch (error) {
             console.error('❌ Connection error:', error);
