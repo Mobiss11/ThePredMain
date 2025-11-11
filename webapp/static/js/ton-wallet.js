@@ -322,32 +322,62 @@ class TONWallet {
                 version: tg?.version
             });
 
-            // DIRECT CONNECTION to Telegram Wallet (skip modal entirely!)
+            // TRY DIRECT CONNECTION in Telegram WebApp
             if (isTelegramWebApp) {
-                console.log('🎯 DIRECT CONNECTION mode - skipping modal!');
+                console.log('🎯 Attempting DIRECT connection to Telegram Wallet...');
 
                 // Set flag
                 this.modalJustOpened = true;
 
                 try {
-                    // Connect directly to Telegram Wallet using its universal link
-                    // This bypasses the modal selection screen
-                    const walletConnectionSource = {
+                    // Method 1: Try using openSingleWalletModal
+                    if (this.tonConnectUI.openSingleWalletModal) {
+                        console.log('Method 1: openSingleWalletModal');
+                        await this.tonConnectUI.openSingleWalletModal('telegram-wallet');
+                        console.log('✅ Single wallet modal opened');
+                        return;
+                    }
+                } catch (e1) {
+                    console.log('⚠️ Method 1 failed:', e1.message);
+                }
+
+                try {
+                    // Method 2: Get wallets list and connect to specific one
+                    console.log('Method 2: getWallets + connect');
+                    const wallets = this.tonConnectUI.getWallets();
+                    console.log('Available wallets:', wallets);
+
+                    const telegramWallet = wallets.find(w =>
+                        w.appName === 'telegram-wallet' ||
+                        w.name?.toLowerCase().includes('telegram')
+                    );
+
+                    if (telegramWallet) {
+                        console.log('Found Telegram Wallet:', telegramWallet);
+                        await this.tonConnectUI.connectWallet(telegramWallet);
+                        console.log('✅ Connect initiated');
+                        return;
+                    } else {
+                        console.log('⚠️ Telegram Wallet not found in list');
+                    }
+                } catch (e2) {
+                    console.log('⚠️ Method 2 failed:', e2.message);
+                }
+
+                try {
+                    // Method 3: Direct connector.connect
+                    console.log('Method 3: connector.connect');
+                    await this.tonConnectUI.connector.connect({
                         universalLink: 'https://t.me/wallet?attach=wallet',
                         bridgeUrl: 'https://bridge.ton.space/bridge'
-                    };
-
-                    console.log('🔗 Connecting directly to Telegram Wallet...');
-
-                    // Use connector directly instead of UI modal
-                    await this.tonConnectUI.connector.connect(walletConnectionSource);
-
-                    console.log('✅ Direct connection initiated!');
+                    });
+                    console.log('✅ Connector.connect initiated');
                     return;
-                } catch (directError) {
-                    console.log('⚠️ Direct connection failed:', directError);
-                    console.log('Falling back to modal...');
+                } catch (e3) {
+                    console.log('⚠️ Method 3 failed:', e3.message);
                 }
+
+                console.log('⚠️ All direct methods failed, falling back to modal');
             }
 
             // FALLBACK: Use modal for non-Telegram or if direct failed
