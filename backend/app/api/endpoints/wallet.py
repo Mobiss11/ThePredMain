@@ -83,10 +83,10 @@ class VerifyDepositResponse(BaseModel):
 
 # ============ Endpoints ============
 
-@router.post("/connect")
+@router.post("/connect/{user_id}")
 async def connect_wallet(
-    data: ConnectWalletRequest,
     user_id: int,
+    data: ConnectWalletRequest,
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -361,7 +361,7 @@ async def get_deposit_status(
     }
 
 
-@router.get("/balance", response_model=WalletBalanceResponse)
+@router.get("/balance/{user_id}", response_model=WalletBalanceResponse)
 async def get_wallet_balance(
     user_id: int,
     db: AsyncSession = Depends(get_db)

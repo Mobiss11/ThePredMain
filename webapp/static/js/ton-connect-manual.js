@@ -439,12 +439,22 @@ class TONConnectManual {
      * Save address to backend
      */
     async saveAddress() {
-        if (!this.address) return;
+        if (!this.address) {
+            console.warn('⚠️ No address to save');
+            return;
+        }
 
-        console.log('💾 Saving address to backend:', this.address);
+        // Get user_id from global userProfile
+        const userId = window.userProfile?.id;
+        if (!userId) {
+            console.error('❌ No user_id found in window.userProfile');
+            return;
+        }
+
+        console.log('💾 Saving address to backend:', this.address, 'for user:', userId);
 
         try {
-            const response = await fetch('/api/wallet/connect', {
+            const response = await fetch(`/api/wallet/connect/${userId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -459,7 +469,7 @@ class TONConnectManual {
                 console.log('✅ Address saved to database:', result);
             } else {
                 const error = await response.json();
-                console.error('❌ Failed to save address:', error);
+                console.error('❌ Failed to save address:', response.status, error);
             }
         } catch (error) {
             console.error('❌ Save error:', error);
