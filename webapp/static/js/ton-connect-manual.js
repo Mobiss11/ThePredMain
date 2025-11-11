@@ -42,23 +42,9 @@ class TONConnectManual {
         console.log('🔧 Creating TonConnect instance...');
         console.log('TonConnectSDK object:', window.TonConnectSDK);
 
-        // Setup openLink callback for Telegram Mini App
-        const tg = window.Telegram?.WebApp;
-        const openLinkCallback = (url) => {
-            console.log('🔗 OpenLink callback:', url);
-            if (tg && tg.openLink) {
-                console.log('📱 Opening via Telegram.WebApp.openLink');
-                tg.openLink(url);
-            } else {
-                console.log('🌐 Opening via window.open');
-                window.open(url, '_blank');
-            }
-        };
-
         // The actual class is TonConnectSDK.TonConnect
         this.connector = new window.TonConnectSDK.TonConnect({
-            manifestUrl: this.manifestUrl,
-            openLink: openLinkCallback
+            manifestUrl: this.manifestUrl
         });
 
         // Listen to status changes
@@ -232,15 +218,26 @@ class TONConnectManual {
             // Close modal immediately
             this.closeModal();
 
-            // Connect to wallet
-            // openLink callback is already set during initialization
+            // Connect to wallet - SDK returns connection URL as string
             console.log('🔗 Initiating connection...');
-            const result = await this.connector.connect({
+            const connectionUrl = await this.connector.connect({
                 universalLink: wallet.universalLink,
                 bridgeUrl: wallet.bridgeUrl
             });
 
-            console.log('✅ Connection result:', result);
+            console.log('✅ Connection URL:', connectionUrl);
+
+            // Open the connection URL
+            const tg = window.Telegram?.WebApp;
+            if (tg && tg.openLink) {
+                console.log('📱 Opening via Telegram.WebApp.openLink');
+                tg.openLink(connectionUrl);
+            } else {
+                console.log('🌐 Opening via window.open');
+                window.open(connectionUrl, '_blank');
+            }
+
+            console.log('✅ Wallet opened');
 
         } catch (error) {
             console.error('❌ Connection error:', error);
