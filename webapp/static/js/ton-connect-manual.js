@@ -223,10 +223,11 @@ class TONConnectManual {
 
             // Add return URL for auto-return to Telegram after connection
             if (isTelegramWebApp && walletId !== 'telegram-wallet') {
-                // Use back parameter for Tonkeeper/MyTonWallet
-                const returnUrl = 'back'; // Special value to return to previous app
+                // Use proper twaReturnUrl format for Telegram Mini Apps
+                // Format: tg://resolve?domain=BOT_USERNAME&appname=APP_SHORT_NAME
+                const returnUrl = 'tg://resolve?domain=The_Pred_Bot&appname=app';
                 const separator = connectionUrl.includes('?') ? '&' : '?';
-                connectionUrl = `${connectionUrl}${separator}ret=${returnUrl}`;
+                connectionUrl = `${connectionUrl}${separator}ret=${encodeURIComponent(returnUrl)}`;
                 console.log('✅ Connection URL (with return URL):', connectionUrl);
             }
 
