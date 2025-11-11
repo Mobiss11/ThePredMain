@@ -388,42 +388,55 @@ class TONWallet {
                 version: tg?.version
             });
 
-            // Listen for Telegram Wallet connection via postMessage
+            // HACK: Use MutationObserver to detect when wallet modal shows "Back to ThePred" button
             console.log('📱 Opening TON Connect modal...');
             this.modalJustOpened = true;
 
-            // CRITICAL: Listen to postMessage for wallet connection
-            const messageHandler = async (event) => {
-                // Check if message is from TON Connect
-                if (event.data && typeof event.data === 'object') {
-                    console.log('📨 Received postMessage:', event.data);
+            let connectionDetected = false;
 
-                    // Check for connection success
-                    if (event.data.type === 'ton-connect-ui-connection-completed' ||
-                        event.data.event === 'connect' ||
-                        event.data.name === 'connect' ||
-                        (event.data.method === 'connect' && event.data.result)) {
+            // CRITICAL: Watch for DOM changes that indicate connection success
+            const observer = new MutationObserver((mutations) => {
+                if (connectionDetected) return;
 
-                        console.log('🎉 WALLET CONNECTION EVENT DETECTED!');
-                        window.removeEventListener('message', messageHandler);
+                // Look for tc-root element (TON Connect modal)
+                const tcRoot = document.querySelector('tc-root');
+                if (!tcRoot || !tcRoot.shadowRoot) return;
 
-                        // Wait a bit for SDK to update
-                        await new Promise(resolve => setTimeout(resolve, 500));
+                // Check if modal content contains "Back to" or success indicators
+                const shadowContent = tcRoot.shadowRoot.textContent || '';
 
-                        // Try to get wallet info
+                // Debug log
+                if (shadowContent.includes('Continue') || shadowContent.includes('Back')) {
+                    console.log('🔍 Modal text detected:', shadowContent.substring(0, 200));
+                }
+
+                // Detect success: modal showing "Continue in Wallet" or similar
+                if (shadowContent.includes('Continue in Wallet') ||
+                    shadowContent.includes('Open Wallet') ||
+                    shadowContent.includes('Back to')) {
+
+                    console.log('⏱️ Waiting for connection to complete...');
+
+                    // Wait 2 seconds after "Continue in Wallet" appears
+                    setTimeout(async () => {
+                        // Check if wallet is now connected
                         const currentWallet = this.tonConnectUI.wallet;
-                        if (currentWallet && currentWallet.account) {
-                            console.log('✅ Wallet info retrieved:', currentWallet.account.address);
+                        console.log('🔍 Checking wallet after delay:', currentWallet);
+
+                        if (currentWallet && currentWallet.account && !connectionDetected) {
+                            connectionDetected = true;
+                            observer.disconnect();
+
+                            console.log('🎉 WALLET CONNECTED VIA DOM OBSERVER!', currentWallet.account.address);
 
                             this.connected = true;
                             this.address = currentWallet.account.address;
 
-                            // NUKE MODAL
+                            // NUKE MODAL AGGRESSIVELY
                             console.log('💥 NUKING MODAL');
-                            this.nukeAllModals();
-                            setTimeout(() => this.nukeAllModals(), 100);
-                            setTimeout(() => this.nukeAllModals(), 300);
-                            setTimeout(() => this.nukeAllModals(), 600);
+                            for (let i = 0; i < 10; i++) {
+                                setTimeout(() => this.nukeAllModals(), i * 200);
+                            }
 
                             // Callbacks
                             this.onConnectionChange(true, this.address);
@@ -432,31 +445,39 @@ class TONWallet {
                             // Show success
                             const tg = window.Telegram?.WebApp;
                             if (tg && tg.showPopup) {
-                                tg.showPopup({
-                                    title: '✅ Успешно!',
-                                    message: 'Кошелек подключен',
-                                    buttons: [{type: 'ok'}]
-                                });
+                                setTimeout(() => {
+                                    tg.showPopup({
+                                        title: '✅ Успешно!',
+                                        message: 'Кошелек подключен',
+                                        buttons: [{type: 'ok'}]
+                                    });
+                                }, 500);
                             }
                         } else {
-                            console.error('❌ Wallet info not available after connection event');
+                            console.log('⚠️ Wallet still not connected after "Continue" appeared');
                         }
-                    }
+                    }, 2000); // Wait 2 seconds
                 }
-            };
+            });
 
-            window.addEventListener('message', messageHandler);
+            // Start observing
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+                characterData: true
+            });
 
             // Cleanup after 30 seconds
             setTimeout(() => {
-                window.removeEventListener('message', messageHandler);
+                observer.disconnect();
                 this.modalJustOpened = false;
+                console.log('⏰ Observer stopped after 30s');
             }, 30000);
 
             // Open modal
             await this.tonConnectUI.openModal();
 
-            console.log('✅ Modal opened, listening for connection events');
+            console.log('✅ Modal opened, observing DOM for connection');
 
         } catch (error) {
             console.error('❌ Connection error:', error);
