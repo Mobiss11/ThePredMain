@@ -222,7 +222,7 @@ class TONConnectManual {
             console.log('✅ Connection URL (before return URL):', connectionUrl);
 
             // Add return URL for auto-return to Telegram after connection
-            if (isTelegramWebApp && walletId !== 'telegram-wallet') {
+            if (isTelegramWebApp) {
                 // Use proper twaReturnUrl format for Telegram Mini Apps
                 // Format: tg://resolve?domain=BOT_USERNAME&appname=APP_SHORT_NAME
                 const returnUrl = 'tg://resolve?domain=The_Pred_Bot&appname=app';
