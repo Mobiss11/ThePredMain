@@ -76,9 +76,15 @@ class TONWallet {
                             platforms: ['chrome', 'ios', 'android', 'firefox', 'safari']
                         }
                     ]
+                },
+                actionsConfiguration: {
+                    // Use format: https://t.me/BOT_NAME/APP_NAME
+                    twaReturnUrl: 'https://t.me/The_Pred_Bot/app',
+                    // CRITICAL: Force return after connection
+                    returnStrategy: 'back',
+                    // Modals configuration
+                    modals: 'all'
                 }
-                // NO actionsConfiguration for Telegram Mini Apps
-                // Telegram Wallet knows how to return to WebApp automatically
             });
 
             // Subscribe to connection status
@@ -108,23 +114,45 @@ class TONWallet {
                     // Show visual feedback
                     this.showConnectionStatus('Wallet connected!', 'success');
 
-                    // Close modal after connection (let return URL work first)
-                    console.log('🔄 Wallet connected - closing modal...');
+                    // CRITICAL: Telegram Wallet CANNOT auto-return to TMA
+                    // Must force close modal IMMEDIATELY
+                    console.log('🔄 Wallet connected - FORCE closing modal NOW...');
+
+                    // Close via API immediately
+                    try {
+                        this.tonConnectUI.closeModal();
+                        console.log('✅ Modal closed via API');
+                    } catch (e) {
+                        console.log('⚠️ API close failed:', e);
+                    }
+
+                    // Force close via DOM after 100ms
                     setTimeout(() => {
                         try {
-                            this.tonConnectUI.closeModal();
-                            console.log('✅ Modal closed');
-                        } catch (e) {
-                            console.log('⚠️ Could not close modal:', e);
-                        }
-                    }, 1000);
+                            // Find and remove TON Connect modal
+                            const modal = document.querySelector('tc-root');
+                            if (modal) {
+                                modal.remove();
+                                console.log('✅ Modal removed from DOM');
+                            }
 
-                    // Show success alert with wallet address
+                            // Remove any backdrop/overlay
+                            const backdrop = document.querySelector('[class*="tc-modal"], [class*="tc-overlay"]');
+                            if (backdrop) {
+                                backdrop.remove();
+                                console.log('✅ Backdrop removed');
+                            }
+                        } catch (e) {
+                            console.log('⚠️ DOM cleanup failed:', e);
+                        }
+                    }, 100);
+
+                    // Show success alert
                     const tg = window.Telegram?.WebApp;
                     if (tg && tg.showAlert && isTelegramWallet) {
                         setTimeout(() => {
-                            tg.showAlert('✅ Telegram Wallet подключен!\n\nАдрес: ' + this.address.substring(0, 8) + '...' + this.address.substring(this.address.length - 6));
-                        }, 1500);
+                            tg.showAlert('✅ Кошелек подключен!\n\nАдрес: ' + this.address.substring(0, 8) + '...' + this.address.substring(this.address.length - 6));
+                        }, 500);
                     }
 
                     // Trigger callback first
@@ -205,7 +233,7 @@ class TONWallet {
                 hasUI: !!this.tonConnectUI
             });
 
-            this.showConnectionStatus('Opening wallet selection...', 'info');
+            // NO status message - user requested removal
 
             // Open wallet connection modal
             await this.tonConnectUI.openModal();
