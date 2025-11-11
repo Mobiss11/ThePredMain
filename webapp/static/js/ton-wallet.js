@@ -388,96 +388,90 @@ class TONWallet {
                 version: tg?.version
             });
 
-            // HACK: Use MutationObserver to detect when wallet modal shows "Back to ThePred" button
+            // FINAL HACK: Intercept Telegram MainButton click to close modal
             console.log('📱 Opening TON Connect modal...');
             this.modalJustOpened = true;
 
-            let connectionDetected = false;
+            const tg = window.Telegram?.WebApp;
+            let mainButtonHandler = null;
 
-            // CRITICAL: Watch for DOM changes that indicate connection success
-            const observer = new MutationObserver((mutations) => {
-                if (connectionDetected) return;
+            if (tg && tg.MainButton) {
+                // Create handler for MainButton click
+                mainButtonHandler = async () => {
+                    console.log('🔘 MainButton clicked!');
 
-                // Look for tc-root element (TON Connect modal)
-                const tcRoot = document.querySelector('tc-root');
-                if (!tcRoot || !tcRoot.shadowRoot) return;
+                    // Check if button text contains "Back" or "Назад"
+                    const buttonText = tg.MainButton.text || '';
+                    console.log('🔍 Button text:', buttonText);
 
-                // Check if modal content contains "Back to" or success indicators
-                const shadowContent = tcRoot.shadowRoot.textContent || '';
+                    if (buttonText.includes('Back') || buttonText.includes('Назад')) {
+                        console.log('🎯 "Back" button detected - checking wallet...');
 
-                // Debug log
-                if (shadowContent.includes('Continue') || shadowContent.includes('Back')) {
-                    console.log('🔍 Modal text detected:', shadowContent.substring(0, 200));
-                }
+                        // Small delay to let SDK update
+                        await new Promise(resolve => setTimeout(resolve, 300));
 
-                // Detect success: modal showing "Continue in Wallet" or similar
-                if (shadowContent.includes('Continue in Wallet') ||
-                    shadowContent.includes('Open Wallet') ||
-                    shadowContent.includes('Back to')) {
-
-                    console.log('⏱️ Waiting for connection to complete...');
-
-                    // Wait 2 seconds after "Continue in Wallet" appears
-                    setTimeout(async () => {
-                        // Check if wallet is now connected
+                        // Check if wallet connected
                         const currentWallet = this.tonConnectUI.wallet;
-                        console.log('🔍 Checking wallet after delay:', currentWallet);
+                        console.log('🔍 Wallet check:', currentWallet);
 
-                        if (currentWallet && currentWallet.account && !connectionDetected) {
-                            connectionDetected = true;
-                            observer.disconnect();
+                        if (currentWallet && currentWallet.account) {
+                            console.log('🎉 WALLET CONNECTED! Address:', currentWallet.account.address);
 
-                            console.log('🎉 WALLET CONNECTED VIA DOM OBSERVER!', currentWallet.account.address);
+                            // Remove handler
+                            if (mainButtonHandler) {
+                                tg.MainButton.offClick(mainButtonHandler);
+                            }
 
                             this.connected = true;
                             this.address = currentWallet.account.address;
 
-                            // NUKE MODAL AGGRESSIVELY
-                            console.log('💥 NUKING MODAL');
-                            for (let i = 0; i < 10; i++) {
-                                setTimeout(() => this.nukeAllModals(), i * 200);
+                            // AGGRESSIVELY NUKE MODAL
+                            console.log('💥 NUKING MODAL NOW');
+                            for (let i = 0; i < 15; i++) {
+                                setTimeout(() => {
+                                    this.nukeAllModals();
+                                    console.log(`💥 Nuke attempt ${i + 1}/15`);
+                                }, i * 150);
                             }
 
                             // Callbacks
                             this.onConnectionChange(true, this.address);
                             await this.saveAddress().catch(err => console.error('Save failed:', err));
 
-                            // Show success
-                            const tg = window.Telegram?.WebApp;
-                            if (tg && tg.showPopup) {
-                                setTimeout(() => {
+                            // Show success popup
+                            setTimeout(() => {
+                                if (tg.showPopup) {
                                     tg.showPopup({
                                         title: '✅ Успешно!',
                                         message: 'Кошелек подключен',
                                         buttons: [{type: 'ok'}]
                                     });
-                                }, 500);
-                            }
+                                }
+                            }, 500);
                         } else {
-                            console.log('⚠️ Wallet still not connected after "Continue" appeared');
+                            console.log('⚠️ Wallet not connected yet');
                         }
-                    }, 2000); // Wait 2 seconds
-                }
-            });
+                    }
+                };
 
-            // Start observing
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true,
-                characterData: true
-            });
+                // Subscribe to MainButton clicks
+                tg.MainButton.onClick(mainButtonHandler);
+                console.log('✅ Subscribed to MainButton clicks');
+            }
 
             // Cleanup after 30 seconds
             setTimeout(() => {
-                observer.disconnect();
+                if (tg && tg.MainButton && mainButtonHandler) {
+                    tg.MainButton.offClick(mainButtonHandler);
+                    console.log('⏰ MainButton handler removed after 30s');
+                }
                 this.modalJustOpened = false;
-                console.log('⏰ Observer stopped after 30s');
             }, 30000);
 
             // Open modal
             await this.tonConnectUI.openModal();
 
-            console.log('✅ Modal opened, observing DOM for connection');
+            console.log('✅ Modal opened, listening for MainButton');
 
         } catch (error) {
             console.error('❌ Connection error:', error);
