@@ -1863,6 +1863,37 @@ window.sendTON = async function() {
         return;
     }
 
+    // Wait for tonConnectManual to initialize
+    await window.tonConnectManual.initPromise;
+
+    // Check if wallet was loaded from database (not connected via SDK)
+    if (window.tonConnectManual.isLoadedFromDatabase) {
+        // Offer to reconnect automatically
+        const reconnect = confirm('⚠️ Для отправки TON необходимо переподключить кошелек через TON Connect.\n\nПереподключить сейчас?');
+        if (!reconnect) {
+            return;
+        }
+
+        // Close top-up modal
+        closeTopUpModal();
+
+        // Trigger wallet connection
+        await connectWallet();
+
+        // Show message to try again
+        setTimeout(() => {
+            alert('✅ Кошелек переподключен!\n\nТеперь вы можете отправить TON.');
+        }, 1000);
+
+        return;
+    }
+
+    // Check if SDK connector is actually connected
+    if (!window.tonConnectManual.connector || !window.tonConnectManual.connector.connected) {
+        alert('⚠️ Кошелек не подключен через TON Connect SDK.\n\nПожалуйста, переподключите кошелек для отправки транзакций.');
+        return;
+    }
+
     const sendBtn = document.getElementById('send-ton-btn');
     const processingDiv = document.getElementById('topup-processing');
     const statusText = document.getElementById('topup-status-text');
@@ -1880,9 +1911,6 @@ window.sendTON = async function() {
             amount: amount,
             nanoAmount: nanoAmount
         });
-
-        // Wait for tonConnectManual to initialize
-        await window.tonConnectManual.initPromise;
 
         // Send transaction via TON Connect
         const transaction = {
