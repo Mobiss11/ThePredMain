@@ -550,6 +550,9 @@ async function loadProfile() {
         if (response.ok) {
             const profile = await response.json();
 
+            // Store profile globally for wallet and other functions
+            window.userProfile = profile;
+
             // Update username
             document.getElementById('username').innerText = profile.username || profile.first_name || `Игрок #${profile.telegram_id}`;
 
@@ -1648,13 +1651,16 @@ function formatNumber(num) {
 window.formatNumber = formatNumber;
 
 // Load data on page load
-document.addEventListener('DOMContentLoaded', () => {
-    loadProfile();
+document.addEventListener('DOMContentLoaded', async () => {
+    // Load profile first (sets window.userProfile)
+    await loadProfile();
+
+    // Now check wallet connection (needs window.userProfile)
+    await checkWalletConnection();
+
+    // Load other data in parallel
     loadUserMarkets();
     loadAchievements();
-
-    // Check wallet connection
-    checkWalletConnection();
 
     // Load my events after profile is loaded
     setTimeout(() => {
