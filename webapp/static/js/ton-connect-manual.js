@@ -444,10 +444,19 @@ class TONConnectManual {
             return;
         }
 
+        // Wait for userProfile to load (max 5 seconds)
+        console.log('⏳ Waiting for window.userProfile...');
+        let attempts = 0;
+        while (!window.userProfile && attempts < 50) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+
         // Get user_id from global userProfile
         const userId = window.userProfile?.id;
         if (!userId) {
-            console.error('❌ No user_id found in window.userProfile');
+            console.error('❌ No user_id found in window.userProfile after waiting');
+            console.error('window.userProfile:', window.userProfile);
             return;
         }
 
