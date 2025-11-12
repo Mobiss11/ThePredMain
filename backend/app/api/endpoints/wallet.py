@@ -361,6 +361,68 @@ async def get_deposit_status(
     }
 
 
+@router.post("/convert/{user_id}")
+async def convert_ton_to_pred(
+    user_id: int,
+    data: CreateDepositRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Конвертировать внутренний TON баланс в PRED
+    """
+    # Получить пользователя
+    user_result = await db.execute(select(User).where(User.id == user_id))
+    user = user_result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    amount_ton = data.amount_ton
+
+    # Проверить что у пользователя достаточно TON
+    if user.ton_balance < amount_ton:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Insufficient TON balance. Available: {user.ton_balance} TON"
+        )
+
+    # Рассчитать PRED
+    pred_amount = int(amount_ton * Decimal(settings.TON_TO_PRED_RATE))
+
+    # Конвертировать
+    user.ton_balance -= amount_ton
+    user.pred_balance += pred_amount
+
+    # Создать транзакцию для истории
+    transaction = Transaction(
+        user_id=user_id,
+        type=TransactionType.DEPOSIT,
+        currency="TON",
+        amount=amount_ton,
+        converted_amount=Decimal(pred_amount),
+        status=TransactionStatus.COMPLETED,
+        completed_at=datetime.now(),
+        description=f"Converted {amount_ton} TON → {pred_amount} PRED"
+    )
+
+    db.add(transaction)
+    await db.commit()
+    await db.refresh(user)
+
+    logger.info(f"Converted {amount_ton} TON → {pred_amount} PRED for user {user_id}")
+
+    return {
+        "success": True,
+        "ton_converted": float(amount_ton),
+        "pred_credited": pred_amount,
+        "new_ton_balance": float(user.ton_balance),
+        "new_pred_balance": float(user.pred_balance)
+    }
+
+
 @router.post("/disconnect/{user_id}")
 async def disconnect_wallet(
     user_id: int,

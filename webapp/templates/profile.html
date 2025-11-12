@@ -58,7 +58,7 @@
 
                 <div class="flex space-x-2">
                     <button onclick="openTopUpModal()" class="flex-1 gold-gradient px-3 py-2 rounded-lg text-xs font-bold text-black hover:opacity-90 transition">
-                        💰 Пополнить TON
+                        💰 Пополнить
                     </button>
                     <button onclick="disconnectWallet()" class="flex-1 bg-red-500 bg-opacity-20 hover:bg-opacity-30 px-3 py-2 rounded-lg text-xs font-bold text-red-400 transition border border-red-500 border-opacity-30">
                         🔌 Отключить
@@ -286,203 +286,182 @@
     </div>
 </div>
 
-<!-- Deposit Modal -->
-<div id="deposit-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4" style="display: none;">
-    <div class="glass rounded-2xl max-w-md w-full">
-        <div class="p-6">
+<!-- Convert TON to PRED Modal -->
+<div id="deposit-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4" style="display: none;" onclick="closeDepositModalIfOutside(event)">
+    <div class="glass rounded-2xl max-w-sm w-full" onclick="event.stopPropagation()">
+        <div class="p-5">
             <!-- Header -->
-            <div class="flex items-center justify-between mb-6">
-                <h2 class="text-2xl font-bold">💎 Пополнить баланс</h2>
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold">💰 Конвертировать в PRED</h2>
                 <button onclick="closeDepositModal()" class="text-gray-400 hover:text-white text-2xl">×</button>
             </div>
 
-            <!-- Wallet Connection Check -->
-            <div id="deposit-connect-wallet" class="mb-6">
-                <div class="glass rounded-xl p-5 text-center">
-                    <div class="text-4xl mb-3">👛</div>
-                    <div class="font-semibold mb-2">Подключите TON кошелек</div>
-                    <div class="text-sm text-gray-400 mb-4">Для пополнения баланса необходимо подключить ваш TON кошелек</div>
-                    <button onclick="connectWalletFromModal()" class="gold-gradient px-6 py-3 rounded-xl font-bold text-black hover:opacity-90 transition w-full">
-                        🔗 Подключить кошелек
-                    </button>
+            <!-- Conversion Info -->
+            <div class="glass rounded-xl p-4 mb-4">
+                <div class="text-center">
+                    <div class="flex items-center justify-center space-x-2 mb-2">
+                        <span class="text-2xl">💎</span>
+                        <span class="text-xl">→</span>
+                        <span class="text-2xl">🪙</span>
+                    </div>
+                    <div class="font-semibold mb-1 text-sm">Курс: 1 TON = 1,000 PRED</div>
+                    <div class="text-xs text-gray-400">Конвертируйте ваш TON баланс в PRED</div>
                 </div>
             </div>
 
-            <!-- Deposit Form (shown when wallet connected) -->
-            <div id="deposit-form" style="display: none;">
-                <!-- Conversion Info -->
-                <div class="glass rounded-xl p-4 mb-6">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-sm text-gray-400">Курс обмена</span>
-                        <span class="font-bold text-yellow-400">1 TON = 1,000 PRED</span>
-                    </div>
-                    <div class="flex items-center justify-between text-xs text-gray-500">
-                        <span>Минимум: 0.1 TON</span>
-                        <span>Максимум: 1,000 TON</span>
-                    </div>
+            <!-- Current Balance Display -->
+            <div class="glass rounded-xl p-3 mb-4">
+                <div class="text-xs text-gray-400 mb-2">Доступно для конвертации:</div>
+                <div class="text-center">
+                    <span class="text-xl font-bold text-blue-400" id="available-ton-balance">0</span>
+                    <span class="text-sm text-gray-400">TON</span>
                 </div>
+            </div>
 
-                <!-- Amount Input -->
-                <div class="mb-6">
-                    <label class="block text-sm font-semibold mb-2">Сумма пополнения</label>
-                    <div class="glass rounded-xl p-4">
-                        <div class="flex items-center space-x-3 mb-3">
-                            <div class="text-2xl">💎</div>
-                            <input
-                                type="number"
-                                id="deposit-amount-input"
-                                placeholder="0.0"
-                                step="0.1"
-                                min="0.1"
-                                max="1000"
-                                class="flex-1 bg-transparent text-2xl font-bold focus:outline-none"
-                                oninput="calculateExpectedPRED()"
-                            >
-                            <span class="text-blue-400 font-bold">TON</span>
-                        </div>
+            <!-- Amount Input -->
+            <div class="mb-4">
+                <label class="block text-xs font-semibold mb-2">Сумма конвертации (TON)</label>
+                <div class="glass rounded-xl p-3">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <div class="text-xl">💎</div>
+                        <input
+                            type="number"
+                            id="deposit-amount-input"
+                            placeholder="0.0"
+                            step="0.1"
+                            min="0.1"
+                            class="flex-1 bg-transparent text-xl font-bold focus:outline-none"
+                            oninput="calculateExpectedPRED()"
+                        >
+                        <span class="text-blue-400 font-bold text-sm">TON</span>
+                    </div>
 
-                        <!-- Quick Amount Buttons -->
-                        <div class="flex space-x-2 mb-3">
-                            <button onclick="setDepositAmount(0.1)" class="flex-1 glass rounded-lg px-3 py-2 text-xs font-semibold hover:bg-opacity-30 transition">
-                                0.1 TON
-                            </button>
-                            <button onclick="setDepositAmount(1)" class="flex-1 glass rounded-lg px-3 py-2 text-xs font-semibold hover:bg-opacity-30 transition">
-                                1 TON
-                            </button>
-                            <button onclick="setDepositAmount(5)" class="flex-1 glass rounded-lg px-3 py-2 text-xs font-semibold hover:bg-opacity-30 transition">
-                                5 TON
-                            </button>
-                        </div>
+                    <!-- Quick Amount Buttons -->
+                    <div class="flex space-x-2 mb-2">
+                        <button onclick="setDepositAmount(1)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
+                            1
+                        </button>
+                        <button onclick="setDepositAmount(5)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
+                            5
+                        </button>
+                        <button onclick="setDepositAmount(10)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
+                            10
+                        </button>
+                        <button onclick="setDepositAmountMax()" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
+                            Всё
+                        </button>
+                    </div>
 
-                        <!-- Expected PRED -->
-                        <div class="pt-3 border-t border-gray-700">
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-gray-400">Вы получите</span>
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-xl font-bold text-yellow-400" id="expected-pred">0</span>
-                                    <span class="text-sm text-gray-400">PRED</span>
-                                </div>
+                    <!-- Expected PRED -->
+                    <div class="pt-2 border-t border-gray-700">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-gray-400">Вы получите</span>
+                            <div class="flex items-center space-x-1">
+                                <span class="text-lg font-bold text-yellow-400" id="expected-pred">0</span>
+                                <span class="text-xs text-gray-400">PRED</span>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Error Message -->
-                <div id="deposit-error" class="mb-4 p-3 rounded-lg bg-red-500 bg-opacity-20 border border-red-500 text-red-400 text-sm" style="display: none;">
-                    <div id="deposit-error-text"></div>
-                </div>
+            <!-- Error Message -->
+            <div id="deposit-error" class="mb-3 p-2 rounded-lg bg-red-500 bg-opacity-20 border border-red-500 text-red-400 text-xs" style="display: none;">
+                <div id="deposit-error-text"></div>
+            </div>
 
-                <!-- Submit Button -->
-                <div class="flex space-x-3">
-                    <button onclick="closeDepositModal()" class="flex-1 glass rounded-xl px-6 py-3 font-bold hover:bg-opacity-30 transition">
-                        Отмена
-                    </button>
-                    <button onclick="submitDeposit()" id="deposit-submit-btn" class="flex-1 gold-gradient rounded-xl px-6 py-3 font-bold text-black hover:opacity-90 transition">
-                        💳 Пополнить
-                    </button>
-                </div>
+            <!-- Submit Button -->
+            <button onclick="submitConvert()" id="deposit-submit-btn" class="w-full gold-gradient rounded-xl px-4 py-2.5 text-sm font-bold text-black hover:opacity-90 transition mb-2">
+                💱 Конвертировать
+            </button>
 
-                <!-- Processing State -->
-                <div id="deposit-processing" class="mt-4 glass rounded-xl p-4 text-center" style="display: none;">
-                    <div class="animate-spin text-4xl mb-3">⏳</div>
-                    <div class="font-semibold mb-2">Обработка транзакции...</div>
-                    <div class="text-sm text-gray-400" id="deposit-status-text">Ожидание подтверждения</div>
-                </div>
+            <!-- Processing State -->
+            <div id="deposit-processing" class="mt-3 glass rounded-xl p-3 text-center" style="display: none;">
+                <div class="animate-spin text-3xl mb-2">⏳</div>
+                <div class="font-semibold mb-1 text-sm">Конвертация...</div>
+                <div class="text-xs text-gray-400" id="deposit-status-text">Обработка</div>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Top Up TON Modal -->
-<div id="topup-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4" style="display: none;">
-    <div class="glass rounded-2xl max-w-md w-full">
-        <div class="p-6">
+<div id="topup-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4" style="display: none;" onclick="closeTopUpModalIfOutside(event)">
+    <div class="glass rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto" onclick="event.stopPropagation()">
+        <div class="p-5">
             <!-- Header -->
-            <div class="flex items-center justify-between mb-6">
-                <h2 class="text-2xl font-bold">💰 Пополнить TON</h2>
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold">💰 Пополнить TON</h2>
                 <button onclick="closeTopUpModal()" class="text-gray-400 hover:text-white text-2xl">×</button>
             </div>
 
             <!-- Instructions -->
-            <div class="glass rounded-xl p-5 mb-6">
-                <div class="text-center mb-4">
-                    <div class="text-4xl mb-3">💎</div>
-                    <div class="font-semibold mb-2">Отправьте TON на адрес платформы</div>
-                    <div class="text-sm text-gray-400">После подтверждения транзакции баланс будет автоматически зачислен</div>
+            <div class="glass rounded-xl p-4 mb-4">
+                <div class="text-center">
+                    <div class="text-3xl mb-2">💎</div>
+                    <div class="font-semibold mb-1 text-sm">Отправьте TON на адрес платформы</div>
+                    <div class="text-xs text-gray-400">Баланс будет зачислен автоматически</div>
                 </div>
             </div>
 
             <!-- Platform Address -->
-            <div class="glass rounded-xl p-4 mb-6">
-                <div class="text-sm text-gray-400 mb-2">Адрес для пополнения:</div>
-                <div class="bg-gray-800 rounded-lg p-3 mb-3 break-all text-sm font-mono" id="platform-address-display">
+            <div class="glass rounded-xl p-3 mb-4">
+                <div class="text-xs text-gray-400 mb-2">Адрес для пополнения:</div>
+                <div class="bg-gray-800 rounded-lg p-2 mb-2 break-all text-xs font-mono" id="platform-address-display">
                     Загрузка...
                 </div>
-                <button onclick="copyPlatformAddress()" class="w-full glass rounded-lg px-4 py-2 text-sm font-semibold hover:bg-opacity-30 transition">
+                <button onclick="copyPlatformAddress()" class="w-full glass rounded-lg px-3 py-2 text-xs font-semibold hover:bg-opacity-30 transition">
                     📋 Копировать адрес
                 </button>
             </div>
 
             <!-- Amount Input -->
-            <div class="mb-6">
-                <label class="block text-sm font-semibold mb-2">Сумма пополнения (TON)</label>
-                <div class="glass rounded-xl p-4">
-                    <div class="flex items-center space-x-3 mb-3">
-                        <div class="text-2xl">💎</div>
+            <div class="mb-4">
+                <label class="block text-xs font-semibold mb-2">Сумма (TON)</label>
+                <div class="glass rounded-xl p-3">
+                    <div class="flex items-center space-x-2">
+                        <div class="text-xl">💎</div>
                         <input
                             type="number"
                             id="topup-amount-input"
                             placeholder="0.0"
                             step="0.1"
                             min="0.1"
-                            class="flex-1 bg-transparent text-2xl font-bold focus:outline-none"
-                            oninput="calculateExpectedPREDForTopUp()"
+                            class="flex-1 bg-transparent text-xl font-bold focus:outline-none"
                         >
-                        <span class="text-blue-400 font-bold">TON</span>
+                        <span class="text-blue-400 font-bold text-sm">TON</span>
                     </div>
 
                     <!-- Quick Amount Buttons -->
-                    <div class="flex space-x-2 mb-3">
-                        <button onclick="setTopUpAmount(1)" class="flex-1 glass rounded-lg px-3 py-2 text-xs font-semibold hover:bg-opacity-30 transition">
-                            1 TON
+                    <div class="flex space-x-2 mt-2">
+                        <button onclick="setTopUpAmount(1)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
+                            1
                         </button>
-                        <button onclick="setTopUpAmount(5)" class="flex-1 glass rounded-lg px-3 py-2 text-xs font-semibold hover:bg-opacity-30 transition">
-                            5 TON
+                        <button onclick="setTopUpAmount(5)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
+                            5
                         </button>
-                        <button onclick="setTopUpAmount(10)" class="flex-1 glass rounded-lg px-3 py-2 text-xs font-semibold hover:bg-opacity-30 transition">
-                            10 TON
+                        <button onclick="setTopUpAmount(10)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
+                            10
                         </button>
-                    </div>
-
-                    <!-- Expected PRED -->
-                    <div class="pt-3 border-t border-gray-700">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-400">Вы получите</span>
-                            <div class="flex items-center space-x-2">
-                                <span class="text-xl font-bold text-yellow-400" id="expected-pred-topup">0</span>
-                                <span class="text-sm text-gray-400">PRED</span>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Send Button -->
-            <button onclick="sendTON()" id="send-ton-btn" class="w-full gold-gradient rounded-xl px-6 py-3 font-bold text-black hover:opacity-90 transition mb-4">
+            <button onclick="sendTON()" id="send-ton-btn" class="w-full gold-gradient rounded-xl px-4 py-2.5 text-sm font-bold text-black hover:opacity-90 transition mb-3">
                 💸 Отправить TON
             </button>
 
             <!-- Info -->
             <div class="text-xs text-gray-400 text-center">
-                <p>После отправки транзакция будет автоматически обработана</p>
-                <p class="mt-1">Курс: 1 TON = 1,000 PRED</p>
+                <p>Транзакция будет обработана автоматически</p>
             </div>
 
             <!-- Processing State -->
-            <div id="topup-processing" class="mt-4 glass rounded-xl p-4 text-center" style="display: none;">
-                <div class="animate-spin text-4xl mb-3">⏳</div>
-                <div class="font-semibold mb-2">Отправка транзакции...</div>
-                <div class="text-sm text-gray-400" id="topup-status-text">Ожидание подтверждения</div>
+            <div id="topup-processing" class="mt-3 glass rounded-xl p-3 text-center" style="display: none;">
+                <div class="animate-spin text-3xl mb-2">⏳</div>
+                <div class="font-semibold mb-1 text-sm">Отправка транзакции...</div>
+                <div class="text-xs text-gray-400" id="topup-status-text">Ожидание подтверждения</div>
             </div>
         </div>
     </div>
@@ -1629,39 +1608,44 @@ window.connectWalletFromModal = async function() {
 };
 
 // Open deposit modal
+// Open convert modal
 window.openDepositModal = function() {
-    document.getElementById('deposit-modal').style.display = 'flex';
-    updateDepositModalState();
+    const modal = document.getElementById('deposit-modal');
+    modal.style.display = 'flex';
 
     // Reset form
     document.getElementById('deposit-amount-input').value = '';
     document.getElementById('expected-pred').textContent = '0';
     document.getElementById('deposit-error').style.display = 'none';
     document.getElementById('deposit-processing').style.display = 'none';
+
+    // Load current TON balance
+    const tonBalance = window.userProfile?.ton_balance || 0;
+    document.getElementById('available-ton-balance').textContent = formatNumber(tonBalance);
 };
 
-// Close deposit modal
+// Close convert modal
 window.closeDepositModal = function() {
     document.getElementById('deposit-modal').style.display = 'none';
 };
 
-// Update deposit modal state based on wallet connection
-function updateDepositModalState() {
-    const connectSection = document.getElementById('deposit-connect-wallet');
-    const depositForm = document.getElementById('deposit-form');
-
-    if (window.tonConnectManual.connected) {
-        connectSection.style.display = 'none';
-        depositForm.style.display = 'block';
-    } else {
-        connectSection.style.display = 'block';
-        depositForm.style.display = 'none';
+// Close modal if clicked outside
+window.closeDepositModalIfOutside = function(event) {
+    if (event.target.id === 'deposit-modal') {
+        closeDepositModal();
     }
-}
+};
 
 // Set deposit amount (quick buttons)
 window.setDepositAmount = function(amount) {
     document.getElementById('deposit-amount-input').value = amount;
+    calculateExpectedPRED();
+};
+
+// Set max amount
+window.setDepositAmountMax = function() {
+    const tonBalance = window.userProfile?.ton_balance || 0;
+    document.getElementById('deposit-amount-input').value = tonBalance;
     calculateExpectedPRED();
 };
 
@@ -1676,19 +1660,22 @@ window.calculateExpectedPRED = function() {
     expectedPred.textContent = formatNumber(pred);
 };
 
-// Submit deposit
-window.submitDeposit = async function() {
+// Submit conversion
+window.submitConvert = async function() {
     const amountInput = document.getElementById('deposit-amount-input');
     const amount = parseFloat(amountInput.value);
 
+    // Get available TON balance
+    const tonBalance = parseFloat(window.userProfile?.ton_balance || 0);
+
     // Validate amount
-    if (!amount || amount < 0.1) {
-        showDepositError('Минимальная сумма депозита: 0.1 TON');
+    if (!amount || amount <= 0) {
+        showDepositError('Введите сумму для конвертации');
         return;
     }
 
-    if (amount > 1000) {
-        showDepositError('Максимальная сумма депозита: 1,000 TON');
+    if (amount > tonBalance) {
+        showDepositError(`Недостаточно TON. Доступно: ${formatNumber(tonBalance)} TON`);
         return;
     }
 
@@ -1697,44 +1684,61 @@ window.submitDeposit = async function() {
 
     // Show processing
     const submitBtn = document.getElementById('deposit-submit-btn');
+    const originalText = submitBtn.textContent;
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Обработка...';
+    submitBtn.textContent = 'Конвертация...';
 
     const processingDiv = document.getElementById('deposit-processing');
     processingDiv.style.display = 'block';
 
     try {
-        // Update status
-        updateDepositStatus('Создание депозита...');
+        updateDepositStatus('Конвертация...');
 
-        // Execute deposit flow
-        const result = await window.tonWallet.deposit(amount);
-
-        if (result.success) {
-            // Success!
-            updateDepositStatus('✅ Депозит успешно зачислен!');
-
-            // Wait 2 seconds before closing
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            // Reload profile to update balances
-            await loadProfile();
-
-            // Close modal
-            closeDepositModal();
-
-            // Show success message
-            alert(`✅ Успешно! Зачислено ${result.pred_credited} PRED`);
-        } else {
-            throw new Error(result.error || 'Deposit failed');
+        const userId = window.userProfile?.id;
+        if (!userId) {
+            throw new Error('User ID not found');
         }
+
+        // Call convert API
+        const response = await fetch(`/api/wallet/convert/${userId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                amount_ton: amount
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || error.error || 'Ошибка конвертации');
+        }
+
+        const result = await response.json();
+
+        // Success!
+        updateDepositStatus('✅ Конвертация выполнена!');
+
+        // Wait 1 second before closing
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Reload profile to update balances
+        await loadProfile();
+
+        // Close modal
+        closeDepositModal();
+
+        // Show success message
+        alert(`✅ Успешно конвертировано!\n💎 ${formatNumber(amount)} TON → 🪙 ${formatNumber(result.pred_credited)} PRED`);
+
     } catch (error) {
-        console.error('Deposit failed:', error);
-        showDepositError('Ошибка депозита: ' + error.message);
+        console.error('Convert failed:', error);
+        showDepositError(error.message);
         processingDiv.style.display = 'none';
     } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = '💳 Пополнить';
+        submitBtn.textContent = originalText;
     }
 };
 
@@ -1801,25 +1805,19 @@ window.closeTopUpModal = function() {
 
     // Reset form
     document.getElementById('topup-amount-input').value = '';
-    document.getElementById('expected-pred-topup').textContent = '0';
     document.getElementById('topup-processing').style.display = 'none';
+};
+
+// Close modal if clicked outside
+window.closeTopUpModalIfOutside = function(event) {
+    if (event.target.id === 'topup-modal') {
+        closeTopUpModal();
+    }
 };
 
 // Set top-up amount (quick buttons)
 window.setTopUpAmount = function(amount) {
     document.getElementById('topup-amount-input').value = amount;
-    calculateExpectedPREDForTopUp();
-};
-
-// Calculate expected PRED for top-up
-window.calculateExpectedPREDForTopUp = function() {
-    const amountInput = document.getElementById('topup-amount-input');
-    const expectedPred = document.getElementById('expected-pred-topup');
-
-    const amount = parseFloat(amountInput.value) || 0;
-    const pred = Math.floor(amount * 1000); // 1 TON = 1000 PRED
-
-    expectedPred.textContent = formatNumber(pred);
 };
 
 // Copy platform address to clipboard

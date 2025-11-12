@@ -526,6 +526,22 @@ async def api_wallet_balance(user_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/wallet/convert/<int:user_id>', methods=['POST'])
+async def api_wallet_convert(user_id):
+    """Convert TON to PRED (internal balance conversion)"""
+    try:
+        data = await request.get_json()
+        print(f"[/api/wallet/convert] Converting TON to PRED for user_id: {user_id}, amount: {data.get('amount_ton')}")
+        result = await api_client._post(f"/wallet/convert/{user_id}", data)
+        print(f"[/api/wallet/convert] ✅ Converted: {result.get('ton_converted')} TON → {result.get('pred_credited')} PRED")
+        return jsonify(result)
+    except Exception as e:
+        print(f"[/api/wallet/convert] Exception: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/api/wallet/disconnect/<int:user_id>', methods=['POST'])
 async def api_wallet_disconnect(user_id):
     """Disconnect TON wallet from user account"""
