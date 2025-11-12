@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
 from urllib.parse import quote_plus
+from pathlib import Path
 
 
 class Settings(BaseSettings):
@@ -70,7 +71,8 @@ class Settings(BaseSettings):
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}"
 
     class Config:
-        env_file = ".env"
+        # Look for .env in project root (3 levels up: app -> backend -> root)
+        env_file = str(Path(__file__).parent.parent.parent.parent / ".env")
         case_sensitive = True
         extra = 'ignore'  # Ignore extra fields from .env (for other services)
 
