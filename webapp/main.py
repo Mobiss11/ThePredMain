@@ -498,20 +498,12 @@ async def api_wallet_connect(user_id):
     """Connect TON wallet to user account"""
     try:
         data = await request.get_json()
-        url = f"{api_client.base_url}/wallet/connect/{user_id}"
-
         print(f"[/api/wallet/connect] Connecting wallet for user_id: {user_id}")
         print(f"[/api/wallet/connect] Address: {data.get('ton_address')}")
 
-        async with aiohttp.ClientSession() as session_http:
-            async with session_http.post(url, json=data) as response:
-                result = await response.json()
-                if response.status == 200:
-                    print(f"[/api/wallet/connect] ✅ Wallet connected successfully")
-                    return jsonify(result)
-                else:
-                    print(f"[/api/wallet/connect] ❌ Error: {result}")
-                    return jsonify(result), response.status
+        result = await api_client._post(f"/wallet/connect/{user_id}", data)
+        print(f"[/api/wallet/connect] ✅ Wallet connected successfully")
+        return jsonify(result)
     except Exception as e:
         print(f"[/api/wallet/connect] Exception: {e}")
         import traceback
@@ -523,20 +515,10 @@ async def api_wallet_connect(user_id):
 async def api_wallet_balance(user_id):
     """Get wallet balance and connection status"""
     try:
-        url = f"{api_client.base_url}/wallet/balance/{user_id}"
-
         print(f"[/api/wallet/balance] Fetching wallet info for user_id: {user_id}")
-
-        async with aiohttp.ClientSession() as session_http:
-            async with session_http.get(url) as response:
-                if response.status == 200:
-                    result = await response.json()
-                    print(f"[/api/wallet/balance] ✅ Wallet connected: {result.get('wallet_connected')}, Address: {result.get('ton_address')}")
-                    return jsonify(result)
-                else:
-                    error_text = await response.text()
-                    print(f"[/api/wallet/balance] ❌ Error: {error_text}")
-                    return jsonify({"error": error_text}), response.status
+        result = await api_client._get(f"/wallet/balance/{user_id}")
+        print(f"[/api/wallet/balance] ✅ Wallet connected: {result.get('wallet_connected')}, Address: {result.get('ton_address')}")
+        return jsonify(result)
     except Exception as e:
         print(f"[/api/wallet/balance] Exception: {e}")
         import traceback
@@ -548,12 +530,8 @@ async def api_wallet_balance(user_id):
 async def api_wallet_info():
     """Get wallet info (conversion rate, limits, etc.)"""
     try:
-        url = f"{api_client.base_url}/wallet/info"
-
-        async with aiohttp.ClientSession() as session_http:
-            async with session_http.get(url) as response:
-                result = await response.json()
-                return jsonify(result), response.status
+        result = await api_client._get("/wallet/info")
+        return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
