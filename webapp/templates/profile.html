@@ -1843,8 +1843,12 @@ window.copyPlatformAddress = function() {
 
 // Send TON using TON Connect
 window.sendTON = async function() {
-    const amountInput = document.getElementById('topup-amount-input');
-    const amount = parseFloat(amountInput.value);
+    try {
+        console.log('🚀 sendTON called');
+
+        const amountInput = document.getElementById('topup-amount-input');
+        const amount = parseFloat(amountInput.value);
+        console.log('Amount:', amount);
 
     // Validate amount
     if (!amount || amount < 0.1) {
@@ -1852,10 +1856,13 @@ window.sendTON = async function() {
         return;
     }
 
+    console.log('Platform address:', platformAddress);
     if (!platformAddress) {
         alert('Адрес платформы не загружен');
         return;
     }
+
+    console.log('Wallet connected:', window.tonConnectManual?.connected);
 
     // Check if wallet is connected
     if (!window.tonConnectManual || !window.tonConnectManual.connected) {
@@ -1863,11 +1870,16 @@ window.sendTON = async function() {
         return;
     }
 
+    console.log('Waiting for init...');
     // Wait for tonConnectManual to initialize
     await window.tonConnectManual.initPromise;
+    console.log('Init complete');
+
+    console.log('Is loaded from database:', window.tonConnectManual.isLoadedFromDatabase);
 
     // Check if wallet was loaded from database (not connected via SDK)
     if (window.tonConnectManual.isLoadedFromDatabase) {
+        console.log('⚠️ Wallet loaded from DB, need to reconnect');
         // Offer to reconnect automatically
         const reconnect = confirm('⚠️ Для отправки TON необходимо переподключить кошелек через TON Connect.\n\nПереподключить сейчас?');
         if (!reconnect) {
@@ -1888,66 +1900,78 @@ window.sendTON = async function() {
         return;
     }
 
+    console.log('SDK connector:', window.tonConnectManual.connector);
+    console.log('SDK connector.connected:', window.tonConnectManual.connector?.connected);
+
     // Check if SDK connector is actually connected
     if (!window.tonConnectManual.connector || !window.tonConnectManual.connector.connected) {
+        console.error('❌ SDK connector not connected');
         alert('⚠️ Кошелек не подключен через TON Connect SDK.\n\nПожалуйста, переподключите кошелек для отправки транзакций.');
         return;
     }
 
-    const sendBtn = document.getElementById('send-ton-btn');
-    const processingDiv = document.getElementById('topup-processing');
-    const statusText = document.getElementById('topup-status-text');
+    console.log('✅ All checks passed, proceeding with transaction');
 
-    try {
-        sendBtn.disabled = true;
-        processingDiv.style.display = 'block';
-        statusText.textContent = 'Подготовка транзакции...';
+        const sendBtn = document.getElementById('send-ton-btn');
+        const processingDiv = document.getElementById('topup-processing');
+        const statusText = document.getElementById('topup-status-text');
 
-        // Convert TON to nanoTON (1 TON = 1,000,000,000 nanoTON)
-        const nanoAmount = Math.floor(amount * 1_000_000_000).toString();
+        try {
+            sendBtn.disabled = true;
+            processingDiv.style.display = 'block';
+            statusText.textContent = 'Подготовка транзакции...';
 
-        console.log('💸 Sending TON:', {
-            to: platformAddress,
-            amount: amount,
-            nanoAmount: nanoAmount
-        });
+            // Convert TON to nanoTON (1 TON = 1,000,000,000 nanoTON)
+            const nanoAmount = Math.floor(amount * 1_000_000_000).toString();
 
-        // Send transaction via TON Connect
-        const transaction = {
-            validUntil: Math.floor(Date.now() / 1000) + 600, // 10 minutes
-            messages: [
-                {
-                    address: platformAddress,
-                    amount: nanoAmount
-                }
-            ]
-        };
+            console.log('💸 Sending TON:', {
+                to: platformAddress,
+                amount: amount,
+                nanoAmount: nanoAmount
+            });
 
-        statusText.textContent = 'Ожидание подтверждения в кошельке...';
+            // Send transaction via TON Connect
+            const transaction = {
+                validUntil: Math.floor(Date.now() / 1000) + 600, // 10 minutes
+                messages: [
+                    {
+                        address: platformAddress,
+                        amount: nanoAmount
+                    }
+                ]
+            };
 
-        const result = await window.tonConnectManual.connector.sendTransaction(transaction);
+            statusText.textContent = 'Ожидание подтверждения в кошельке...';
 
-        console.log('✅ Transaction sent:', result);
+            const result = await window.tonConnectManual.connector.sendTransaction(transaction);
 
-        statusText.textContent = 'Транзакция отправлена! Ожидание подтверждения...';
+            console.log('✅ Transaction sent:', result);
 
-        // Wait a bit and then reload profile
-        setTimeout(async () => {
-            processingDiv.style.display = 'none';
-            closeTopUpModal();
+            statusText.textContent = 'Транзакция отправлена! Ожидание подтверждения...';
 
-            // Reload user profile to update balance
-            await loadProfile();
+            // Wait a bit and then reload profile
+            setTimeout(async () => {
+                processingDiv.style.display = 'none';
+                closeTopUpModal();
 
-            alert('✅ TON отправлены! Баланс будет обновлен после подтверждения транзакции.');
-        }, 2000);
+                // Reload user profile to update balance
+                await loadProfile();
 
-    } catch (error) {
-        console.error('❌ Send TON failed:', error);
-        processingDiv.style.display = 'none';
-        alert('Ошибка отправки TON: ' + error.message);
-    } finally {
-        sendBtn.disabled = false;
+                alert('✅ TON отправлены! Баланс будет обновлен после подтверждения транзакции.');
+            }, 2000);
+
+        } catch (error) {
+            console.error('❌ Send TON failed:', error);
+            const processingDiv = document.getElementById('topup-processing');
+            const sendBtn = document.getElementById('send-ton-btn');
+            if (processingDiv) processingDiv.style.display = 'none';
+            if (sendBtn) sendBtn.disabled = false;
+            alert('Ошибка отправки TON: ' + error.message);
+        }
+
+    } catch (outerError) {
+        console.error('❌ Critical error in sendTON:', outerError);
+        alert('Произошла критическая ошибка: ' + outerError.message);
     }
 };
 
