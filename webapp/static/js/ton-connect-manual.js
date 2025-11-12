@@ -11,6 +11,7 @@ class TONConnectManual {
         this.address = null;
         this.onConnectionChange = () => {};
         this.isRestoringConnection = false; // Flag to prevent alert on restore
+        this.isLoadedFromDatabase = false; // Flag to track if wallet loaded from DB (not connected via SDK)
 
         this.initPromise = this.init();
     }
@@ -289,10 +290,48 @@ class TONConnectManual {
         console.log('🔌 Disconnecting...');
         await this.initPromise;
 
-        if (this.connector) {
+        // If wallet was loaded from database (not connected via SDK)
+        if (this.isLoadedFromDatabase) {
+            console.log('💾 Disconnecting via API (wallet loaded from DB)');
+
+            const userId = window.userProfile?.id;
+            if (!userId) {
+                console.error('❌ No user_id found');
+                throw new Error('User ID not found');
+            }
+
+            try {
+                const response = await fetch(`/api/wallet/disconnect/${userId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    console.log('✅ Wallet disconnected via API');
+                    this.connected = false;
+                    this.address = null;
+                    this.isLoadedFromDatabase = false;
+                } else {
+                    const error = await response.json();
+                    console.error('❌ Failed to disconnect via API:', error);
+                    throw new Error(error.error || 'Failed to disconnect wallet');
+                }
+            } catch (error) {
+                console.error('❌ Disconnect error:', error);
+                throw error;
+            }
+        }
+        // If wallet is connected via SDK
+        else if (this.connector && this.connected) {
+            console.log('🔗 Disconnecting via TON Connect SDK');
             await this.connector.disconnect();
             this.connected = false;
             this.address = null;
+            this.isLoadedFromDatabase = false;
+        } else {
+            console.warn('⚠️ No wallet connected');
         }
     }
 

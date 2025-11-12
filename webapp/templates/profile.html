@@ -1413,6 +1413,7 @@ async function checkWalletConnection() {
                 // Update internal state
                 window.tonConnectManual.connected = true;
                 window.tonConnectManual.address = data.ton_address;
+                window.tonConnectManual.isLoadedFromDatabase = true; // Mark as loaded from DB
             } else {
                 console.log('ℹ️ No wallet connected in database');
                 updateWalletConnectionUI(false, null);

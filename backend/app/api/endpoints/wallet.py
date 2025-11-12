@@ -361,6 +361,40 @@ async def get_deposit_status(
     }
 
 
+@router.post("/disconnect/{user_id}")
+async def disconnect_wallet(
+    user_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Отключить TON кошелек от аккаунта
+    """
+    # Получить кошелек пользователя
+    wallet_result = await db.execute(
+        select(WalletAddress).where(WalletAddress.user_id == user_id)
+    )
+    wallet = wallet_result.scalar_one_or_none()
+
+    if not wallet:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Wallet not found"
+        )
+
+    # Деактивировать кошелек (не удаляем, чтобы сохранить историю)
+    wallet.is_active = False
+    wallet.updated_at = datetime.now()
+
+    await db.commit()
+
+    logger.info(f"Disconnected wallet for user {user_id}: {wallet.ton_address}")
+
+    return {
+        "success": True,
+        "message": "Wallet disconnected successfully"
+    }
+
+
 @router.get("/balance/{user_id}", response_model=WalletBalanceResponse)
 async def get_wallet_balance(
     user_id: int,

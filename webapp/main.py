@@ -526,6 +526,21 @@ async def api_wallet_balance(user_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/wallet/disconnect/<int:user_id>', methods=['POST'])
+async def api_wallet_disconnect(user_id):
+    """Disconnect TON wallet from user account"""
+    try:
+        print(f"[/api/wallet/disconnect] Disconnecting wallet for user_id: {user_id}")
+        result = await api_client._post(f"/wallet/disconnect/{user_id}", {})
+        print(f"[/api/wallet/disconnect] ✅ Wallet disconnected successfully")
+        return jsonify(result)
+    except Exception as e:
+        print(f"[/api/wallet/disconnect] Exception: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/api/wallet/info')
 async def api_wallet_info():
     """Get wallet info (conversion rate, limits, etc.)"""
