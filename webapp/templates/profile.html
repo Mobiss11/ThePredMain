@@ -286,69 +286,61 @@
     </div>
 </div>
 
-<!-- Convert TON to PRED Modal -->
+<!-- Deposit PRED via CryptoCloud Modal -->
 <div id="deposit-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4" style="display: none;" onclick="closeDepositModalIfOutside(event)">
     <div class="glass rounded-2xl max-w-sm w-full" onclick="event.stopPropagation()">
         <div class="p-5">
             <!-- Header -->
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold">💰 Конвертировать в PRED</h2>
+                <h2 class="text-xl font-bold">💰 Пополнить PRED</h2>
                 <button onclick="closeDepositModal()" class="text-gray-400 hover:text-white text-2xl">×</button>
             </div>
 
-            <!-- Conversion Info -->
+            <!-- Payment Info -->
             <div class="glass rounded-xl p-4 mb-4">
                 <div class="text-center">
                     <div class="flex items-center justify-center space-x-2 mb-2">
-                        <span class="text-2xl">💎</span>
+                        <span class="text-2xl">💵</span>
                         <span class="text-xl">→</span>
                         <span class="text-2xl">🪙</span>
                     </div>
-                    <div class="font-semibold mb-1 text-sm">Курс: 1 TON = 1,000 PRED</div>
-                    <div class="text-xs text-gray-400">Конвертируйте ваш TON баланс в PRED</div>
-                </div>
-            </div>
-
-            <!-- Current Balance Display -->
-            <div class="glass rounded-xl p-3 mb-4">
-                <div class="text-xs text-gray-400 mb-2">Доступно для конвертации:</div>
-                <div class="text-center">
-                    <span class="text-xl font-bold text-blue-400" id="available-ton-balance">0</span>
-                    <span class="text-sm text-gray-400">TON</span>
+                    <div class="font-semibold mb-1 text-sm">Курс: $1 = 10 PRED</div>
+                    <div class="text-xs text-gray-400">Оплата криптовалютой (BTC, ETH, USDT)</div>
                 </div>
             </div>
 
             <!-- Amount Input -->
             <div class="mb-4">
-                <label class="block text-xs font-semibold mb-2">Сумма конвертации (TON)</label>
+                <label class="block text-xs font-semibold mb-2">Сумма пополнения (USD)</label>
                 <div class="glass rounded-xl p-3">
                     <div class="flex items-center space-x-2 mb-2">
-                        <div class="text-xl">💎</div>
+                        <div class="text-xl">💵</div>
                         <input
                             type="number"
                             id="deposit-amount-input"
-                            placeholder="0.0"
-                            step="0.1"
-                            min="0.1"
+                            placeholder="10"
+                            step="1"
+                            min="1"
+                            max="10000"
                             class="flex-1 bg-transparent text-xl font-bold focus:outline-none"
                             oninput="calculateExpectedPRED()"
                         >
-                        <span class="text-blue-400 font-bold text-sm">TON</span>
+                        <span class="text-green-400 font-bold text-sm">USD</span>
                     </div>
 
                     <!-- Quick Amount Buttons -->
                     <div class="flex space-x-2 mb-2">
-                        <button onclick="setDepositAmount(1)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
-                            1
-                        </button>
-                        <button onclick="setDepositAmount(5)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
-                            5
-                        </button>
                         <button onclick="setDepositAmount(10)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
-                            10
+                            $10
                         </button>
-                        <button onclick="setDepositAmountMax()" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
-                            Всё
+                        <button onclick="setDepositAmount(50)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
+                            $50
+                        </button>
+                        <button onclick="setDepositAmount(100)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
+                            $100
+                        </button>
+                        <button onclick="setDepositAmount(500)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
+                            $500
                         </button>
                     </div>
 
@@ -365,20 +357,31 @@
                 </div>
             </div>
 
+            <!-- Info Message -->
+            <div class="mb-3 p-3 rounded-lg glass text-xs">
+                <div class="text-blue-400 mb-2">ℹ️ Как это работает:</div>
+                <div class="text-gray-400 space-y-1">
+                    <div>1. Введите сумму в USD</div>
+                    <div>2. Нажмите "Перейти к оплате"</div>
+                    <div>3. Оплатите криптовалютой через CryptoCloud</div>
+                    <div>4. PRED зачислятся автоматически</div>
+                </div>
+            </div>
+
             <!-- Error Message -->
             <div id="deposit-error" class="mb-3 p-2 rounded-lg bg-red-500 bg-opacity-20 border border-red-500 text-red-400 text-xs" style="display: none;">
                 <div id="deposit-error-text"></div>
             </div>
 
             <!-- Submit Button -->
-            <button onclick="submitConvert()" id="deposit-submit-btn" class="w-full gold-gradient rounded-xl px-4 py-2.5 text-sm font-bold text-black hover:opacity-90 transition mb-2">
-                💱 Конвертировать
+            <button onclick="submitDeposit()" id="deposit-submit-btn" class="w-full gold-gradient rounded-xl px-4 py-2.5 text-sm font-bold text-black hover:opacity-90 transition mb-2">
+                💳 Перейти к оплате
             </button>
 
             <!-- Processing State -->
             <div id="deposit-processing" class="mt-3 glass rounded-xl p-3 text-center" style="display: none;">
                 <div class="animate-spin text-3xl mb-2">⏳</div>
-                <div class="font-semibold mb-1 text-sm">Конвертация...</div>
+                <div class="font-semibold mb-1 text-sm">Создание платежа...</div>
                 <div class="text-xs text-gray-400" id="deposit-status-text">Обработка</div>
             </div>
         </div>
@@ -1619,7 +1622,6 @@ window.connectWalletFromModal = async function() {
 };
 
 // Open deposit modal
-// Open convert modal
 window.openDepositModal = function() {
     const modal = document.getElementById('deposit-modal');
     modal.style.display = 'flex';
@@ -1629,10 +1631,6 @@ window.openDepositModal = function() {
     document.getElementById('expected-pred').textContent = '0';
     document.getElementById('deposit-error').style.display = 'none';
     document.getElementById('deposit-processing').style.display = 'none';
-
-    // Load current TON balance
-    const tonBalance = window.userProfile?.ton_balance || 0;
-    document.getElementById('available-ton-balance').textContent = formatNumber(tonBalance);
 };
 
 // Close convert modal
@@ -1653,40 +1651,35 @@ window.setDepositAmount = function(amount) {
     calculateExpectedPRED();
 };
 
-// Set max amount
-window.setDepositAmountMax = function() {
-    const tonBalance = window.userProfile?.ton_balance || 0;
-    document.getElementById('deposit-amount-input').value = tonBalance;
-    calculateExpectedPRED();
-};
-
-// Calculate expected PRED from TON amount
+// Calculate expected PRED from USD amount
 window.calculateExpectedPRED = function() {
     const amountInput = document.getElementById('deposit-amount-input');
     const expectedPred = document.getElementById('expected-pred');
 
     const amount = parseFloat(amountInput.value) || 0;
-    const pred = Math.floor(amount * 1000); // 1 TON = 1000 PRED
+    const pred = Math.floor(amount * 10); // $1 = 10 PRED
 
     expectedPred.textContent = formatNumber(pred);
 };
 
-// Submit conversion
-window.submitConvert = async function() {
+// Submit deposit (create CryptoCloud payment)
+window.submitDeposit = async function() {
     const amountInput = document.getElementById('deposit-amount-input');
     const amount = parseFloat(amountInput.value);
 
-    // Get available TON balance
-    const tonBalance = parseFloat(window.userProfile?.ton_balance || 0);
-
     // Validate amount
     if (!amount || amount <= 0) {
-        showDepositError('Введите сумму для конвертации');
+        showDepositError('Введите сумму пополнения');
         return;
     }
 
-    if (amount > tonBalance) {
-        showDepositError(`Недостаточно TON. Доступно: ${formatNumber(tonBalance)} TON`);
+    if (amount < 1) {
+        showDepositError('Минимальная сумма: $1');
+        return;
+    }
+
+    if (amount > 10000) {
+        showDepositError('Максимальная сумма: $10,000');
         return;
     }
 
@@ -1697,54 +1690,56 @@ window.submitConvert = async function() {
     const submitBtn = document.getElementById('deposit-submit-btn');
     const originalText = submitBtn.textContent;
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Конвертация...';
+    submitBtn.textContent = 'Создание платежа...';
 
     const processingDiv = document.getElementById('deposit-processing');
     processingDiv.style.display = 'block';
 
     try {
-        updateDepositStatus('Конвертация...');
+        updateDepositStatus('Создание платежа...');
 
-        const userId = window.userProfile?.id;
-        if (!userId) {
-            throw new Error('User ID not found');
-        }
-
-        // Call convert API
-        const response = await fetch(`/api/wallet/convert/${userId}`, {
+        // Call payment create API
+        const response = await fetch('/api/payment/create', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                amount_ton: amount
+                amount: amount
             })
         });
 
         if (!response.ok) {
             const error = await response.json();
-            throw new Error(error.detail || error.error || 'Ошибка конвертации');
+            throw new Error(error.detail || 'Ошибка создания платежа');
         }
 
         const result = await response.json();
 
-        // Success!
-        updateDepositStatus('✅ Конвертация выполнена!');
+        console.log('✅ Payment created:', result);
 
-        // Wait 1 second before closing
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Redirect to CryptoCloud payment page
+        updateDepositStatus('Переход к оплате...');
 
-        // Reload profile to update balances
-        await loadProfile();
+        // Wait a moment before redirecting
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-        // Close modal
-        closeDepositModal();
+        // Open payment URL in Telegram WebApp
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.openLink) {
+            tg.openLink(result.payment_url);
+        } else {
+            // Fallback to window.open
+            window.open(result.payment_url, '_blank');
+        }
 
-        // Show success message
-        alert(`✅ Успешно конвертировано!\n💎 ${formatNumber(amount)} TON → 🪙 ${formatNumber(result.pred_credited)} PRED`);
+        // Close modal after opening payment link
+        setTimeout(() => {
+            closeDepositModal();
+        }, 1000);
 
     } catch (error) {
-        console.error('Convert failed:', error);
+        console.error('❌ Payment creation failed:', error);
         showDepositError(error.message);
         processingDiv.style.display = 'none';
     } finally {

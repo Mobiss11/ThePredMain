@@ -61,6 +61,16 @@ class Settings(BaseSettings):
     BOT_TOKEN: Optional[str] = None
     WEBAPP_URL: str = "https://thepred.store"
 
+    # CryptoCloud Payment Gateway
+    CRYPTOCLOUD_API_KEY: str = ""
+    CRYPTOCLOUD_SHOP_ID: str = ""
+    CRYPTOCLOUD_API_URL: str = "https://api.cryptocloud.plus/v2"
+
+    # Payment settings
+    MIN_DEPOSIT_USD: int = 1
+    MAX_DEPOSIT_USD: int = 10000
+    USD_TO_PRED_RATE: int = 10  # 1 USD = 10 PRED
+
     @property
     def database_url(self) -> str:
         password = quote_plus(self.POSTGRES_PASSWORD)
