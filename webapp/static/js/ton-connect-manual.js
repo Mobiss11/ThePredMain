@@ -350,11 +350,47 @@ class TONConnectManual {
         // This will automatically open the wallet app in Telegram
         try {
             console.log('🔗 Calling connector.sendTransaction...');
-            const result = await this.connector.sendTransaction(transaction);
+            console.log('🔗 Connector state:', {
+                connected: this.connector.connected,
+                wallet: this.connector.wallet,
+                account: this.connector.account,
+                provider: this.connector.provider
+            });
+
+            // Check if we're in Telegram WebApp
+            const tg = window.Telegram?.WebApp;
+            if (tg) {
+                console.log('📱 Running in Telegram WebApp');
+                console.log('📱 Telegram version:', tg.version);
+                console.log('📱 Platform:', tg.platform);
+            }
+
+            // Add timeout to prevent infinite waiting
+            const timeoutMs = 60000; // 60 seconds
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => {
+                    console.error('⏰ Transaction timeout after 60 seconds');
+                    reject(new Error('Transaction timeout - wallet did not respond'));
+                }, timeoutMs);
+            });
+
+            console.log('⏳ Waiting for wallet response (timeout: 60s)...');
+
+            // Race between transaction and timeout
+            const result = await Promise.race([
+                this.connector.sendTransaction(transaction),
+                timeoutPromise
+            ]);
+
             console.log('✅ Transaction result:', result);
             return result;
         } catch (error) {
             console.error('❌ sendTransaction error:', error);
+            console.error('Error details:', {
+                message: error.message,
+                code: error.code,
+                stack: error.stack
+            });
             throw error;
         }
     }
