@@ -453,6 +453,47 @@ class TONConnectManual {
                 // Wait a bit to see if URL was caught
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 console.log('🔍 Transaction URL caught:', transactionUrlCaught);
+
+                // If URL was not caught and we're using HTTP bridge, use manual fallback
+                if (!transactionUrlCaught && this.connector.wallet.provider === 'http') {
+                    console.warn('⚠️ SDK did not generate transaction URL, using manual fallback');
+
+                    // Build transaction URL manually
+                    const walletUrl = this.connector.wallet.device?.universalLink ||
+                                     this.connector.wallet.device?.deepLink;
+
+                    if (walletUrl) {
+                        // Encode transaction as base64 BOC
+                        const transactionData = {
+                            to: transaction.messages[0].address,
+                            value: transaction.messages[0].amount,
+                            timeout: transaction.validUntil
+                        };
+
+                        // Create URL for Telegram Wallet
+                        const base64Data = btoa(JSON.stringify(transactionData));
+                        const txUrl = `${walletUrl}/tx/${base64Data}`;
+
+                        console.log('🔗 Manual transaction URL:', txUrl);
+
+                        // Open via Telegram WebApp
+                        if (tg) {
+                            console.log('💎 Opening transaction via Telegram WebApp');
+                            if (txUrl.includes('ton://') || txUrl.includes('tg://')) {
+                                tg.openTelegramLink(txUrl);
+                            } else {
+                                tg.openLink(txUrl);
+                            }
+
+                            // Wait for user to complete transaction in wallet
+                            // This is a simplified approach - in production you'd want to poll for confirmation
+                            console.log('⏳ Waiting for user to confirm in wallet...');
+                            throw new Error('Manual transaction opened - please confirm in wallet. Refresh page to see updated balance.');
+                        }
+                    } else {
+                        console.error('❌ No wallet URL available for manual transaction');
+                    }
+                }
             } catch (syncError) {
                 console.error('❌ Synchronous error in sendTransaction:', syncError);
                 // Restore original functions
