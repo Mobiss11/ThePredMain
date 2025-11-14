@@ -397,11 +397,85 @@ class TONConnectManual {
             console.log('⏳ Waiting for wallet response (timeout: 60s)...');
             console.log('📦 Transaction payload:', JSON.stringify(transaction, null, 2));
 
+            // Intercept window.open to catch transaction URL
+            const originalOpen = window.open;
+            const originalTgOpenLink = window.Telegram?.WebApp?.openLink;
+            const originalTgOpenTelegramLink = window.Telegram?.WebApp?.openTelegramLink;
+
+            let transactionUrlCaught = false;
+
+            // Override window.open
+            window.open = function(...args) {
+                console.log('🔗 window.open intercepted:', args);
+                transactionUrlCaught = true;
+
+                // Use Telegram WebApp methods if available
+                if (tg && args[0]) {
+                    const url = args[0].toString();
+                    console.log('📱 Opening via Telegram WebApp:', url);
+
+                    // For Telegram Wallet links, use openTelegramLink
+                    if (url.includes('ton://') || url.includes('tg://')) {
+                        console.log('💎 Using openTelegramLink');
+                        tg.openTelegramLink(url);
+                    } else {
+                        console.log('🌐 Using openLink');
+                        tg.openLink(url);
+                    }
+                    return null;
+                }
+
+                return originalOpen.apply(window, args);
+            };
+
+            // Override Telegram WebApp methods too
+            if (tg) {
+                window.Telegram.WebApp.openLink = function(...args) {
+                    console.log('📱 Telegram.WebApp.openLink intercepted:', args);
+                    transactionUrlCaught = true;
+                    return originalTgOpenLink.apply(window.Telegram.WebApp, args);
+                };
+
+                window.Telegram.WebApp.openTelegramLink = function(...args) {
+                    console.log('💎 Telegram.WebApp.openTelegramLink intercepted:', args);
+                    transactionUrlCaught = true;
+                    return originalTgOpenTelegramLink.apply(window.Telegram.WebApp, args);
+                };
+            }
+
+            // Try to call sendTransaction and monitor what happens
+            let transactionPromise;
+            try {
+                console.log('🚀 Initiating sendTransaction...');
+                transactionPromise = this.connector.sendTransaction(transaction);
+                console.log('📨 sendTransaction promise created');
+
+                // Wait a bit to see if URL was caught
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                console.log('🔍 Transaction URL caught:', transactionUrlCaught);
+            } catch (syncError) {
+                console.error('❌ Synchronous error in sendTransaction:', syncError);
+                // Restore original functions
+                window.open = originalOpen;
+                if (tg) {
+                    window.Telegram.WebApp.openLink = originalTgOpenLink;
+                    window.Telegram.WebApp.openTelegramLink = originalTgOpenTelegramLink;
+                }
+                throw syncError;
+            }
+
             // Race between transaction and timeout
             const result = await Promise.race([
-                this.connector.sendTransaction(transaction),
+                transactionPromise,
                 timeoutPromise
             ]);
+
+            // Restore original functions
+            window.open = originalOpen;
+            if (tg) {
+                window.Telegram.WebApp.openLink = originalTgOpenLink;
+                window.Telegram.WebApp.openTelegramLink = originalTgOpenTelegramLink;
+            }
 
             console.log('✅ Transaction result:', result);
             return result;
