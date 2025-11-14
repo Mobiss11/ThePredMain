@@ -19,11 +19,23 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Create PaymentMethod enum
-    op.execute("CREATE TYPE paymentmethod AS ENUM ('cryptocloud')")
+    # Create PaymentMethod enum if not exists
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE paymentmethod AS ENUM ('cryptocloud');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
 
-    # Create PaymentStatus enum
-    op.execute("CREATE TYPE paymentstatus AS ENUM ('pending', 'processing', 'completed', 'failed', 'cancelled')")
+    # Create PaymentStatus enum if not exists
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE paymentstatus AS ENUM ('pending', 'processing', 'completed', 'failed', 'cancelled');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
 
     # Create payments table
     op.create_table(

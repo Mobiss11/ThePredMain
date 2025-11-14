@@ -19,8 +19,14 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Create WithdrawalStatus enum
-    op.execute("CREATE TYPE withdrawalstatus AS ENUM ('pending', 'processing', 'completed', 'rejected', 'cancelled')")
+    # Create WithdrawalStatus enum if not exists
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE withdrawalstatus AS ENUM ('pending', 'processing', 'completed', 'rejected', 'cancelled');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
 
     # Create withdrawal_requests table
     op.create_table(
