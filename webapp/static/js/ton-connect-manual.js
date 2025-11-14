@@ -357,6 +357,26 @@ class TONConnectManual {
                 provider: this.connector.provider
             });
 
+            // Log detailed wallet info
+            if (this.connector.wallet) {
+                console.log('👛 Wallet details:', {
+                    device: this.connector.wallet.device,
+                    provider: this.connector.wallet.provider,
+                    account: this.connector.wallet.account
+                });
+            }
+
+            // Log detailed provider info
+            if (this.connector.provider) {
+                console.log('🔌 Provider details:', {
+                    type: this.connector.provider.constructor.name,
+                    connection: this.connector.provider.connection,
+                    // Try to access provider methods
+                    hasSendTransaction: typeof this.connector.provider.sendTransaction === 'function',
+                    hasConnect: typeof this.connector.provider.connect === 'function'
+                });
+            }
+
             // Check if we're in Telegram WebApp
             const tg = window.Telegram?.WebApp;
             if (tg) {
@@ -375,6 +395,7 @@ class TONConnectManual {
             });
 
             console.log('⏳ Waiting for wallet response (timeout: 60s)...');
+            console.log('📦 Transaction payload:', JSON.stringify(transaction, null, 2));
 
             // Race between transaction and timeout
             const result = await Promise.race([
