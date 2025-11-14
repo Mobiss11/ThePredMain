@@ -1891,38 +1891,41 @@ window.sendTON = async function() {
         console.log('Init complete');
 
         console.log('Is loaded from database:', window.tonConnectManual.isLoadedFromDatabase);
-
-        // Check if wallet was loaded from database (not connected via SDK)
-        if (window.tonConnectManual.isLoadedFromDatabase) {
-            console.log('⚠️ Wallet loaded from DB, need to reconnect');
-            // Offer to reconnect automatically
-            const reconnect = confirm('⚠️ Для отправки TON необходимо переподключить кошелек через TON Connect.\n\nПереподключить сейчас?');
-            if (!reconnect) {
-                return;
-            }
-
-            // Close top-up modal
-            closeTopUpModal();
-
-            // Trigger wallet connection
-            await connectWallet();
-
-            // Show message to try again
-            setTimeout(() => {
-                alert('✅ Кошелек переподключен!\n\nТеперь вы можете отправить TON.');
-            }, 1000);
-
-            return;
-        }
-
         console.log('SDK connector:', window.tonConnectManual.connector);
         console.log('SDK connector.connected:', window.tonConnectManual.connector?.connected);
 
         // Check if SDK connector is actually connected
+        // If not connected via SDK (even if loaded from DB), need to reconnect
         if (!window.tonConnectManual.connector || !window.tonConnectManual.connector.connected) {
             console.error('❌ SDK connector not connected');
-            alert('⚠️ Кошелек не подключен через TON Connect SDK.\n\nПожалуйста, переподключите кошелек для отправки транзакций.');
-            return;
+
+            // If wallet was loaded from database, offer to reconnect
+            if (window.tonConnectManual.isLoadedFromDatabase) {
+                console.log('⚠️ Wallet loaded from DB but SDK not connected, need to reconnect');
+
+                // Offer to reconnect automatically
+                const reconnect = confirm('⚠️ Для отправки TON необходимо переподключить кошелек через TON Connect.\n\nПереподключить сейчас?');
+                if (!reconnect) {
+                    return;
+                }
+
+                // Close top-up modal
+                closeTopUpModal();
+
+                // Trigger wallet connection
+                await connectWallet();
+
+                // Show message to try again
+                setTimeout(() => {
+                    alert('✅ Кошелек переподключен!\n\nТеперь вы можете отправить TON.');
+                }, 1000);
+
+                return;
+            } else {
+                // Not loaded from DB and not connected - just show error
+                alert('⚠️ Кошелек не подключен через TON Connect SDK.\n\nПожалуйста, подключите кошелек для отправки транзакций.');
+                return;
+            }
         }
 
         console.log('✅ All checks passed, proceeding with transaction');
