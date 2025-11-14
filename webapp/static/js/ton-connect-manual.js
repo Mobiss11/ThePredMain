@@ -336,6 +336,30 @@ class TONConnectManual {
     }
 
     /**
+     * Send transaction via TON Connect
+     */
+    async sendTransaction(transaction) {
+        console.log('📤 sendTransaction called with:', transaction);
+        await this.initPromise;
+
+        if (!this.connector || !this.connected) {
+            throw new Error('Wallet not connected');
+        }
+
+        // Send transaction via TON Connect SDK
+        // This will automatically open the wallet app in Telegram
+        try {
+            console.log('🔗 Calling connector.sendTransaction...');
+            const result = await this.connector.sendTransaction(transaction);
+            console.log('✅ Transaction result:', result);
+            return result;
+        } catch (error) {
+            console.error('❌ sendTransaction error:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Inject modal styles
      */
     injectStyles() {

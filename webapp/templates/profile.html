@@ -1955,22 +1955,39 @@ window.sendTON = async function() {
         statusText.textContent = 'Ожидание подтверждения в кошельке...';
 
         console.log('📤 Calling sendTransaction...');
-        const result = await window.tonConnectManual.connector.sendTransaction(transaction);
+        const result = await window.tonConnectManual.sendTransaction(transaction);
 
         console.log('✅ Transaction sent:', result);
 
-        statusText.textContent = 'Транзакция отправлена! Ожидание подтверждения...';
+        statusText.textContent = 'Транзакция отправлена! Проверяем поступление...';
 
-        // Wait a bit and then reload profile
-        setTimeout(async () => {
-            processingDiv.style.display = 'none';
-            closeTopUpModal();
+        // Start checking for transaction confirmation
+        let checkAttempts = 0;
+        const maxAttempts = 30; // Check for 30 seconds
+        const checkInterval = setInterval(async () => {
+            checkAttempts++;
+            console.log(`🔍 Checking balance (attempt ${checkAttempts}/${maxAttempts})...`);
 
-            // Reload user profile to update balance
+            // Reload profile to check if balance updated
             await loadProfile();
 
-            alert('✅ TON отправлены! Баланс будет обновлен после подтверждения транзакции.');
-        }, 2000);
+            // If balance updated or max attempts reached, stop checking
+            if (checkAttempts >= maxAttempts) {
+                clearInterval(checkInterval);
+                processingDiv.style.display = 'none';
+                closeTopUpModal();
+                alert('✅ TON отправлены! Баланс будет обновлен после подтверждения транзакции в блокчейне (может занять до 1-2 минут).');
+            }
+        }, 1000);
+
+        // Also close after 5 seconds anyway
+        setTimeout(() => {
+            if (checkAttempts < maxAttempts) {
+                clearInterval(checkInterval);
+            }
+            processingDiv.style.display = 'none';
+            closeTopUpModal();
+        }, 5000);
 
     } catch (error) {
         console.error('❌ Send TON failed:', error);
