@@ -469,36 +469,47 @@ class TONConnectManual {
 
                     console.log('🔍 Extracted wallet URL:', walletUrl);
 
-                    if (walletUrl) {
-                        // Encode transaction as base64 BOC
-                        const transactionData = {
-                            to: transaction.messages[0].address,
-                            value: transaction.messages[0].amount,
-                            timeout: transaction.validUntil
-                        };
+                    // Always try to create transaction, even if walletUrl is not found
+                    // We'll use TON transfer deep link format
+                    const address = transaction.messages[0].address;
+                    const amount = transaction.messages[0].amount;
 
-                        // Create URL for Telegram Wallet
-                        const base64Data = btoa(JSON.stringify(transactionData));
-                        const txUrl = `${walletUrl}/tx/${base64Data}`;
+                    // Convert nanoTON to TON for display
+                    const tonAmount = (parseInt(amount) / 1_000_000_000).toString();
 
-                        console.log('🔗 Manual transaction URL:', txUrl);
+                    // Create TON deep link (works in Telegram)
+                    // Format: ton://transfer/<address>?amount=<nanotons>
+                    const txUrl = `ton://transfer/${address}?amount=${amount}`;
 
-                        // Open via Telegram WebApp
-                        if (tg) {
-                            console.log('💎 Opening transaction via Telegram WebApp');
-                            if (txUrl.includes('ton://') || txUrl.includes('tg://')) {
-                                tg.openTelegramLink(txUrl);
-                            } else {
-                                tg.openLink(txUrl);
-                            }
+                    console.log('🔗 Manual transaction URL (TON deep link):', txUrl);
+                    console.log('💰 Amount:', tonAmount, 'TON (', amount, 'nanoTON)');
 
-                            // Wait for user to complete transaction in wallet
-                            // This is a simplified approach - in production you'd want to poll for confirmation
-                            console.log('⏳ Waiting for user to confirm in wallet...');
-                            throw new Error('Manual transaction opened - please confirm in wallet. Refresh page to see updated balance.');
+                    // Open via Telegram WebApp
+                    if (tg) {
+                        console.log('💎 Opening transaction via Telegram WebApp');
+                        console.log('📱 Using openTelegramLink for ton:// URL');
+
+                        try {
+                            tg.openTelegramLink(txUrl);
+                            console.log('✅ Transaction link opened');
+
+                            // Don't throw error, just show message
+                            console.log('⏳ Transaction sent to Telegram Wallet. Waiting for user confirmation...');
+
+                            // Close the modal after a delay
+                            setTimeout(() => {
+                                alert('Транзакция отправлена в Telegram Wallet. Пожалуйста, подтвердите в кошельке.');
+                            }, 500);
+
+                            // Cancel the SDK promise since we handled it manually
+                            throw new Error('Transaction handled manually via TON deep link');
+                        } catch (openError) {
+                            console.error('❌ Error opening transaction link:', openError);
+                            throw openError;
                         }
                     } else {
-                        console.error('❌ No wallet URL available for manual transaction');
+                        console.error('❌ Telegram WebApp not available');
+                        throw new Error('Telegram WebApp not available');
                     }
                 }
             } catch (syncError) {
