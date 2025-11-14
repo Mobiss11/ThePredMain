@@ -470,27 +470,39 @@ class TONConnectManual {
                     console.log('🔍 Extracted wallet URL:', walletUrl);
 
                     // Always try to create transaction, even if walletUrl is not found
-                    // We'll use TON transfer deep link format
+                    // We'll use Telegram Wallet bot deep link format
                     const address = transaction.messages[0].address;
                     const amount = transaction.messages[0].amount;
 
                     // Convert nanoTON to TON for display
                     const tonAmount = (parseInt(amount) / 1_000_000_000).toString();
 
-                    // Create TON deep link (works in Telegram)
-                    // Format: ton://transfer/<address>?amount=<nanotons>
-                    const txUrl = `ton://transfer/${address}?amount=${amount}`;
+                    // Create Telegram Wallet bot URL
+                    // Format: https://t.me/wallet?startattach=wpay_order-orderId_{params}
+                    // Or simpler: https://t.me/wallet/start?command=send&address=...&amount=...
 
-                    console.log('🔗 Manual transaction URL (TON deep link):', txUrl);
+                    // Encode transaction parameters
+                    const params = new URLSearchParams({
+                        address: address,
+                        amount: amount,
+                        text: 'Payment to ThePred'
+                    });
+
+                    // Try different URL formats
+                    const txUrl = `https://t.me/wallet?startattach=transfer_${params.toString()}`;
+                    // Alternative: const txUrl = `tg://resolve?domain=wallet&startattach=transfer_${params.toString()}`;
+
+                    console.log('🔗 Manual transaction URL (Telegram Wallet):', txUrl);
                     console.log('💰 Amount:', tonAmount, 'TON (', amount, 'nanoTON)');
 
                     // Open via Telegram WebApp
                     if (tg) {
                         console.log('💎 Opening transaction via Telegram WebApp');
-                        console.log('📱 Using openTelegramLink for ton:// URL');
 
                         try {
-                            tg.openTelegramLink(txUrl);
+                            // Use openLink for https:// URLs
+                            console.log('🌐 Using openLink for https:// URL');
+                            tg.openLink(txUrl);
                             console.log('✅ Transaction link opened');
 
                             // Don't throw error, just show message
@@ -498,11 +510,11 @@ class TONConnectManual {
 
                             // Close the modal after a delay
                             setTimeout(() => {
-                                alert('Транзакция отправлена в Telegram Wallet. Пожалуйста, подтвердите в кошельке.');
+                                alert('Открывается Telegram Wallet. Пожалуйста, подтвердите транзакцию.');
                             }, 500);
 
                             // Cancel the SDK promise since we handled it manually
-                            throw new Error('Transaction handled manually via TON deep link');
+                            throw new Error('Transaction handled manually via Telegram Wallet link');
                         } catch (openError) {
                             console.error('❌ Error opening transaction link:', openError);
                             throw openError;
