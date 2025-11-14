@@ -182,6 +182,15 @@ DEFAULT_MISSIONS = [
         "type": "achievement",
         "requirements": {"win_streak": 10},
         "icon": "unstoppable"
+    },
+    {
+        "title": "Подключи Кошелек",
+        "description": "Подключи TON кошелек к своему аккаунту",
+        "reward_amount": 100,
+        "reward_currency": "PRED",
+        "type": "achievement",
+        "requirements": {"wallet_connected": True},
+        "icon": "wallet"
     }
 ]
 
@@ -194,7 +203,7 @@ async def init_default_missions():
             result = await db.execute(select(Mission))
             existing_missions = result.scalars().all()
 
-            # If we have less than 20 missions, recreate all
+            # If we have 20 missions, recreate all to include CONNECT_WALLET
             if len(existing_missions) >= 20:
                 print(f"✓ Missions already exist ({len(existing_missions)} missions found)")
                 return

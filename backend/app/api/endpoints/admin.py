@@ -2418,3 +2418,274 @@ async def create_admin_event(
         "moderation_status": market.moderation_status,
         "photo_url": photo_url
     }
+
+# ============ Withdrawal Management ============
+
+@router.get("/withdrawals")
+async def get_all_withdrawals(
+    status: Optional[str] = Query(None, description="Filter by status"),
+    limit: int = Query(50, le=100),
+    offset: int = Query(0),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get all withdrawal requests with optional status filter
+    
+    Status options: pending, processing, completed, rejected, cancelled
+    """
+    from app.models.withdrawal import WithdrawalRequest, WithdrawalStatus
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Build query
+        query = select(WithdrawalRequest, User).join(
+            User, WithdrawalRequest.user_id == User.id
+        )
+        
+        # Apply status filter if provided
+        if status:
+            try:
+                status_enum = WithdrawalStatus(status)
+                query = query.where(WithdrawalRequest.status == status_enum)
+            except ValueError:
+                raise HTTPException(status_code=400, detail=f"Invalid status: {status}")
+        
+        # Order by created_at desc (newest first)
+        query = query.order_by(WithdrawalRequest.created_at.desc())
+        
+        # Apply pagination
+        query = query.limit(limit).offset(offset)
+        
+        result = await db.execute(query)
+        rows = result.all()
+        
+        withdrawals = []
+        for withdrawal, user in rows:
+            withdrawals.append({
+                "id": withdrawal.id,
+                "user_id": withdrawal.user_id,
+                "username": user.username,
+                "first_name": user.first_name,
+                "telegram_id": user.telegram_id,
+                "pred_amount": float(withdrawal.pred_amount),
+                "ton_amount": float(withdrawal.ton_amount) if withdrawal.ton_amount else None,
+                "ton_address": withdrawal.ton_address,
+                "status": withdrawal.status.value,
+                "tx_hash": withdrawal.tx_hash,
+                "admin_note": withdrawal.admin_note,
+                "created_at": withdrawal.created_at.isoformat(),
+                "processed_at": withdrawal.processed_at.isoformat() if withdrawal.processed_at else None
+            })
+        
+        # Get total count
+        count_query = select(func.count(WithdrawalRequest.id))
+        if status:
+            count_query = count_query.where(WithdrawalRequest.status == status_enum)
+        count_result = await db.execute(count_query)
+        total = count_result.scalar()
+        
+        return {
+            "withdrawals": withdrawals,
+            "total": total,
+            "limit": limit,
+            "offset": offset
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting withdrawals: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get withdrawals")
+
+
+@router.put("/withdrawals/{withdrawal_id}/approve")
+async def approve_withdrawal(
+    withdrawal_id: int,
+    tx_hash: str = Query(..., description="TON blockchain transaction hash"),
+    admin_note: Optional[str] = Query(None, description="Admin note"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Approve withdrawal request and mark as completed
+    
+    Requirements:
+    - Admin must manually send TON to user's address
+    - Provide tx_hash from TON blockchain
+    - Updates status to COMPLETED
+    """
+    from app.models.withdrawal import WithdrawalRequest, WithdrawalStatus
+    from app.models.transaction import Transaction, TransactionType, TransactionStatus
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Get withdrawal
+        query = select(WithdrawalRequest).where(WithdrawalRequest.id == withdrawal_id)
+        result = await db.execute(query)
+        withdrawal = result.scalars().first()
+        
+        if not withdrawal:
+            raise HTTPException(status_code=404, detail="Withdrawal request not found")
+        
+        # Check status
+        if withdrawal.status not in [WithdrawalStatus.PENDING, WithdrawalStatus.PROCESSING]:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot approve withdrawal with status: {withdrawal.status.value}"
+            )
+        
+        # Update withdrawal
+        withdrawal.status = WithdrawalStatus.COMPLETED
+        withdrawal.tx_hash = tx_hash
+        withdrawal.admin_note = admin_note
+        withdrawal.processed_at = datetime.utcnow()
+        
+        # Update related transaction
+        tx_query = select(Transaction).where(
+            Transaction.user_id == withdrawal.user_id,
+            Transaction.type == TransactionType.WITHDRAW,
+            Transaction.status == TransactionStatus.PENDING
+        ).order_by(Transaction.created_at.desc()).limit(1)
+        tx_result = await db.execute(tx_query)
+        transaction = tx_result.scalars().first()
+        
+        if transaction:
+            transaction.status = TransactionStatus.COMPLETED
+            transaction.tx_hash = tx_hash
+            transaction.completed_at = datetime.utcnow()
+        
+        await db.commit()
+        
+        logger.info(f"✅ Withdrawal approved: ID={withdrawal_id}, tx_hash={tx_hash}")
+        
+        return {
+            "success": True,
+            "message": "Withdrawal approved and marked as completed",
+            "withdrawal_id": withdrawal_id,
+            "tx_hash": tx_hash
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Error approving withdrawal: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to approve withdrawal")
+
+
+@router.put("/withdrawals/{withdrawal_id}/reject")
+async def reject_withdrawal(
+    withdrawal_id: int,
+    reason: str = Query(..., description="Rejection reason"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Reject withdrawal request
+    
+    - Refunds PRED to user balance
+    - Updates status to REJECTED
+    """
+    from app.models.withdrawal import WithdrawalRequest, WithdrawalStatus
+    from app.models.transaction import Transaction, TransactionType, TransactionStatus
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Get withdrawal
+        query = select(WithdrawalRequest, User).join(
+            User, WithdrawalRequest.user_id == User.id
+        ).where(WithdrawalRequest.id == withdrawal_id)
+        result = await db.execute(query)
+        row = result.first()
+        
+        if not row:
+            raise HTTPException(status_code=404, detail="Withdrawal request not found")
+        
+        withdrawal, user = row
+        
+        # Check status
+        if withdrawal.status not in [WithdrawalStatus.PENDING, WithdrawalStatus.PROCESSING]:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot reject withdrawal with status: {withdrawal.status.value}"
+            )
+        
+        # Refund PRED to user
+        user.pred_balance += withdrawal.pred_amount
+        
+        # Update withdrawal
+        withdrawal.status = WithdrawalStatus.REJECTED
+        withdrawal.admin_note = reason
+        withdrawal.processed_at = datetime.utcnow()
+        
+        # Update related transaction
+        tx_query = select(Transaction).where(
+            Transaction.user_id == withdrawal.user_id,
+            Transaction.type == TransactionType.WITHDRAW,
+            Transaction.status == TransactionStatus.PENDING
+        ).order_by(Transaction.created_at.desc()).limit(1)
+        tx_result = await db.execute(tx_query)
+        transaction = tx_result.scalars().first()
+        
+        if transaction:
+            transaction.status = TransactionStatus.FAILED
+            transaction.description += f" (отклонена: {reason})"
+        
+        await db.commit()
+        
+        logger.info(f"❌ Withdrawal rejected: ID={withdrawal_id}, reason={reason}")
+        
+        return {
+            "success": True,
+            "message": "Withdrawal rejected and PRED refunded",
+            "withdrawal_id": withdrawal_id,
+            "refunded_pred": float(withdrawal.pred_amount)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Error rejecting withdrawal: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to reject withdrawal")
+
+
+@router.get("/withdrawals/stats")
+async def get_withdrawal_stats(db: AsyncSession = Depends(get_db)):
+    """Get withdrawal statistics"""
+    from app.models.withdrawal import WithdrawalRequest, WithdrawalStatus
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Total withdrawals by status
+        status_query = select(
+            WithdrawalRequest.status,
+            func.count(WithdrawalRequest.id),
+            func.sum(WithdrawalRequest.pred_amount)
+        ).group_by(WithdrawalRequest.status)
+        status_result = await db.execute(status_query)
+        
+        stats_by_status = {}
+        for status, count, total_pred in status_result.all():
+            stats_by_status[status.value] = {
+                "count": count,
+                "total_pred": float(total_pred) if total_pred else 0
+            }
+        
+        # Pending count (needs attention)
+        pending_query = select(func.count(WithdrawalRequest.id)).where(
+            WithdrawalRequest.status == WithdrawalStatus.PENDING
+        )
+        pending_result = await db.execute(pending_query)
+        pending_count = pending_result.scalar()
+        
+        return {
+            "stats_by_status": stats_by_status,
+            "pending_count": pending_count
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting withdrawal stats: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get withdrawal stats")
