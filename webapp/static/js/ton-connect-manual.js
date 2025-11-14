@@ -458,9 +458,16 @@ class TONConnectManual {
                 if (!transactionUrlCaught && this.connector.wallet.provider === 'http') {
                     console.warn('⚠️ SDK did not generate transaction URL, using manual fallback');
 
+                    // Log full wallet device info to find the right URL
+                    console.log('🔍 Full wallet object:', this.connector.wallet);
+                    console.log('🔍 Wallet device:', this.connector.wallet.device);
+
                     // Build transaction URL manually
                     const walletUrl = this.connector.wallet.device?.universalLink ||
-                                     this.connector.wallet.device?.deepLink;
+                                     this.connector.wallet.device?.deepLink ||
+                                     this.connector.wallet.device?.appName;
+
+                    console.log('🔍 Extracted wallet URL:', walletUrl);
 
                     if (walletUrl) {
                         // Encode transaction as base64 BOC
