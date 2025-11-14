@@ -1029,5 +1029,34 @@ async def tonconnect_manifest():
     return response
 
 
+# ============ CryptoCloud Payment Pages ============
+
+@app.route('/successful-payment')
+async def successful_payment():
+    """
+    Success page after CryptoCloud payment
+
+    URL: https://thepred.tech/successful-payment
+
+    User is redirected here after successful payment.
+    Actual balance update happens via webhook.
+    """
+    user_id = session.get('user_id')
+    return await render_template('payment_success.html', user_id=user_id)
+
+
+@app.route('/failed-payment')
+async def failed_payment():
+    """
+    Failed page after CryptoCloud payment failure
+
+    URL: https://thepred.tech/failed-payment
+
+    User is redirected here if payment fails or is cancelled.
+    """
+    user_id = session.get('user_id')
+    return await render_template('payment_failed.html', user_id=user_id)
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8001, debug=app.config['DEV_MODE'])

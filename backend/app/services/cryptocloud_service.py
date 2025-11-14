@@ -71,8 +71,8 @@ class CryptoCloudService:
 
             # Use WEBAPP_URL from settings
             base_url = settings.WEBAPP_URL
-            payload["success_url"] = success_url or f"{base_url}/payment/success"
-            payload["fail_url"] = fail_url or f"{base_url}/payment/error"
+            payload["success_url"] = success_url or f"{base_url}/successful-payment"
+            payload["fail_url"] = fail_url or f"{base_url}/failed-payment"
 
             logger.info(f"Creating CryptoCloud invoice: {payload}")
 

@@ -172,13 +172,15 @@ async def get_payment_history(
         raise HTTPException(status_code=500, detail="Failed to get payment history")
 
 
-@router.post("/webhook")
-async def payment_webhook(
+@router.post("/callback")
+async def payment_callback(
     request: Request,
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Webhook endpoint for CryptoCloud
+    Callback endpoint for CryptoCloud webhooks
+
+    URL: https://thepred.tech/api/payment/callback
 
     This endpoint is called by CryptoCloud when payment status changes.
     It processes the payment and credits user's PRED balance.
@@ -238,13 +240,15 @@ async def payment_webhook(
         return {"status": "error", "message": str(e)}
 
 
-@router.get("/success")
-async def payment_success():
+@router.get("/successful-payment")
+async def successful_payment():
     """
     Success redirect page after payment
 
+    URL: https://thepred.tech/api/payment/successful-payment
+
     User is redirected here by CryptoCloud after successful payment.
-    This is just a confirmation page - actual processing happens in webhook.
+    This is just a confirmation page - actual processing happens in callback webhook.
     """
     return {
         "status": "success",
@@ -253,10 +257,12 @@ async def payment_success():
     }
 
 
-@router.get("/error")
-async def payment_error():
+@router.get("/failed-payment")
+async def failed_payment():
     """
-    Error redirect page after payment failure
+    Failed redirect page after payment failure
+
+    URL: https://thepred.tech/api/payment/failed-payment
 
     User is redirected here by CryptoCloud if payment fails or is cancelled.
     """
