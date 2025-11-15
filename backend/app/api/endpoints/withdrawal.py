@@ -15,7 +15,6 @@ from datetime import datetime
 import logging
 
 from app.core.database import get_db
-from app.core.security import get_current_user
 from app.models.user import User
 from app.models.withdrawal import WithdrawalRequest, WithdrawalStatus
 from app.models.transaction import Transaction, TransactionType, TransactionStatus
@@ -62,10 +61,10 @@ class WithdrawalResponse(BaseModel):
 # User Endpoints
 # ============================================================================
 
-@router.post("/create", response_model=WithdrawalResponse)
+@router.post("/create/{user_id}", response_model=WithdrawalResponse)
 async def create_withdrawal_request(
+    user_id: int,
     request: CreateWithdrawalRequest,
-    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -84,6 +83,14 @@ async def create_withdrawal_request(
     4. Admin marks as completed with tx_hash
     """
     try:
+        # Get user
+        user_query = select(User).where(User.id == user_id)
+        user_result = await db.execute(user_query)
+        user = user_result.scalars().first()
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
         # Validate amount
         MIN_WITHDRAWAL = 100
         pred_amount = Decimal(str(request.pred_amount))
@@ -95,15 +102,15 @@ async def create_withdrawal_request(
             )
 
         # Check user balance
-        if current_user.pred_balance < pred_amount:
+        if user.pred_balance < pred_amount:
             raise HTTPException(
                 status_code=400,
-                detail=f"Недостаточно средств. Доступно: {float(current_user.pred_balance)} PRED"
+                detail=f"Недостаточно средств. Доступно: {float(user.pred_balance)} PRED"
             )
 
         # Check if user has pending withdrawal
         pending_query = select(WithdrawalRequest).where(
-            WithdrawalRequest.user_id == current_user.id,
+            WithdrawalRequest.user_id == user_id,
             or_(
                 WithdrawalRequest.status == WithdrawalStatus.PENDING,
                 WithdrawalRequest.status == WithdrawalStatus.PROCESSING
@@ -123,7 +130,7 @@ async def create_withdrawal_request(
 
         # Create withdrawal request
         withdrawal = WithdrawalRequest(
-            user_id=current_user.id,
+            user_id=user_id,
             pred_amount=pred_amount,
             ton_amount=ton_amount,
             ton_address=request.ton_address,
@@ -133,11 +140,11 @@ async def create_withdrawal_request(
         db.add(withdrawal)
 
         # Deduct PRED from user balance immediately (hold funds)
-        current_user.pred_balance -= pred_amount
+        user.pred_balance -= pred_amount
 
         # Create transaction record
         transaction = Transaction(
-            user_id=current_user.id,
+            user_id=user_id,
             type=TransactionType.WITHDRAW,
             currency="PRED",
             amount=pred_amount,
@@ -150,7 +157,7 @@ async def create_withdrawal_request(
         await db.commit()
         await db.refresh(withdrawal)
 
-        logger.info(f"✅ Withdrawal request created: ID={withdrawal.id}, User={current_user.id}, Amount={pred_amount} PRED")
+        logger.info(f"✅ Withdrawal request created: ID={withdrawal.id}, User={user_id}, Amount={pred_amount} PRED")
 
         return WithdrawalResponse(
             id=withdrawal.id,
@@ -172,10 +179,10 @@ async def create_withdrawal_request(
         raise HTTPException(status_code=500, detail="Ошибка создания заявки")
 
 
-@router.get("/my-requests", response_model=List[WithdrawalResponse])
+@router.get("/my-requests/{user_id}", response_model=List[WithdrawalResponse])
 async def get_my_withdrawal_requests(
+    user_id: int,
     limit: int = 10,
-    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -189,7 +196,7 @@ async def get_my_withdrawal_requests(
 
         query = (
             select(WithdrawalRequest)
-            .where(WithdrawalRequest.user_id == current_user.id)
+            .where(WithdrawalRequest.user_id == user_id)
             .order_by(WithdrawalRequest.created_at.desc())
             .limit(limit)
         )
@@ -216,10 +223,10 @@ async def get_my_withdrawal_requests(
         raise HTTPException(status_code=500, detail="Ошибка получения заявок")
 
 
-@router.post("/cancel/{withdrawal_id}")
+@router.post("/cancel/{user_id}/{withdrawal_id}")
 async def cancel_withdrawal_request(
+    user_id: int,
     withdrawal_id: int,
-    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -238,7 +245,7 @@ async def cancel_withdrawal_request(
             raise HTTPException(status_code=404, detail="Заявка не найдена")
 
         # Check ownership
-        if withdrawal.user_id != current_user.id:
+        if withdrawal.user_id != user_id:
             raise HTTPException(status_code=403, detail="Нет доступа к этой заявке")
 
         # Check status
@@ -248,8 +255,16 @@ async def cancel_withdrawal_request(
                 detail=f"Нельзя отменить заявку со статусом: {withdrawal.status.value}"
             )
 
+        # Get user
+        user_query = select(User).where(User.id == user_id)
+        user_result = await db.execute(user_query)
+        user = user_result.scalars().first()
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
         # Refund PRED
-        current_user.pred_balance += withdrawal.pred_amount
+        user.pred_balance += withdrawal.pred_amount
 
         # Update withdrawal status
         withdrawal.status = WithdrawalStatus.CANCELLED
@@ -257,7 +272,7 @@ async def cancel_withdrawal_request(
 
         # Update transaction
         tx_query = select(Transaction).where(
-            Transaction.user_id == current_user.id,
+            Transaction.user_id == user_id,
             Transaction.type == TransactionType.WITHDRAW,
             Transaction.status == TransactionStatus.PENDING
         ).order_by(Transaction.created_at.desc()).limit(1)
@@ -270,7 +285,7 @@ async def cancel_withdrawal_request(
 
         await db.commit()
 
-        logger.info(f"✅ Withdrawal cancelled: ID={withdrawal_id}, User={current_user.id}")
+        logger.info(f"✅ Withdrawal cancelled: ID={withdrawal_id}, User={user_id}")
 
         return {
             "status": "success",

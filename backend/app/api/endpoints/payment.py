@@ -12,7 +12,6 @@ from typing import List
 import logging
 
 from app.core.database import get_db
-from app.core.security import get_current_user
 from app.models.user import User
 from app.models.payment import Payment
 from app.services.cryptocloud_service import PaymentService
@@ -71,10 +70,10 @@ class PaymentHistoryResponse(BaseModel):
 # Endpoints
 # ============================================================================
 
-@router.post("/create", response_model=PaymentResponse)
+@router.post("/create/{user_id}", response_model=PaymentResponse)
 async def create_payment(
+    user_id: int,
     request: CreatePaymentRequest,
-    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -109,7 +108,7 @@ async def create_payment(
         payment_service = PaymentService(db)
 
         payment = await payment_service.create_payment(
-            user_id=current_user.id,
+            user_id=user_id,
             amount=request.amount,
             currency="USD"
         )
@@ -132,10 +131,10 @@ async def create_payment(
         raise HTTPException(status_code=500, detail="Failed to create payment")
 
 
-@router.get("/history", response_model=List[PaymentHistoryResponse])
+@router.get("/history/{user_id}", response_model=List[PaymentHistoryResponse])
 async def get_payment_history(
+    user_id: int,
     limit: int = 10,
-    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -150,7 +149,7 @@ async def get_payment_history(
             limit = 50
 
         payment_service = PaymentService(db)
-        payments = await payment_service.get_user_payments(current_user.id, limit=limit)
+        payments = await payment_service.get_user_payments(user_id, limit=limit)
 
         return [
             PaymentHistoryResponse(
