@@ -43,7 +43,7 @@ class PaymentResponse(BaseModel):
     payment_url: str
     amount: float
     currency: str
-    pred_amount: float
+    pred_amount: float | None  # Optional - not used for TON payments
     status: str
     created_at: str
 

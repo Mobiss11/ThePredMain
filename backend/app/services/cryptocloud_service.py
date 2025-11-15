@@ -178,12 +178,13 @@ class PaymentService:
                 raise ValueError(f"Maximum deposit is ${settings.MAX_DEPOSIT_USD}")
 
             # Create payment record
+            # Note: We don't set pred_amount here - TON will be credited via webhook
             payment = Payment(
                 user_id=user_id,
                 amount=Decimal(str(amount)),
                 currency=currency,
                 status=PaymentStatus.PENDING,
-                pred_amount=Decimal(str(amount * settings.USD_TO_PRED_RATE)),
+                pred_amount=None,  # Not used - payment credits TON balance
                 expires_at=datetime.utcnow() + timedelta(hours=24)
             )
 
@@ -303,25 +304,26 @@ class PaymentService:
             if not user:
                 raise Exception(f"User {payment.user_id} not found")
 
-            # Credit PRED balance
-            pred_amount = payment.pred_amount or Decimal(str(float(payment.amount) * settings.USD_TO_PRED_RATE))
-            user.pred_balance += pred_amount
+            # Credit TON balance (not PRED!)
+            # Calculate TON amount from USD (approximate rate, actual from CryptoCloud)
+            ton_amount = Decimal(str(float(payment.amount) * settings.USD_TO_TON_RATE))
+            user.ton_balance += ton_amount
 
             # Create transaction record
             transaction = Transaction(
                 user_id=user.id,
                 type=TransactionType.DEPOSIT,
-                currency="PRED",
-                amount=pred_amount,
+                currency="TON",
+                amount=ton_amount,
                 status=TransactionStatus.COMPLETED,
-                description=f"CryptoCloud deposit: ${payment.amount} → {pred_amount} PRED",
+                description=f"CryptoCloud deposit: ${payment.amount} USDT → {ton_amount} TON",
                 completed_at=datetime.utcnow()
             )
             self.db.add(transaction)
 
             await self.db.commit()
 
-            logger.info(f"User {user.id} credited {pred_amount} PRED (Payment {payment.id})")
+            logger.info(f"User {user.id} credited {ton_amount} TON (Payment {payment.id})")
 
         except Exception as e:
             await self.db.rollback()

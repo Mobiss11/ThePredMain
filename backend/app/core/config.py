@@ -69,7 +69,8 @@ class Settings(BaseSettings):
     # Payment settings
     MIN_DEPOSIT_USD: int = 1
     MAX_DEPOSIT_USD: int = 10000
-    USD_TO_PRED_RATE: int = 10  # 1 USD = 10 PRED
+    USD_TO_PRED_RATE: int = 10  # 1 USD = 10 PRED (deprecated, use for internal conversion only)
+    USD_TO_TON_RATE: float = 0.17  # 1 USD ≈ 0.17 TON (approximate, actual rate from CryptoCloud)
 
     @property
     def database_url(self) -> str:
