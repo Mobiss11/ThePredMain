@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/payment", tags=["payment"])
+router = APIRouter(tags=["payment"])
 
 
 # ============================================================================
