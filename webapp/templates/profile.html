@@ -31,14 +31,6 @@
         <div class="glass rounded-xl p-4">
             <div class="flex items-center justify-between mb-2">
                 <div class="text-gray-400 text-sm">Баланс PRED</div>
-                <div class="flex space-x-2">
-                    <button onclick="openDepositModal()" class="gold-gradient px-3 py-1 rounded-lg text-xs font-bold text-black hover:opacity-90 transition">
-                        💎 Пополнить
-                    </button>
-                    <button onclick="openWithdrawalModal()" class="glass px-3 py-1 rounded-lg text-xs font-bold hover:bg-opacity-30 transition">
-                        💸 Вывести
-                    </button>
-                </div>
             </div>
             <div class="text-2xl font-bold text-yellow-400" id="pred-balance-display">...</div>
         </div>
@@ -61,12 +53,15 @@
                 <div class="text-xs text-green-400 mb-2">✓ Кошелек подключен</div>
                 <div class="text-xs text-gray-400 truncate mb-3" id="wallet-address-short">...</div>
 
-                <div class="flex space-x-2">
-                    <button onclick="openTopUpModal()" class="flex-1 gold-gradient px-3 py-2 rounded-lg text-xs font-bold text-black hover:opacity-90 transition">
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="openTopUpModal()" class="gold-gradient px-3 py-2 rounded-lg text-xs font-bold text-black hover:opacity-90 transition">
                         💰 Пополнить
                     </button>
-                    <button onclick="disconnectWallet()" class="flex-1 bg-red-500 bg-opacity-20 hover:bg-opacity-30 px-3 py-2 rounded-lg text-xs font-bold text-red-400 transition border border-red-500 border-opacity-30">
-                        🔌 Отключить
+                    <button onclick="openWithdrawalModal()" class="glass px-3 py-2 rounded-lg text-xs font-bold hover:bg-opacity-30 transition">
+                        💸 Вывести
+                    </button>
+                    <button onclick="disconnectWallet()" class="bg-red-500 bg-opacity-20 hover:bg-opacity-30 px-3 py-2 rounded-lg text-xs font-bold text-red-400 transition border border-red-500 border-opacity-30">
+                        🔌 Выйти
                     </button>
                 </div>
             </div>
@@ -291,108 +286,6 @@
     </div>
 </div>
 
-<!-- Deposit PRED via CryptoCloud Modal -->
-<div id="deposit-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4" style="display: none;" onclick="closeDepositModalIfOutside(event)">
-    <div class="glass rounded-2xl max-w-sm w-full" onclick="event.stopPropagation()">
-        <div class="p-5">
-            <!-- Header -->
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold">💰 Пополнить PRED</h2>
-                <button onclick="closeDepositModal()" class="text-gray-400 hover:text-white text-2xl">×</button>
-            </div>
-
-            <!-- Payment Info -->
-            <div class="glass rounded-xl p-4 mb-4">
-                <div class="text-center">
-                    <div class="flex items-center justify-center space-x-2 mb-2">
-                        <span class="text-2xl">💵</span>
-                        <span class="text-xl">→</span>
-                        <span class="text-2xl">🪙</span>
-                    </div>
-                    <div class="font-semibold mb-1 text-sm">Курс: $1 = 10 PRED</div>
-                    <div class="text-xs text-gray-400">Оплата криптовалютой (BTC, ETH, USDT)</div>
-                </div>
-            </div>
-
-            <!-- Amount Input -->
-            <div class="mb-4">
-                <label class="block text-xs font-semibold mb-2">Сумма пополнения (USD)</label>
-                <div class="glass rounded-xl p-3">
-                    <div class="flex items-center space-x-2 mb-2">
-                        <div class="text-xl">💵</div>
-                        <input
-                            type="number"
-                            id="deposit-amount-input"
-                            placeholder="10"
-                            step="1"
-                            min="1"
-                            max="10000"
-                            class="flex-1 bg-transparent text-xl font-bold focus:outline-none"
-                            oninput="calculateExpectedPRED()"
-                        >
-                        <span class="text-green-400 font-bold text-sm">USD</span>
-                    </div>
-
-                    <!-- Quick Amount Buttons -->
-                    <div class="flex space-x-2 mb-2">
-                        <button onclick="setDepositAmount(10)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
-                            $10
-                        </button>
-                        <button onclick="setDepositAmount(50)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
-                            $50
-                        </button>
-                        <button onclick="setDepositAmount(100)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
-                            $100
-                        </button>
-                        <button onclick="setDepositAmount(500)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
-                            $500
-                        </button>
-                    </div>
-
-                    <!-- Expected PRED -->
-                    <div class="pt-2 border-t border-gray-700">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs text-gray-400">Вы получите</span>
-                            <div class="flex items-center space-x-1">
-                                <span class="text-lg font-bold text-yellow-400" id="expected-pred">0</span>
-                                <span class="text-xs text-gray-400">PRED</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Info Message -->
-            <div class="mb-3 p-3 rounded-lg glass text-xs">
-                <div class="text-blue-400 mb-2">ℹ️ Как это работает:</div>
-                <div class="text-gray-400 space-y-1">
-                    <div>1. Введите сумму в USD</div>
-                    <div>2. Нажмите "Перейти к оплате"</div>
-                    <div>3. Оплатите криптовалютой через CryptoCloud</div>
-                    <div>4. PRED зачислятся автоматически</div>
-                </div>
-            </div>
-
-            <!-- Error Message -->
-            <div id="deposit-error" class="mb-3 p-2 rounded-lg bg-red-500 bg-opacity-20 border border-red-500 text-red-400 text-xs" style="display: none;">
-                <div id="deposit-error-text"></div>
-            </div>
-
-            <!-- Submit Button -->
-            <button onclick="submitDeposit()" id="deposit-submit-btn" class="w-full gold-gradient rounded-xl px-4 py-2.5 text-sm font-bold text-black hover:opacity-90 transition mb-2">
-                💳 Перейти к оплате
-            </button>
-
-            <!-- Processing State -->
-            <div id="deposit-processing" class="mt-3 glass rounded-xl p-3 text-center" style="display: none;">
-                <div class="animate-spin text-3xl mb-2">⏳</div>
-                <div class="font-semibold mb-1 text-sm">Создание платежа...</div>
-                <div class="text-xs text-gray-400" id="deposit-status-text">Обработка</div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Withdrawal Modal -->
 <div id="withdrawal-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4" style="display: none;" onclick="closeWithdrawalModalIfOutside(event)">
     <div class="glass rounded-2xl max-w-sm w-full" onclick="event.stopPropagation()">
@@ -407,71 +300,56 @@
             <div class="glass rounded-xl p-4 mb-4">
                 <div class="text-center">
                     <div class="flex items-center justify-center space-x-2 mb-2">
-                        <span class="text-2xl">🪙</span>
-                        <span class="text-xl">→</span>
                         <span class="text-2xl">💎</span>
+                        <span class="text-xl">→</span>
+                        <span class="text-2xl">🪙</span>
                     </div>
-                    <div class="font-semibold mb-1 text-sm">Курс: 1000 PRED = 1 TON</div>
-                    <div class="text-xs text-gray-400">Минимальная сумма вывода: 100 PRED</div>
+                    <div class="font-semibold mb-1 text-sm">Вывод TON на ваш кошелёк</div>
+                    <div class="text-xs text-gray-400">Минимальная сумма: 0.1 TON</div>
                 </div>
             </div>
 
-            <!-- TON Address Input -->
+            <!-- TON Address (auto-filled) -->
             <div class="mb-4">
                 <label class="block text-xs font-semibold mb-2">TON адрес для вывода</label>
                 <div class="glass rounded-xl p-3 mb-3">
-                    <input
-                        type="text"
-                        id="withdrawal-address-input"
-                        placeholder="UQAa..."
-                        class="w-full bg-transparent text-sm focus:outline-none"
-                    >
+                    <div class="text-xs text-gray-400 truncate" id="withdrawal-address-display">
+                        Загрузка...
+                    </div>
                 </div>
             </div>
 
             <!-- Amount Input -->
             <div class="mb-4">
-                <label class="block text-xs font-semibold mb-2">Сумма вывода (PRED)</label>
+                <label class="block text-xs font-semibold mb-2">Сумма вывода (TON)</label>
                 <div class="glass rounded-xl p-3">
                     <div class="flex items-center space-x-2 mb-2">
-                        <div class="text-xl">🪙</div>
+                        <div class="text-xl">💎</div>
                         <input
                             type="number"
                             id="withdrawal-amount-input"
-                            placeholder="100"
-                            step="10"
-                            min="100"
+                            placeholder="0.1"
+                            step="0.1"
+                            min="0.1"
                             class="flex-1 bg-transparent text-xl font-bold focus:outline-none"
-                            oninput="calculateExpectedTON()"
                         >
-                        <span class="text-yellow-400 font-bold text-sm">PRED</span>
+                        <span class="text-blue-400 font-bold text-sm">TON</span>
                     </div>
 
                     <!-- Quick Amount Buttons -->
                     <div class="flex space-x-2 mb-2">
-                        <button onclick="setWithdrawalAmount(100)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
-                            100
+                        <button onclick="setWithdrawalAmount(0.1)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
+                            0.1
                         </button>
-                        <button onclick="setWithdrawalAmount(500)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
-                            500
+                        <button onclick="setWithdrawalAmount(0.5)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
+                            0.5
                         </button>
-                        <button onclick="setWithdrawalAmount(1000)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
-                            1K
+                        <button onclick="setWithdrawalAmount(1)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
+                            1
                         </button>
                         <button onclick="setWithdrawalMax()" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
                             Всё
                         </button>
-                    </div>
-
-                    <!-- Expected TON -->
-                    <div class="pt-2 border-t border-gray-700">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs text-gray-400">Вы получите</span>
-                            <div class="flex items-center space-x-1">
-                                <span class="text-lg font-bold text-blue-400" id="expected-ton">0</span>
-                                <span class="text-xs text-gray-400">TON</span>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -480,10 +358,10 @@
             <div class="mb-3 p-3 rounded-lg glass text-xs">
                 <div class="text-blue-400 mb-2">ℹ️ Как это работает:</div>
                 <div class="text-gray-400 space-y-1">
-                    <div>1. Введите TON адрес и сумму</div>
+                    <div>1. Введите сумму TON для вывода</div>
                     <div>2. Создайте заявку на вывод</div>
                     <div>3. Ожидайте проверки администрацией</div>
-                    <div>4. TON будут отправлены вручную</div>
+                    <div>4. TON будут отправлены на ваш кошелёк</div>
                     <div class="text-yellow-400 mt-2">⚠️ Обработка может занять до 24 часов</div>
                 </div>
             </div>
@@ -514,16 +392,20 @@
         <div class="p-5">
             <!-- Header -->
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold">💰 Пополнить TON</h2>
+                <h2 class="text-xl font-bold">💰 Пополнить PRED</h2>
                 <button onclick="closeTopUpModal()" class="text-gray-400 hover:text-white text-2xl">×</button>
             </div>
 
             <!-- Instructions -->
             <div class="glass rounded-xl p-4 mb-4">
                 <div class="text-center">
-                    <div class="text-3xl mb-2">💎</div>
-                    <div class="font-semibold mb-1 text-sm">Отправьте TON на адрес платформы</div>
-                    <div class="text-xs text-gray-400">Баланс будет зачислен автоматически</div>
+                    <div class="flex items-center justify-center space-x-2 mb-2">
+                        <span class="text-2xl">💵</span>
+                        <span class="text-xl">→</span>
+                        <span class="text-2xl">🪙</span>
+                    </div>
+                    <div class="font-semibold mb-1 text-sm">Отправьте USDT на адрес платформы</div>
+                    <div class="text-xs text-gray-400">PRED зачислятся по курсу USDT автоматически</div>
                 </div>
             </div>
 
@@ -540,44 +422,44 @@
 
             <!-- Amount Input -->
             <div class="mb-4">
-                <label class="block text-xs font-semibold mb-2">Сумма (TON)</label>
+                <label class="block text-xs font-semibold mb-2">Сумма (USDT)</label>
                 <div class="glass rounded-xl p-3">
                     <div class="flex items-center space-x-2">
-                        <div class="text-lg">💎</div>
+                        <div class="text-lg">💵</div>
                         <input
                             type="number"
                             id="topup-amount-input"
                             placeholder="0.0"
                             step="0.1"
-                            min="0.1"
+                            min="1"
                             class="flex-1 bg-transparent text-lg font-bold focus:outline-none w-0"
                         >
-                        <span class="text-blue-400 font-bold text-xs flex-shrink-0">TON</span>
+                        <span class="text-green-400 font-bold text-xs flex-shrink-0">USDT</span>
                     </div>
 
                     <!-- Quick Amount Buttons -->
                     <div class="flex space-x-2 mt-2">
-                        <button onclick="setTopUpAmount(1)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
-                            1
-                        </button>
-                        <button onclick="setTopUpAmount(5)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
-                            5
-                        </button>
                         <button onclick="setTopUpAmount(10)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
                             10
+                        </button>
+                        <button onclick="setTopUpAmount(50)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
+                            50
+                        </button>
+                        <button onclick="setTopUpAmount(100)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
+                            100
                         </button>
                     </div>
                 </div>
             </div>
 
             <!-- Send Button -->
-            <button onclick="sendTON()" id="send-ton-btn" class="w-full gold-gradient rounded-xl px-4 py-2.5 text-sm font-bold text-black hover:opacity-90 transition mb-3">
-                💸 Отправить TON
+            <button onclick="sendUSDT()" id="send-usdt-btn" class="w-full gold-gradient rounded-xl px-4 py-2.5 text-sm font-bold text-black hover:opacity-90 transition mb-3">
+                💸 Отправить USDT
             </button>
 
             <!-- Info -->
             <div class="text-xs text-gray-400 text-center">
-                <p>Транзакция будет обработана автоматически</p>
+                <p>PRED зачислятся автоматически по актуальному курсу</p>
             </div>
 
             <!-- Processing State -->
@@ -1902,13 +1784,21 @@ window.formatNumber = formatNumber;
 
 // Open withdrawal modal
 window.openWithdrawalModal = function() {
+    // Check if wallet is connected
+    if (!window.tonConnectUI || !window.tonConnectUI.account) {
+        alert('❌ Сначала подключите кошелек!');
+        return;
+    }
+
     const modal = document.getElementById('withdrawal-modal');
     modal.style.display = 'flex';
 
+    // Set wallet address
+    const addressDisplay = document.getElementById('withdrawal-address-display');
+    addressDisplay.textContent = window.tonConnectUI.account.address;
+
     // Reset form
-    document.getElementById('withdrawal-address-input').value = '';
     document.getElementById('withdrawal-amount-input').value = '';
-    document.getElementById('expected-ton').textContent = '0';
     document.getElementById('withdrawal-error').style.display = 'none';
     document.getElementById('withdrawal-processing').style.display = 'none';
 };
@@ -1928,45 +1818,26 @@ window.closeWithdrawalModalIfOutside = function(event) {
 // Set withdrawal amount (quick buttons)
 window.setWithdrawalAmount = function(amount) {
     document.getElementById('withdrawal-amount-input').value = amount;
-    calculateExpectedTON();
 };
 
-// Set max withdrawal amount
+// Set max withdrawal amount (all TON balance)
 window.setWithdrawalMax = function() {
-    if (window.userProfile && window.userProfile.pred_balance) {
-        const maxAmount = Math.floor(parseFloat(window.userProfile.pred_balance));
+    if (window.userProfile && window.userProfile.ton_balance) {
+        const maxAmount = parseFloat(window.userProfile.ton_balance).toFixed(2);
         document.getElementById('withdrawal-amount-input').value = maxAmount;
-        calculateExpectedTON();
     }
-};
-
-// Calculate expected TON from PRED amount
-window.calculateExpectedTON = function() {
-    const amountInput = document.getElementById('withdrawal-amount-input');
-    const expectedTon = document.getElementById('expected-ton');
-
-    const amount = parseFloat(amountInput.value) || 0;
-    const ton = (amount / 1000).toFixed(3); // 1000 PRED = 1 TON
-
-    expectedTon.textContent = ton;
 };
 
 // Submit withdrawal request
 window.submitWithdrawal = async function() {
-    const addressInput = document.getElementById('withdrawal-address-input');
     const amountInput = document.getElementById('withdrawal-amount-input');
-
-    const address = addressInput.value.trim();
     const amount = parseFloat(amountInput.value);
 
-    // Validate address
-    if (!address) {
-        showWithdrawalError('Введите TON адрес');
-        return;
-    }
+    // Get wallet address
+    const address = window.tonConnectUI?.account?.address;
 
-    if (!address.startsWith('UQ') && !address.startsWith('EQ')) {
-        showWithdrawalError('Неверный формат TON адреса');
+    if (!address) {
+        showWithdrawalError('Кошелёк не подключен');
         return;
     }
 
@@ -1976,13 +1847,13 @@ window.submitWithdrawal = async function() {
         return;
     }
 
-    if (amount < 100) {
-        showWithdrawalError('Минимальная сумма вывода: 100 PRED');
+    if (amount < 0.1) {
+        showWithdrawalError('Минимальная сумма вывода: 0.1 TON');
         return;
     }
 
-    if (window.userProfile && amount > parseFloat(window.userProfile.pred_balance)) {
-        showWithdrawalError('Недостаточно средств');
+    if (window.userProfile && amount > parseFloat(window.userProfile.ton_balance)) {
+        showWithdrawalError('Недостаточно TON на балансе');
         return;
     }
 
@@ -2001,6 +1872,9 @@ window.submitWithdrawal = async function() {
     try {
         updateWithdrawalStatus('Создание заявки на вывод...');
 
+        // Convert TON amount to nanotons (for API)
+        const tonAmount = amount;
+
         // Call withdrawal create API
         const response = await fetch(`/api/withdrawal/create/${userId}`, {
             method: 'POST',
@@ -2008,7 +1882,7 @@ window.submitWithdrawal = async function() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                pred_amount: amount,
+                ton_amount: tonAmount,
                 ton_address: address
             })
         });
@@ -2025,7 +1899,7 @@ window.submitWithdrawal = async function() {
         updateWithdrawalStatus('Заявка создана успешно!');
 
         // Show success message
-        alert('✅ Заявка на вывод создана!\n\nСумма: ' + amount + ' PRED\nАдрес: ' + address + '\n\nОжидайте обработки администратором (до 24 часов)');
+        alert('✅ Заявка на вывод создана!\n\nСумма: ' + amount + ' TON\nАдрес: ' + address + '\n\nОжидайте обработки администратором (до 24 часов)');
 
         // Close modal and refresh profile
         setTimeout(() => {
@@ -2126,22 +2000,22 @@ window.copyPlatformAddress = function() {
     });
 };
 
-// Send TON using TON Connect
-window.sendTON = async function() {
-    const sendBtn = document.getElementById('send-ton-btn');
+// Send USDT using TON Connect
+window.sendUSDT = async function() {
+    const sendBtn = document.getElementById('send-usdt-btn');
     const processingDiv = document.getElementById('topup-processing');
     const statusText = document.getElementById('topup-status-text');
 
     try {
-        console.log('🚀 sendTON called');
+        console.log('🚀 sendUSDT called');
 
         const amountInput = document.getElementById('topup-amount-input');
         const amount = parseFloat(amountInput.value);
         console.log('Amount:', amount);
 
         // Validate amount
-        if (!amount || amount < 0.1) {
-            alert('Минимальная сумма: 0.1 TON');
+        if (!amount || amount < 1) {
+            alert('Минимальная сумма: 1 USDT');
             return;
         }
 
