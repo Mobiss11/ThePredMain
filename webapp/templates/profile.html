@@ -392,7 +392,7 @@
         <div class="p-5">
             <!-- Header -->
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold">💰 Пополнить PRED</h2>
+                <h2 class="text-xl font-bold">💰 Пополнить TON</h2>
                 <button onclick="closeTopUpModal()" class="text-gray-400 hover:text-white text-2xl">×</button>
             </div>
 
@@ -402,65 +402,81 @@
                     <div class="flex items-center justify-center space-x-2 mb-2">
                         <span class="text-2xl">💵</span>
                         <span class="text-xl">→</span>
-                        <span class="text-2xl">🪙</span>
+                        <span class="text-2xl">💎</span>
                     </div>
-                    <div class="font-semibold mb-1 text-sm">Отправьте USDT на адрес платформы</div>
-                    <div class="text-xs text-gray-400">PRED зачислятся по курсу USDT автоматически</div>
+                    <div class="font-semibold mb-1 text-sm">Оплата через CryptoCloud</div>
+                    <div class="text-xs text-gray-400">TON зачислятся по курсу USDT автоматически</div>
                 </div>
-            </div>
-
-            <!-- Platform Address -->
-            <div class="glass rounded-xl p-3 mb-4">
-                <div class="text-xs text-gray-400 mb-2">Адрес для пополнения:</div>
-                <div class="bg-gray-800 rounded-lg p-2 mb-2 break-all text-xs font-mono" id="platform-address-display">
-                    Загрузка...
-                </div>
-                <button onclick="copyPlatformAddress()" class="w-full glass rounded-lg px-3 py-2 text-xs font-semibold hover:bg-opacity-30 transition">
-                    📋 Копировать адрес
-                </button>
             </div>
 
             <!-- Amount Input -->
             <div class="mb-4">
                 <label class="block text-xs font-semibold mb-2">Сумма (USDT)</label>
                 <div class="glass rounded-xl p-3">
-                    <div class="flex items-center space-x-2">
+                    <div class="flex items-center space-x-2 mb-2">
                         <div class="text-lg">💵</div>
                         <input
                             type="number"
                             id="topup-amount-input"
-                            placeholder="0.0"
-                            step="0.1"
+                            placeholder="10"
+                            step="1"
                             min="1"
-                            class="flex-1 bg-transparent text-lg font-bold focus:outline-none w-0"
+                            max="10000"
+                            class="flex-1 bg-transparent text-lg font-bold focus:outline-none"
+                            oninput="calculateExpectedTONTopup()"
                         >
-                        <span class="text-green-400 font-bold text-xs flex-shrink-0">USDT</span>
+                        <span class="text-green-400 font-bold text-sm">USDT</span>
                     </div>
 
                     <!-- Quick Amount Buttons -->
-                    <div class="flex space-x-2 mt-2">
+                    <div class="flex space-x-2 mb-2">
                         <button onclick="setTopUpAmount(10)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
-                            10
+                            $10
                         </button>
                         <button onclick="setTopUpAmount(50)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
-                            50
+                            $50
                         </button>
                         <button onclick="setTopUpAmount(100)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
-                            100
+                            $100
                         </button>
+                        <button onclick="setTopUpAmount(500)" class="flex-1 glass rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-opacity-30 transition">
+                            $500
+                        </button>
+                    </div>
+
+                    <!-- Expected TON -->
+                    <div class="pt-2 border-t border-gray-700">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-gray-400">Вы получите ~</span>
+                            <div class="flex items-center space-x-1">
+                                <span class="text-lg font-bold text-blue-400" id="expected-ton-topup">0</span>
+                                <span class="text-xs text-gray-400">TON</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Send Button -->
-            <button onclick="sendUSDT()" id="send-usdt-btn" class="w-full gold-gradient rounded-xl px-4 py-2.5 text-sm font-bold text-black hover:opacity-90 transition mb-3">
-                💸 Отправить USDT
-            </button>
-
-            <!-- Info -->
-            <div class="text-xs text-gray-400 text-center">
-                <p>PRED зачислятся автоматически по актуальному курсу</p>
+            <!-- Info Message -->
+            <div class="mb-3 p-3 rounded-lg glass text-xs">
+                <div class="text-blue-400 mb-2">ℹ️ Как это работает:</div>
+                <div class="text-gray-400 space-y-1">
+                    <div>1. Введите сумму в USDT</div>
+                    <div>2. Нажмите "Перейти к оплате"</div>
+                    <div>3. Оплатите криптовалютой через CryptoCloud</div>
+                    <div>4. TON зачислятся автоматически по курсу</div>
+                </div>
             </div>
+
+            <!-- Error Message -->
+            <div id="topup-error" class="mb-3 p-2 rounded-lg bg-red-500 bg-opacity-20 border border-red-500 text-red-400 text-xs" style="display: none;">
+                <div id="topup-error-text"></div>
+            </div>
+
+            <!-- Submit Button -->
+            <button onclick="submitTopUp()" id="topup-submit-btn" class="w-full gold-gradient rounded-xl px-4 py-2.5 text-sm font-bold text-black hover:opacity-90 transition mb-2">
+                💳 Перейти к оплате
+            </button>
 
             <!-- Processing State -->
             <div id="topup-processing" class="mt-3 glass rounded-xl p-3 text-center" style="display: none;">
@@ -1937,34 +1953,21 @@ function updateWithdrawalStatus(text) {
 let platformAddress = null;
 
 // Open top-up modal
-window.openTopUpModal = async function() {
+window.openTopUpModal = function() {
     const modal = document.getElementById('topup-modal');
     modal.style.display = 'flex';
 
-    // Load platform address from API
-    try {
-        const response = await fetch('/api/wallet/info');
-        if (response.ok) {
-            const data = await response.json();
-            platformAddress = data.platform_address;
-            document.getElementById('platform-address-display').textContent = platformAddress || 'Адрес недоступен';
-        } else {
-            document.getElementById('platform-address-display').textContent = 'Ошибка загрузки адреса';
-        }
-    } catch (error) {
-        console.error('Failed to load platform address:', error);
-        document.getElementById('platform-address-display').textContent = 'Ошибка загрузки адреса';
-    }
+    // Reset form
+    document.getElementById('topup-amount-input').value = '';
+    document.getElementById('expected-ton-topup').textContent = '0';
+    document.getElementById('topup-error').style.display = 'none';
+    document.getElementById('topup-processing').style.display = 'none';
 };
 
 // Close top-up modal
 window.closeTopUpModal = function() {
     const modal = document.getElementById('topup-modal');
     modal.style.display = 'none';
-
-    // Reset form
-    document.getElementById('topup-amount-input').value = '';
-    document.getElementById('topup-processing').style.display = 'none';
 };
 
 // Close modal if clicked outside
@@ -1977,27 +1980,117 @@ window.closeTopUpModalIfOutside = function(event) {
 // Set top-up amount (quick buttons)
 window.setTopUpAmount = function(amount) {
     document.getElementById('topup-amount-input').value = amount;
+    calculateExpectedTONTopup();
 };
 
-// Copy platform address to clipboard
-window.copyPlatformAddress = function() {
-    if (!platformAddress) {
-        alert('Адрес не загружен');
+// Calculate expected TON from USDT (примерный курс: 1 USDT ≈ 0.17 TON)
+window.calculateExpectedTONTopup = function() {
+    const amountInput = document.getElementById('topup-amount-input');
+    const expectedTon = document.getElementById('expected-ton-topup');
+
+    const amount = parseFloat(amountInput.value) || 0;
+    // Примерный курс - точный курс будет от CryptoCloud
+    const ton = (amount * 0.17).toFixed(2);
+
+    expectedTon.textContent = ton;
+};
+
+// Submit top-up (create CryptoCloud payment)
+window.submitTopUp = async function() {
+    const amountInput = document.getElementById('topup-amount-input');
+    const amount = parseFloat(amountInput.value);
+
+    // Validate amount
+    if (!amount || amount <= 0) {
+        showTopUpError('Введите сумму пополнения');
         return;
     }
 
-    navigator.clipboard.writeText(platformAddress).then(() => {
-        // Show visual feedback
-        const button = event.target;
-        const originalText = button.textContent;
-        button.textContent = '✅ Скопировано!';
+    if (amount < 1) {
+        showTopUpError('Минимальная сумма: 1 USDT');
+        return;
+    }
+
+    if (amount > 10000) {
+        showTopUpError('Максимальная сумма: 10,000 USDT');
+        return;
+    }
+
+    // Hide error
+    document.getElementById('topup-error').style.display = 'none';
+
+    // Show processing
+    const submitBtn = document.getElementById('topup-submit-btn');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Создание платежа...';
+
+    const processingDiv = document.getElementById('topup-processing');
+    processingDiv.style.display = 'block';
+
+    try {
+        updateTopUpStatus('Создание платежа...');
+
+        // Call payment create API
+        const response = await fetch(`/api/payment/create/${userId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                amount: amount
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Ошибка создания платежа');
+        }
+
+        const result = await response.json();
+
+        console.log('✅ Payment created:', result);
+
+        updateTopUpStatus('Переход к оплате...');
+
+        // Wait a moment before redirecting
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Open CryptoCloud payment page
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.openLink) {
+            tg.openLink(result.payment_url);
+        } else {
+            window.open(result.payment_url, '_blank');
+        }
+
+        // Close modal after opening payment link
         setTimeout(() => {
-            button.textContent = originalText;
-        }, 2000);
-    }).catch(err => {
-        console.error('Failed to copy:', err);
-        alert('Не удалось скопировать адрес');
-    });
+            closeTopUpModal();
+        }, 1000);
+
+    } catch (error) {
+        console.error('❌ Payment creation failed:', error);
+        showTopUpError(error.message);
+        processingDiv.style.display = 'none';
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+    }
+};
+
+// Show top-up error
+function showTopUpError(message) {
+    const errorDiv = document.getElementById('topup-error');
+    const errorText = document.getElementById('topup-error-text');
+
+    errorText.textContent = message;
+    errorDiv.style.display = 'block';
+}
+
+// Update top-up status text
+function updateTopUpStatus(text) {
+    document.getElementById('topup-status-text').textContent = text;
 };
 
 // Send USDT using TON Connect
