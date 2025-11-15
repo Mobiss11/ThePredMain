@@ -19,7 +19,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Create WithdrawalStatus enum if not exists
+    # Create enum using native PostgreSQL syntax with IF NOT EXISTS check
     op.execute("""
         DO $$ BEGIN
             CREATE TYPE withdrawalstatus AS ENUM ('pending', 'processing', 'completed', 'rejected', 'cancelled');
@@ -28,7 +28,12 @@ def upgrade() -> None:
         END $$;
     """)
 
-    # Create withdrawal_requests table
+    # Create withdrawal_requests table using existing enum type
+    # Note: We use create_type=False to prevent SQLAlchemy from creating the enum again
+    from sqlalchemy.dialects.postgresql import ENUM
+
+    withdrawal_status_enum = ENUM('pending', 'processing', 'completed', 'rejected', 'cancelled', name='withdrawalstatus', create_type=False)
+
     op.create_table(
         'withdrawal_requests',
         sa.Column('id', sa.BigInteger(), autoincrement=True, nullable=False),
@@ -36,7 +41,7 @@ def upgrade() -> None:
         sa.Column('pred_amount', sa.DECIMAL(precision=20, scale=2), nullable=False),
         sa.Column('ton_amount', sa.DECIMAL(precision=20, scale=8), nullable=True),
         sa.Column('ton_address', sa.String(length=255), nullable=False),
-        sa.Column('status', sa.Enum('pending', 'processing', 'completed', 'rejected', 'cancelled', name='withdrawalstatus'), nullable=False, server_default='pending'),
+        sa.Column('status', withdrawal_status_enum, nullable=False, server_default='pending'),
         sa.Column('tx_hash', sa.String(length=255), nullable=True),
         sa.Column('admin_note', sa.Text(), nullable=True),
         sa.Column('processed_by', sa.BigInteger(), nullable=True),

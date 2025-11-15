@@ -19,7 +19,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Create PaymentMethod enum if not exists
+    # Create enums using native PostgreSQL syntax with IF NOT EXISTS check
     op.execute("""
         DO $$ BEGIN
             CREATE TYPE paymentmethod AS ENUM ('cryptocloud');
@@ -28,7 +28,6 @@ def upgrade() -> None:
         END $$;
     """)
 
-    # Create PaymentStatus enum if not exists
     op.execute("""
         DO $$ BEGIN
             CREATE TYPE paymentstatus AS ENUM ('pending', 'processing', 'completed', 'failed', 'cancelled');
@@ -37,7 +36,13 @@ def upgrade() -> None:
         END $$;
     """)
 
-    # Create payments table
+    # Create payments table using existing enum types
+    # Note: We use checkfirst=False and handle enum creation manually above
+    from sqlalchemy.dialects.postgresql import ENUM
+
+    payment_method_enum = ENUM('cryptocloud', name='paymentmethod', create_type=False)
+    payment_status_enum = ENUM('pending', 'processing', 'completed', 'failed', 'cancelled', name='paymentstatus', create_type=False)
+
     op.create_table(
         'payments',
         sa.Column('id', sa.BigInteger(), autoincrement=True, nullable=False),
@@ -49,8 +54,8 @@ def upgrade() -> None:
         sa.Column('crypto_amount', sa.DECIMAL(precision=20, scale=8), nullable=True),
         sa.Column('crypto_currency', sa.String(length=10), nullable=True),
         sa.Column('pred_amount', sa.DECIMAL(precision=20, scale=2), nullable=True),
-        sa.Column('payment_method', sa.Enum('cryptocloud', name='paymentmethod'), nullable=False, server_default='cryptocloud'),
-        sa.Column('status', sa.Enum('pending', 'processing', 'completed', 'failed', 'cancelled', name='paymentstatus'), nullable=False, server_default='pending'),
+        sa.Column('payment_method', payment_method_enum, nullable=False, server_default='cryptocloud'),
+        sa.Column('status', payment_status_enum, nullable=False, server_default='pending'),
         sa.Column('description', sa.String(length=500), nullable=True),
         sa.Column('payment_data', sa.Text(), nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
