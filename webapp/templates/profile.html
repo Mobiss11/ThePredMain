@@ -652,6 +652,9 @@
 
 {% block extra_scripts %}
 <script>
+// Global user ID
+const userId = {{ user_id }};
+
 // Load profile data
 async function loadProfile() {
     try {
