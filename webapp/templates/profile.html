@@ -1699,7 +1699,7 @@ window.submitDeposit = async function() {
         updateDepositStatus('Создание платежа...');
 
         // Call payment create API
-        const response = await fetch('/api/payment/create', {
+        const response = await fetch(`/api/payment/create/${userId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
