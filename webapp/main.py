@@ -794,6 +794,28 @@ async def api_user_referrals(user_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/payment/create/<int:user_id>', methods=['POST'])
+async def api_create_payment(user_id):
+    """Create CryptoCloud payment - proxy to backend"""
+    try:
+        data = await request.get_json()
+        result = await api_client._post(f"/payment/create/{user_id}", json=data)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/payment/history/<int:user_id>')
+async def api_payment_history(user_id):
+    """Get payment history - proxy to backend"""
+    try:
+        limit = request.args.get('limit', 10)
+        result = await api_client._get(f"/payment/history/{user_id}?limit={limit}")
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/api/markets/create-event', methods=['POST'])
 async def api_create_event():
     """Create user event - proxy to backend"""
