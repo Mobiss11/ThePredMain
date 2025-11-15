@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.config import settings
-from app.models.payment import Payment, PaymentStatus
+from app.models.payment import Payment, PaymentStatus, PaymentMethod
 from app.models.user import User
 from app.models.transaction import Transaction, TransactionType, TransactionStatus
 
@@ -184,6 +184,7 @@ class PaymentService:
                 amount=Decimal(str(amount)),
                 currency=currency,
                 status=PaymentStatus.PENDING,
+                payment_method=PaymentMethod.CRYPTOCLOUD,
                 pred_amount=None,  # Not used - payment credits TON balance
                 expires_at=datetime.utcnow() + timedelta(hours=24)
             )
