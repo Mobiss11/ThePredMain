@@ -799,7 +799,7 @@ async def api_create_payment(user_id):
     """Create CryptoCloud payment - proxy to backend"""
     try:
         data = await request.get_json()
-        result = await api_client._post(f"/payment/create/{user_id}", json=data)
+        result = await api_client._post(f"/payment/create/{user_id}", data)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
