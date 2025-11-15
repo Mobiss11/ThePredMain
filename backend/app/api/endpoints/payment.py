@@ -119,7 +119,7 @@ async def create_payment(
             payment_url=payment.payment_url,
             amount=float(payment.amount),
             currency=payment.currency,
-            pred_amount=float(payment.pred_amount),
+            pred_amount=float(payment.pred_amount) if payment.pred_amount else None,
             status=payment.status.value,
             created_at=payment.created_at.isoformat()
         )
